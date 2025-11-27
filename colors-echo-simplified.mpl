@@ -1,6 +1,6 @@
-protocol Colors => S =
-    ColorPutRed :: Put( [Char] | Get( [Char] | S)) => S
-    ColorClose :: TopBot => S
+protocol Echo => S =
+    EchoSend :: Put( [Char] | Get( [Char] | S)) => S
+    EchoClose :: TopBot => S
 
 protocol ReadConsole => S =
     StringTerminalGet :: Get( [Char] | S) => S
@@ -11,46 +11,46 @@ coprotocol S => LogConsole =
     ConsolePut :: S => Get( [Char] | S)
     ConsoleClose :: S => TopBot
 
-proc client :: | => Colors, ReadConsole =
-    | => colors, console -> do
+proc client :: | => Echo, ReadConsole =
+    | => ch, console -> do
         hput StringTerminalGet on console
         get fruit on console
 
         case fruit of
             [] -> do
-                hput ColorClose on colors
+                hput EchoClose on ch
                 hput StringTerminalClose on console
                 close console
-                halt colors
+                halt ch
 
             _:_ -> do
-                hput ColorPutRed on colors
-                put fruit on colors
-                get echoed on colors
+                hput EchoSend on ch
+                put fruit on ch
+                get echoed on ch
                 hput StringTerminalPut on console
                 put ('>':' ':echoed) on console
 
-                client( | => colors, console)
+                client( | => ch, console)
 
-proc server :: | Colors, LogConsole => =
-    | colors, console => -> do
-        hcase colors of
-            ColorPutRed -> do
-                get fruit on colors
+proc server :: | Echo, LogConsole => =
+    | ch, console => -> do
+        hcase ch of
+            EchoSend -> do
+                get fruit on ch
 
                 hput ConsolePut on console
                 put fruit on console
 
-                put fruit on colors
-                server( | colors, console => )
-            ColorClose -> do
+                put fruit on ch
+                server( | ch, console => )
+            EchoClose -> do
                 hput ConsolePut on console
                 put "Done" on console
                 hput ConsoleClose on console
                 close console
-                halt colors
+                halt ch
 
 proc run :: | LogConsole => ReadConsole =
     | console_s => console_c -> plug
-        client( | => colors, console_c )
-        server( | colors, console_s => )
+        client( | => ch, console_c )
+        server( | ch, console_s => )
