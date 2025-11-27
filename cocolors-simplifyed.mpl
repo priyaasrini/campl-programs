@@ -13,9 +13,9 @@ proc client :: | Echo => =
 proc server :: | => Echo =
     | => ch -> hcase ch of
         EchoSend -> do
-            get fruit on ch
-            put fruit on ch
-            server( | ch => )
+            get val on ch
+            put val on ch
+            server( | => ch )
         EchoClose -> halt ch
 
 proc run :: | => =
