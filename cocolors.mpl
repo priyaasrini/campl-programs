@@ -1,12 +1,10 @@
+{- Echo Server using coprotocol with terminals -}
+
+-- coProtocol connecting the client and the server
 coprotocol
-    S => Colors =
-        ColorPutRed :: S => Get( [Char] | R)
-        ColorClose :: S => TopBot
-
-    and
-
-    R => RedFruits =
-        RedFruit :: R => Put( [Char] | S)
+    S => Echo =
+        EchoSend :: S => Get( [Char] | Put( [Char] | S))
+        EchoClose :: S => TopBot
 
 protocol ReadConsole => S =
     StringTerminalGet :: Get( [Char] | S) => S
@@ -17,50 +15,61 @@ coprotocol S => LogConsole =
     ConsolePut :: S => Get( [Char] | S)
     ConsoleClose :: S => TopBot
 
-proc client :: | Colors => ReadConsole =
-    | colors => console -> do
+{-
+    1. Client reads data from the terminals
+    2. Sends to server
+    3. Waits for server to echo it back
+    4. Once it hears the echo, prints on the console. 
+
+    Client closes channel, sends close handle to server and halts on receiving an empty string.
+-}
+proc client :: | Echo => ReadConsole =
+    | ch => console -> do
         hput StringTerminalGet on console
         get fruit on console
 
         case fruit of
             [] -> do
-                hput ColorClose on colors
+                hput EchoClose on ch
                 hput StringTerminalClose on console
                 close console
-                halt colors
+                halt ch
 
             _:_ -> do
-                hput ColorPutRed on colors
-                put fruit on colors
-
-                hput RedFruit on colors
-                get echoed on colors
+                hput EchoSend on ch
+                put fruit on ch
+                get echoed on ch
                 hput StringTerminalPut on console
                 put ('>':echoed) on console
 
-                client( | => colors, console)
+                client( | ch => console)
 
-proc server :: | LogConsole => Colors =
-    | console => colors -> do
-        hcase colors of
-            ColorPutRed -> do
-                get fruit on colors
+{-  Loop: 
+    1. Server waits to hear data from client
+    2. Prints and echoes back the data to the client
+     
+    Server closes channel and halts when it receives close handle. 
+-}
+proc server :: | LogConsole => Echo =
+    | console => ch -> do
+        hcase ch of
+            EchoSend -> do
+                get fruit on ch
 
                 hput ConsolePut on console
                 put fruit on console
 
-                hcase colors of
-                    RedFruit -> do
-                        put fruit on colors
-                        server( | colors, console => )
-            ColorClose -> do
+                put fruit on ch
+                server( | console => ch)
+
+            EchoClose -> do
                 hput ConsolePut on console
                 put "Done" on console
                 hput ConsoleClose on console
                 close console
-                halt colors
+                halt ch
 
 proc run :: | LogConsole => ReadConsole =
     | console_s => console_c -> plug
-        client( | colors => console_c )
-        server( | console_s => colors )
+        client( | ch => console_c )
+        server( | console_s => ch )

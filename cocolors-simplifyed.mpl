@@ -1,3 +1,7 @@
+{- 
+    An echo-server with no printing and using coprotocol.
+-}
+
 coprotocol S => Echo =
     EchoSend :: S => Get( [Char] | Put( [Char] | S))
     EchoClose :: S => TopBot
