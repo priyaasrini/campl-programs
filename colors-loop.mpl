@@ -1,18 +1,13 @@
--- See colors-echo-simplified.mpl
+-- Simple client-server communication where the client loops until it encounters an empty string. 
 
+-- Connects Client and Server
 protocol
     Echo => S =
-        EchoSend :: Put( [Char] | R) => S
+        EchoSend :: Put( [Char] | S) => S
         EchoClose :: TopBot => S
-
-    and
-
-    RedFruits => R =
-        RedFruit :: Get( [Char] | S) => R
 
 protocol ReadConsole => S =
     StringTerminalGet :: Get( [Char] | S) => S
-    StringTerminalPut :: Put( [Char] | S) => S
     StringTerminalClose :: TopBot => S
 
 coprotocol S => LogConsole =
@@ -26,36 +21,33 @@ proc client :: | => Echo, ReadConsole =
 
         case fruit of
             [] -> do
+                -- Close channels and halt -- 
                 hput EchoClose on ch
                 hput StringTerminalClose on console
                 close console
                 halt ch
 
             _:_ -> do
+                -- Send handle and data to server
                 hput EchoSend on ch
                 put fruit on ch
 
-                hput RedFruit on ch
-                get echoed on ch
-                hput StringTerminalPut on console
-                put ('>':echoed) on console
-
-                client( | => ch, console)
+                -- loop -- 
+                client( | => ch, console) 
 
 proc server :: | Echo, LogConsole => =
     | ch, console => -> do
         hcase ch of
             EchoSend -> do
+                -- receive data from client -- 
                 get fruit on ch
 
                 hput ConsolePut on console
                 put fruit on console
 
-                hcase ch of
-                    RedFruit -> do
-                        put fruit on ch
-                        server( | ch, console => )
+                server( | ch, console => )
             EchoClose -> do
+                -- close channels and halt -- 
                 hput ConsolePut on console
                 put "Done" on console
                 hput ConsoleClose on console
