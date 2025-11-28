@@ -1,3 +1,5 @@
+-- Does not compile. "race" expects the racing channels to be of Put type 
+
 protocol Echo => S =
         EchoSend :: S => S
         EchoClose :: TopBot => S

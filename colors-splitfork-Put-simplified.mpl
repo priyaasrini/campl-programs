@@ -1,3 +1,5 @@
+{- Does not compile because -}
+
 protocol Echo => S =
     EchoSend :: Put( [Char] | Get( [Char] | S)) => S
     EchoClose :: TopBot => S

@@ -1,3 +1,7 @@
+{- Does not compile. Because the server_echo expects a put (|) type but the server sends Colors type.
+   See colors-splitfork-Put-simplified-withterminals.mpl for working example. 
+-}
+
 protocol
     Colors => S =
         ColorPutRed :: Put( [Char] | R) => S
@@ -98,7 +102,7 @@ defn
                         ColorPutRed -> case swtch of
                             False -> server_loop( | winner, loser, console => )
                             True -> server_loop( | loser, winner, console => )
-                        ColorClose -> server_close_then_loop1( | winner, loser, console => )
+                        ColorClose -> server_close_then_loop1( "Done" | winner, loser, console => )
 
 proc server :: | Colors (*) Colors, LogConsole => =
     | _2_colors, console => -> do
