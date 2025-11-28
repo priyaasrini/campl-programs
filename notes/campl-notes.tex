@@ -1,0 +1,1512 @@
+\documentclass[11pt]{article}
+\input{preamble}
+\input{macros}
+\addbibresource{refs.bib}
+\linespread{1.11}
+
+\title{Logic of concurrency (from scratch)}
+\author{
+    Robin Cockett\thanks{University of Calgary} \and Niccolo Veltri\thanks{Tallinn University of Technology} \and Priyaa Varshinee Srinivasan$^\dagger$}
+%\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Cockett and Pastro worked out a message passing logic, its proof theory and categorical semantics for classical concurrent processes. In this work, we extend the message passing logic to describe a logic of quantum message passing for quantum processes. The aim is to provide an elegant setting in which communication protocols such as "Local Operations and Classical Communications", "Super Dense coding" can be formally presented. 
+\end{abstract}
+
+\addcontentsline{toc}{section}{References}
+
+\tableofcontents
+
+\section{Introduction}
+
+Say why this is a good thing to do! Why do we need better representations of these communication protocols? Where does bra-ket notation fall short?
+
+\priyaa{This is very rough introduction intended for internal purposes only.}
+
+\section{Background: Linear logic and its categorical semantics}
+
+Linearly distributive categories \cite{CS97} are the categorical semantics of multiplicative fragment of linear logic. Linearly distributive categories are equipped with two monoidal structures $(\otimes, \top)$ called the tensor product and $(\oplus, \bot)$ called the par product -- one for each multiplicative connective of the logic -- interacting via natural transformations called {\bf linear distributors}: 
+\[ \partial^l: A \ox (B \oa C) \to (A \ox B) \oa C  \quad \quad \quad \partial^r: (B \oa C) \ox A \to B \oa (A \ox C) \ \]
+
+The distributors are linear in the sense that the term $A$ is not duplicated when the tensor distributes over the par product. 
+
+Monoidal categories are linearly distributive categories in which both the monoidal structures coincide.
+
+From the perspective of logic, it is helpful to interpret the tensor product $\otimes$ as "parallel" hence refer to it as "or" operation, and its unit $\top$ as "true", and interpret the parr product $\oplus$ as "sequential" hence refer to it as "and" operation, and its unit $\bot$ as "false". 
+
+There is a series of properties, summarized in Figure \ref{Fig: LDCs}, by which linearly distributive categories reduce to monoidal categories:
+\begin{enumerate}[(a)]
+\item LDCs with a map from false to truth, $\m: \bot \to \top$ called {\bf mix categories}
+\item LDCs where the monoidal units are isomorphic, $\m: \bot \to^{\simeq} \top$  (false and truth are isomorphic) called {\bf isomix categories}
+\item LDCs where the monoidal structures are isomorphic called {\bf compact LDCs}
+\item LDCs where the monoidal structure coincide precisely called {\bf monoidal categories}
+\end{enumerate}
+
+\begin{center}
+		\begin{figure}[h]
+			\centering
+		\begin{tikzpicture}[scale=1.2]
+			\begin{pgfonlayer}{nodelayer}
+				\node [style=circle, scale=2, color=black, fill=red] (0) at (-5.75, 2.75) {};
+				\node [style=circle, scale=2, color=black, fill=red!70] (1) at (-3.5, 2.75) {};
+				\node [style=circle, scale=2, color=black, fill=red!60] (2) at (-1, 2.75) {};
+				\node [style=circle, scale=2, color=black, fill=red!40] (3) at (1.75, 2.75) {};
+				\node [style=circle, scale=2, color=black, fill=red!20] (5) at (4, 2.75) {};
+				\node [style=none] (4) at (-7.75, 2.75) {};
+				\node [style=none] (6) at (6, 2.75) {};
+				\node [style=none] (7) at (-5.75, 2) {LDC};
+				\node [style=none] (8) at (-3.5, 4) {Mix category};
+				\node [style=none] (9) at (-3.5, 3.5) {$\m: \bot \to \top$};
+				\node [style=none] (10) at (-1, 2) {Isomix category};
+				\node [style=none] (11) at (1.75, 4.25) {Compact LDC};
+				\node [style=none] (12) at (1.75, 3.65) {$A \ox B \to^{\mx}_{\simeq} A \oa B$};
+				\node [style=none] (13) at (4, 2) {Monoidal category};
+				\node [style=none] (14) at (-1, 1.4) {$\bot \to^{\m}_{\simeq} \top$};
+				\node [style=none] (15) at (4, 1.5) {$\m = 1$, $\mx=1$};
+				\node [style=none] (16) at (-5.75, 1.5) {$(\X, \ox, \top)$};
+				\node [style=none] (17) at (-5.75, 1) {$(\X, \oa, \bot)$};
+			\end{pgfonlayer}
+			\begin{pgfonlayer}{edgelayer}
+				\draw [dotted] (4.center) to (0);
+				\draw (0) to (1);
+				\draw (1) to (2);
+				\draw (2) to (3);
+				\draw (3) to (5);
+				\draw [dotted] (5) to (6.center);
+			\end{pgfonlayer}
+		\end{tikzpicture}
+		\caption{Schematic diagram of LDC properties}
+		\label{Fig: LDCs}
+	\end{figure}
+\end{center}
+
+A {\bf mix category} \cite{CS97a} is an LDC with a {\bf mix map} ${\sf m}:\bot\to\top$ such that:
+\begin{enumerate}[(a)]
+\item The following diagram commutes:
+\[
+\xymatrixcolsep{4pc}
+\xymatrix{
+A \ox B \ar[r]^{1 \ox u_\oa^{L^{-1}}} \ar[d]_{(u_\oa^R)^{-1} \ox 1} \ar@{.>}[ddrr]^{\indep_{A,B}} & A \ox (\bot \oa B) 
+\ar[r]^{1 \ox (\m \oa 1)} & A \ox ( \top \oa B) \ar[d]^{\partial^L} \\
+(A \oa \bot) \ox B \ar[d]_{\partial^R} & & ( A \ox \top ) \oa B  \ar[d]^{u_\ox^R \oa 1} \\
+A \oa (\bot \ox B) \ar[r]_{1 \oa (\m \ox 1)} & A \oa (\top \ox B) \ar[r]_{1 \oa u_\ox^L} &  A \oa B
+}
+\]
+
+\item The map $\indep: A \ox B \to A \oa B$ is a natural transformation.
+\end{enumerate}
+
+A mix category is {\bf isomix} when the mix map is an isomorphism, $\m: \bot \to \top$. The mix map being an isomorphism does not induce the indep map to be an isomorphism (in general), however induces the $\indep_{-,-}$ family of maps to be natural.
+
+An isomix LDC is {\bf compact} if $\indep_{-,-}$ is a natural isomorphism.
+
+A compact LDC is {\bf monoidal} if  $\indep_{-,-}$ is identity isomorphism.
+
+\section{Logic of two processes communication}
+
+Lambek introduced the notion of "deductive system" which means the presentation of a sequent calculus for a logic as a 
+category. On the other hand "doctrines" of categories (categorical analogue of fragments of logical theories) allowed 
+construction of certain logics. A classical example being the doctrine of cartesian closed categories corresponding to a 
+fragment of the intuitionistic logic.  An excellent account of this can be found in \cite{lambek1988introduction}.
+
+Cockett and Seely investigated categories with finite sums and product under this light. In \cite{CoS01}, they developed 
+a simple logic of sum and products with five inference rules. They showed cut-elimination in this system of logic using 
+eight cut-elimination schema. They proved the equivalence of the free category generated by this logic and the category 
+with finite sums and products. 
+
+In their work, Cockett and Seely made a remark on the logic of finite sums and products that there are suggestive 
+connections of this logic with the two-player games and channel-based concurrent communication which we will explore in this section. 
+
+\subsection{$\Sigma \Pi$ Logic}
+
+The inference rules of the logic of products and coproducts called $\Sigma \Pi$ are as follows in term calculus: $I$ is an arbitrary finite set.
+% Rules for sum-product logic
+\[  \AxiomC{}
+	 \RightLabel{(identity)}
+	\UnaryInfC{$A \vdash_{1_A} A$}
+	\DisplayProof 
+\]
+\[
+	\AxiomC{$\{ X_i \vdash_{f_i} Y \}_{i \in I}$}
+	\RightLabel{(coproduct)}
+	\UnaryInfC{$\sum_{i \in I} X_i \vdash_{[f_i]_{i \in I}} Y$}
+	\DisplayProof
+	\hspace{1.5cm}
+	\AxiomC{$\{ X \vdash_{f_i} Y_i \}_{i \in I}$}
+	\RightLabel{(product)}
+	\UnaryInfC{$X \vdash_{\langle f_i \rangle_{i \in I}} \Pi_{i \in I} Y_i$}
+	\DisplayProof
+\]
+\[ 
+	\AxiomC{$ X \vdash_{f} Y_k$}
+	\RightLabel{(coprojection)}
+	\UnaryInfC{$X \vdash_{\coprod_k(f)} \sum_{i \in I} Y_i$}
+	\DisplayProof
+	\hspace{1.5cm}
+	\AxiomC{$\{ X_k \vdash_{f} Y \}_{i \in I}$}
+	\RightLabel{(projection)}
+	\UnaryInfC{$\Pi_{i \in I} X_i \vdash_{\Pi_k(f)} Y $}
+	\DisplayProof	
+	\AxiomC{where $k \in I$ and $I \neq 0$}
+\]
+\[ 
+	\AxiomC{$X \vdash_{f} Y$}
+	\AxiomC{$Y \vdash_{g} Z$}
+	\RightLabel{(cut)}
+	\BinaryInfC{$X \vdash_{f;g} Z$}
+	\DisplayProof
+\]
+
+Note that: $\Pi_k(f) = \Pi_k ; f$ and $\amalg(f) = f ; \amalg_k$.
+
+The following are $\Sigma \Pi$ reduction rules:
+\begin{align}
+& f;1 \Rightarrow f   \\ %% 1  
+& 1;f \Rightarrow f   \\ %% 2 
+& f; \amalg_k(g) \Rightarrow \amalg_k( f;g )  \\  %% 3
+& \Pi_k(f) ; g \Rightarrow \Pi_k (f;g)   \\ %% 4
+&\langle f_i \rangle_i ; g \Rightarrow \langle f_i ; g \rangle_i  \\  %% 5
+&f ; [ g_i ]_i \Rightarrow [ f g_i ]_i  \\ %% 6
+& \amalg_k (f) ; [ g_i ]_i \Rightarrow f ; g_k   \\  %% 7
+&\langle f_i \rangle_i ; \Pi_k(g) \Rightarrow f_k ; g  \\  %% 8
+&\amalg_k ([f_j]_j) \iff [\amalg_k(f_j) ]_j \\ %% 9
+&\Pi_k (\langle f_i \rangle_i) \iff \langle \Pi_k (f_j) \rangle_j  \\ %% 10
+&\amalg_l(\Pi_k(f)) \iff \Pi_k (\amalg_l(f)) \\ %% 11
+&\langle [f_{ij}]_i \rangle_j  \iff [ \langle f_{ij} \rangle_j]_i   %% 12 
+\end{align}
+
+Cockett and Seely prove that the above system rewriting rules is Church-Rosser \cite[Section 2]{CoS01}, thus a consistent system of computation.
+
+The formulae `(coproduct)' and `(coprojection)' refer to categorical coproduct and the formulae `(product)' and `(projection)' to the categorical product. The cut elimination rules (3), (6), (7), and (9) refer to the universal property of coproducts and the rules (4), (5), (8), and (10) to the universal property of products.
+
+%We call the augmentation of the sum-product logic with an arbitrary set of atoms and axioms as the $\Sigma \Pi_A$ logic upto equality of paths. The free category generated by this logic with the atoms as the objects of the category and the axioms as maps is equivalent to the free category with finite sums and products. 
+
+\subsection{Graphical calculus of two-process communication}
+
+The sum-product logic is a preliminary model for process communication. In this model each process communicates with utmost two processes at a time --- one on its left and one on its right. We describe this using a graphical calculus. 
+
+Cockett and Seely provided a graphical decision procedure to decide equality of terms in the logic. Each term is represented as a term graph. This allows to represent concurrent-communication graphically. 
+
+A {\em communicating process} is a sequent derivation (a term) in $\Sigma \Pi_A$, in other words a map in the category  $\Sigma \Pi_A$. The domain and the co-domain types of the maps are referred to as {\em protocols} or {\em channels}. The {\em basic building blocks} of communication given by the sum-product logic are as follows: (the choice of left and right being arbitrary)
+\[ \begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=process] (0) at (-2, 3) {}; %process
+		\node [style=map] (1) at (-2, 4.5) {};
+		\node [style=none] (2) at (-2, 5.5) {};
+		\node [style=none] (3) at (-1.65, 4.5) {$k$};
+		\node [style=none] (4) at (-2, 3) {$f$};
+		\node [style=none] (5) at (-2, 2.25) {(a)~~output $k$ on the right = $\amalg_k$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw[thick] (2.center) to (1);
+		\draw[thick] (1) to (0);
+	\end{pgfonlayer}
+\end{tikzpicture} 
+  \quad \quad \quad 
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=process] (0) at (-2, 3) {};
+		\node [style=mapblack] (1) at (-2, 4.5) {};
+		\node [style=none] (2) at (-2, 5.5) {};
+		\node [style=none] (3) at (-2.35, 4.5) {$k$};
+		\node [style=none] (4) at (-2, 3) {$f$};
+		\node [style=none] (5) at (-2, 2.25) {(b)~~output $k$ on the left = $\Pi_k$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw[thick] (2.center) to (1);
+		\draw[thick] (1) to (0);
+	\end{pgfonlayer}
+\end{tikzpicture}  \] 
+\[
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-2, 4) {};
+		\node [style=none] (1) at (-2.25, 3.75) {};
+		\node [style=none] (2) at (-1.75, 3.75) {};
+		\node [style=none] (3) at (-2.25, 3.75) {};
+		\node [style=none] (4) at (-2, 5) {};
+		\node [style=process] (5) at (-3, 3) {};
+		\node [style=process] (6) at (-1, 3) {};
+		\node [style=none] (7) at (-3, 3) {$f$};
+		\node [style=none] (8) at (-1, 3) {$g$};
+		\node [style=none] (9) at (-2, 2.25) {(c) listen for input on the left = $\langle f , g \rangle$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick](0.center) -- (3.center) -- (2.center) -- (0.center);
+		\draw [thick] (3.center) to (5);
+		\draw [thick] (2.center) to (6);
+		\draw [thick] (0.center) to (4.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \quad \quad 
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-2, 4) {};
+		\node [style=none] (1) at (-2.25, 3.75) {};
+		\node [style=none] (2) at (-1.75, 3.75) {};
+		\node [style=none] (3) at (-2.25, 3.75) {};
+		\node [style=none] (4) at (-2, 5) {};
+		\node [style=process] (5) at (-3, 3) {};
+		\node [style=process] (6) at (-1, 3) {};
+		\node [style=none] (7) at (-3, 3) {$f$};
+		\node [style=none] (8) at (-1, 3) {$g$};
+		\node [style=none] (9) at (-2, 2.25) {(d) listen for input on the right  $= [ f, g ]$ };
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick, fill=black](0.center) -- (3.center) -- (2.center) -- (0.center);
+		\draw [thick] (3.center) to (5);
+		\draw [thick] (2.center) to (6);
+		\draw [thick] (0.center) to (4.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+ \]
+where, $f$ and $g$ are just processes (subtrees of the above building blocks). The following is an example of a communicating process:
+\[ (A \times B) + (A \times C) \to^{[ \langle \Pi_A , \amalg_{B}(\Pi_B (1_B))  \rangle, \langle \Pi_A, \amalg_{C}(\Pi_C(1_C)) \rangle  ]} A \times (B + C) \]
+Let us label the domain and codomain protocols of the above process as Kiki and Bouba\footnote{The ``bouba-kiki effect'' is a psychological phenomenon where people consistently associate the nonsense word ``bouba'' with a rounded shape and the word ''kiki'' with a spiky shape. This is test showing a non-arbitrary connection between sound and shape.} respectively. 
+\[ \text{Kiki} \to^{\text{{\bf P}}} \text{Bouba}  \] 
+\begin{align*}
+	\text{where,} \quad \quad \quad &\text{Kiki} := (A \times B) + (A \times C)  \quad \quad \text{Bouba} := A \times (B + C) \\ 
+	\text{and   } \quad \quad \quad &\text{Process {\bf P}} := [ \langle \Pi_A , \amalg_{B}(\Pi_B (1_B))  \rangle, \langle \Pi_A, \amalg_{C}(\Pi_C(1_C)) \rangle  ]
+\end{align*}
+
+Below is a diagrammatic depiction of communication between protocols:
+\[ \begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=coprod] (0) at (-3, 3) {};
+		\node [style=prod] (1) at (-4, 2) {};
+		\node [style=prod] (2) at (-2, 2) {};
+		\node [style=process] (3) at (-5, 1) {};
+		\node [style=process] (4) at (-4, 1) {};
+		\node [style=process] (5) at (-2, 1) {};
+		\node [style=process] (6) at (-1, 1) {};
+		\node [style=none] (7) at (-3, 4) {};
+		\node [style=none] (8) at (-5, 1) {$1_A$};
+		\node [style=none] (9) at (-4, 1) {$1_B$};
+		\node [style=none] (10) at (-2, 1) {$1_A$};
+		\node [style=none] (11) at (-1, 1) {$1_C$};
+		\node [style=none] (12) at (-3, 0) {Kiki};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw  [thick] (7.center) to (0);
+		\draw  [thick] (0) to (1);
+		\draw  [thick]  (0) to (2);
+		\draw  [thick] (1) to (3);
+		\draw  [thick] (1) to (4);
+		\draw  [thick] (2) to (5);
+		\draw  [thick] (2) to (6);
+	\end{pgfonlayer}
+\end{tikzpicture} ~~  \quad \quad  %%
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (0, 4) {};
+		\node [style=none] (1) at (0, 3.25) {};
+		\node [style=none] (2) at (-0.25, 3) {};
+		\node [style=none] (3) at (0.25, 3) {};
+		\node [style=none] (4) at (0, 3.25) {};
+		\node [style=none] (5) at (-1.25, 2.25) {};
+		\node [style=none] (6) at (-1.5, 2) {};
+		\node [style=none] (7) at (-1, 2) {};
+		\node [style=none] (8) at (1.5, 2.25) {};
+		\node [style=none] (9) at (1.25, 2) {};
+		\node [style=none] (10) at (1.75, 2) {};
+		\node [style=mapblack] (11) at (-2, 1) {};
+		\node [style=none] (12) at (-2.25, 1) {$A~$};
+		\node [style=map] (13) at (-0.5, 1) {};
+		\node [style=none] (14) at (-0.25, 1) {$~B$};
+		\node [style=mapblack] (15) at (0.75, 1) {};
+		\node [style=map] (16) at (2.25, 1) {};
+		\node [style=none] (17) at (0.5, 1) {$A~$};
+		\node [style=none] (18) at (2.5, 1) {$~C$};
+		\node [style=process] (19) at (-2, 0) {};
+		\node [style=none] (20) at (-2, 0) {$1_A$};
+		\node [style=mapblack] (21) at (-0.5, 0) {};
+		\node [style=none] (22) at (-0.75, 0) {$B~$};
+		\node [style=process] (23) at (0.75, 0) {};
+		\node [style=none] (234) at (0.75, 0) {$1_A$};
+		\node [style=mapblack] (24) at (2.25, 0) {};
+		\node [style=none] (25) at (2, 0) {$C~$};
+		\node [style=process] (26) at (-0.5, -1) {};
+		\node [style=none] (27) at (-0.5, -1) {$1_B$};
+		\node [style=process] (28) at (2.25, -1) {};
+		\node [style=none] (29) at (2.25, -1) {$1_C$};
+		\node [style=none] (30) at (0, -2) {Process {\bf P}};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (2.center)
+			 to (3.center)
+			 to (4.center)
+			 to cycle;
+		\draw [thick] (0.center) to (4.center);
+		\draw [thick, fill=black] (7.center)
+			 to (5.center)
+			 to (6.center)
+			 to cycle;
+		\draw [thick, fill=black] (9.center)
+			 to (10.center)
+			 to (8.center)
+			 to cycle;
+		\draw [style=thick] (2.center) to (5.center);
+		\draw [style=thick] (3.center) to (8.center);
+		\draw [style=thick] (6.center) to (11);
+		\draw [style=thick] (7.center) to (13);
+		\draw [style=thick] (9.center) to (15);
+		\draw [style=thick] (10.center) to (16);
+		\draw [style=thick] (11) to (20.center);
+		\draw [style=thick] (13) to (21);
+		\draw [style=thick] (15) to (23);
+		\draw [style=thick] (16) to (24);
+		\draw [style=thick] (21) to (27.center);
+		\draw [style=thick] (24) to (29.center);
+	\end{pgfonlayer}
+\end{tikzpicture} ~~  \quad \quad %%
+\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (0, 4) {};
+		\node [style=prod] (1) at (0, 3) {};
+		\node [style=coprod] (2) at (1, 2) {};
+		\node [style=process] (3) at (-0.75, 2) {};
+		\node [style=none] (4) at (-0.75, 2) {$1_A$};
+		\node [style=process] (5) at (0.25, 1) {};
+		\node [style=process] (6) at (1.75, 1) {};
+		\node [style=none] (7) at (-0.75, 2.75) {left};
+		\node [style=none] (8) at (0.75, 2.75) {right};
+		\node [style=none] (9) at (0.25, 1.75) {left};
+		\node [style=none] (10) at (1.75, 1.75) {right};
+		\node [style=none] (11) at (0.25, 1) {$1_B$};
+		\node [style=none] (12) at (1.75, 1) {$1_C$};
+		\node [style=none] (13) at (0.25, 0) {Bouba};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=thick] (0.center) to (1);
+		\draw [style=thick] (1) to (4.center);
+		\draw [style=thick] (1) to (2);
+		\draw [style=thick] (2) to (5);
+		\draw [style=thick] (2) to (6);
+	\end{pgfonlayer}
+\end{tikzpicture}
+\]
+
+Suppose there are processes {\bf L} to the left of {\bf P} connected through Kiki and {\bf R} to the right of {\bf P} connected through Bouba. Kiki and Bouba are channels between these processes carrying specific types. 
+
+We list a few sample conversations from the perspective of process {\bf P}: 
+
+\subsection*{Sample Conversation 1: Process {\bf P} starts at the root of the tree.}
+\begin{description}
+\item[] Process listens to Process {\bf L} over Kiki channel. The white circle in the Kiki protocol means that the process to its right receives and to its left sends.
+\item[Receives (from Kiki):] left 
+\item[] Process moves down one step to the left branch and listens to Process {\bf R} over Bouba channel. The black circle of Bouba protocol means that the process to its left sends and to the right receives.
+\item[Recieves (from Bouba):] right 
+\item[] Process moves down one step and outputs B on Bouba. The white circle of Bouba protocol means that the process to its left sends and the one to its right receives. 
+\item[Sends (to Bouba):] B 
+\item[] Process moves down and outputs B on Kiki. The black circle of Kiki protocol means that the process to its right sends / process to its left receives.
+\item[Sends (to Kiki):] B 
+\end{description} 
+
+More conversations can be found in Appendix \ref{Appendix-A}. Note that when process {\bf P} listens to left or right, the protocol responds, and vice versa. This symphony arises from the universal property of products and co-products.
+
+\subsection*{Composing communicating processes}
+
+
+\section{Logic of communicating processes and concurrency}
+
+Cockett and Pastro introduced message passing logic to derive a type system for concurrent proccesses which use message passing as their concurrency primitive \cite{CoP07}. The logic they introduced is two-tiered with rules governing the interaction of the two tiers. Rules (11) and (12) capture the interaction of product and coproduct.
+
+<PICTURE>
+
+The two tiers include: 
+\begin{itemize}
+	\item {\bf The logic of messages:} This tier represents the logic of computation, and corresponds to the type system for sequential computation. The proofs in this logic correspond to sequential programs. This tier is concerned with generation of messages.
+	\item {\bf The logic of message passing (or communication):} This tier represents the logic of communication, and is concerned with channels over which processes communicate messages. The rules governing the communication over the channels forms this logic. 
+\end{itemize}
+
+Thus, the message passing logic provides a clean separation of computation and communication layers thereby allowing the complexities associated with each layer to be addressed effectively.
+
+\subsection{Term Calculus}
+
+\subsection{Linear Actegories}
+
+The categorical semantics of message passing logic is provided by linear actegories. The logic of messages is modeled as symmetric monoidal categories with coproducts. The logic of message passing is modeled as linearly distributive categories. The interaction of these two logics is modeled as a monoidal category acting on a linearly distributive category, called a linear actegory.
+
+\begin{definition}\cite[4.2]{CoP07}
+	Given a symmetric monoidal category $\A$, a linear $\A$-actegory consists of a: 
+	\begin{enumerate}[(a)]
+		\item A symmetric LDC $(\X, \otimes, \top, \oplus, \bot)$;
+		\item Two functors called the {\bf actions} of the monoidal category on the LDC: 
+				\[ \circ: \A \times \X \to \X \quad \quad \quad \bullet: \A^{\op} \times \X \to \X \] such that for any object $A \in \A$, the parametrized functor $A \circ -$ is the left adjoint of $A \bullet -$. 
+				\[ A \circ - \dashv A \bullet - :: \X \to \X \]
+			The unit and the counit of the adjunctions are as follows respectively.
+				\[ \eta_{A,X}: X \to A \bullet (A \circ X) \quad \quad \quad \epsilon_{A,X}: A \circ (A \bullet X) \to X \]
+	\end{enumerate}
+	along with {\bf six natural isomorphisms} --- 
+	\begin{align*}
+		u_\circ: I \circ X \to^{\simeq} X \quad &\quad \quad u_\bullet: X \to^{\simeq} I \bullet X \\ 
+		a_\circ^*: (A*B) \circ X \circ \to^{\simeq} A \circ (B \circ X ) \quad & \quad \quad \a_\bullet^*: A \bullet (B \bullet X ) \to^{\simeq} (A * B) \bullet X \\ 
+		a_\otimes^\circ: A \circ (X \otimes Y) \to^{\simeq} (A \circ X) \otimes Y \quad &\quad \quad a_\oplus^\bullet: (A \bullet Y) \oplus Y \to^{\simeq} A \bullet (X \oplus Y)
+	\end{align*}
+	and {\bf three natural transformations} ---
+	\begin{align*}
+		d_\oplus^\circ &: A \circ (X \oplus Y) \to (A \circ X) \oplus Y \\ 
+		d_\otimes^\bullet &: (A \bullet X) \otimes Y \to  A \bullet (X \otimes Y) \\ 
+		d_\bullet^\circ &: A \circ (B \bullet X)\to B \bullet (A \circ X)
+	\end{align*}
+\end{definition}
+
+Intuitively, the adjoint functors encode the duality inherent in the direction of (classical) information flow between two communicating processes: Negative polarity implies {\em to receive} and positive polarity implies {\em to send}.
+\[  \xymatrix{  
+ P0 & & P1 & & P2 \\ \grayman \quad  & & \quad \blackman  \quad
+ \ar@<-3.5ex>[rr]^{(+) \quad A \circ X \quad (-)} \ar@{<-}[rr]^{(-) \quad B \bullet X \quad (+)} 
+ \ar@<3.5ex>[ll]_{(-)\quad C \bullet Y \quad (+)} \ar@{<-}[ll]_{(+) \quad D \circ Y \quad (-)} 
+ &  & \quad \grayman   }  \]
+\begin{enumerate}[$(a)$]
+	\item Process $P1$ is connected to the negative polarity of the channel of type $D \circ Y$ enabling $P1$ to receive data of type $D$ over channel $Y$. 
+	\item Process $P1$ is connected to the positive polarity of the channel of type $C \bullet Y$ enabling $P1$ to send data of type $C$ over channel $Y$. 
+	\item Process $P2$ is connected to the positive polarity of the channel of type $A \circ X$ enabling $P1$ to send data of type $A$ over channel $X$. 
+	\item Process $P2$ is connected to the negative polarity of the channel of type $B \bullet X$ enabling $P1$ to receive data of type $B$ over channel $X$. 
+\end{enumerate} 
+Accordingly, a channel $X$ comes with two polarities and the polarity to which a process is connected the process determines if the process will use $A \circ X$ or $A \bullet X$ to send (or receive) a value of of type $A$ over the channel. 
+
+The following diagrams are a visualization the natural isomorphisms and the natural transformations. The interpretations provided are from the perspective of the communicator on the left. 
+\begin{itemize}
+\item  $u_\circ: I \circ X \to^{\simeq} X$ :- Sending the trivial object is equivalent to ``send-nothing"
+\[ \xymatrix{ \blackman \ar@{>}[rr]^{I \circ X} & & \grayman } \quad \quad \to^{u_\circ}_{\simeq} \quad \quad \xymatrix{\blackman  \ar@{ }[rr]^{ }_{ch:X} &  & \grayman} \]
+\item  $a_\circ^*: (A * B) \circ X\to_{\simeq} A \circ (B \circ X)$ :-  Sending "$A*B$" is equivalent to sending $A$
+\[ \xymatrix{ \blackman \ar@{->}[rr]^{(A * B)}_{ch:X} & & \grayman } \quad \quad \to^{a_\circ^*}_{\simeq} \quad \quad \xymatrix{\blackman \ar@<2.5ex>[rr]^{A}_{ch:X} \ar@<-2.5ex>[rr]^{B}_{ch:X} & & \grayman}  \]
+\item  $a_\otimes^\circ: A \circ (X \otimes Y) \to^{\simeq} (A \circ X) \otimes Y$ :- Sending a value over a channel `tensor'ed channel is equivalent to sending the value over one of the strands. 
+\[ \xymatrix{ \blackman \ar@{->}[rr]^{A}_{ch:X \otimes Y} & & \grayman }  \quad \quad  \to^{a_\otimes^\circ}_{\simeq}   \quad \quad  
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (1.5, 4) {};
+		\node [style=none] (1) at (1.5, 3) {};
+		\node [style=ox] (2) at (2.25, 3.5) {};
+		\node [style=none] (3) at (3, 3.5) {};
+		\node [style=none] (4) at (0.5, 4) {};
+		\node [style=none] (5) at (-0.75, 3) {};
+		\node [style=none] (6) at (0.75, 4.25) {$A$};
+		\node [style=none] (7) at (0.75, 3.75) {$ch:X$};
+		\node [style=none] (8) at (0.75, 2.75) {$ch:Y$};
+		\node [style=head] (9) at (-0.25, 4.75) {};
+		\node [style=none] (10) at (-0.25, 3.75) {};
+		\node [style=none] (11) at (-0.5, 3.5) {};
+		\node [style=none] (12) at (0, 3.5) {};
+		\node [style=none] (13) at (-0.5, 4.2) {};
+		\node [style=none] (14) at (0, 4.2) {};
+		\node [style=head] (15) at (-1.25, 3.75) {};
+		\node [style=none] (16) at (-1.25, 2.75) {};
+		\node [style=none] (17) at (-1.5, 2.5) {};
+		\node [style=none] (18) at (-1, 2.5) {};
+		\node [style=none] (19) at (-1.5, 3.2) {};
+		\node [style=none] (20) at (-1, 3.2) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick, bend right] (1.center) to (2);
+		\draw [thick, bend left] (0.center) to (2);
+		\draw [thick] (2) to (3.center);
+		\draw [->, thick] (4.center) to (0.center);
+		\draw [thick] (5.center) to (1.center);
+		\draw [thick] (9) to (10.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw [thick] (10.center) to (12.center);
+		\draw [thick] (13.center) to (14.center);
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \quad \grayman \]
+\item $a_\oplus^\bullet: (A \bullet X) \oplus Y \to^{\simeq} A \bullet (X \oplus Y)$ :- Receiving over a `par'ed channel is equivalent to receiving over one of the strands.
+\[ \blackman ~~~ \begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=grayhead, thick] (0) at (1.5, 4.75) {};
+		\node [style=none] (1) at (1.5, 3.75) {};
+		\node [style=none] (2) at (1.25, 3.5) {};
+		\node [style=none] (3) at (1.75, 3.5) {};
+		\node [style=none] (4) at (1.25, 4.2) {};
+		\node [style=none] (5) at (1.75, 4.2) {};
+		\node [style=none] (6) at (-0.25, 4) {};
+		\node [style=none] (7) at (-0.25, 3) {};
+		\node [style=oa] (8) at (-1, 3.5) {};
+		\node [style=none] (9) at (-1.75, 3.5) {};
+		\node [style=none] (10) at (0.75, 4) {};
+		\node [style=none] (11) at (1.75, 3) {};
+		\node [style=none] (12) at (0.25, 4.5) {$A \bullet X$};
+		%\node [style=none] (13) at (0.5, 3.75) {$ch:X$};
+		\node [style=none] (14) at (0.5, 2.75) {$Y$};
+		\node [style=grayhead, thick] (15) at (2.5, 3.75) {};
+		\node [style=none] (16) at (2.5, 2.75) {};
+		\node [style=none] (17) at (2.25, 2.5) {};
+		\node [style=none] (18) at (2.75, 2.5) {};
+		\node [style=none] (19) at (2.25, 3.2) {};
+		\node [style=none] (20) at (2.75, 3.2) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick, color=gray, dashed] (0) to (1.center);
+		\draw [thick, color=gray, dashed] (1.center) to (2.center);
+		\draw [thick, color=gray, dashed] (1.center) to (3.center);
+		\draw [thick, color=gray, dashed] (4.center) to (5.center);
+		\draw [thick, bend left] (7.center) to (8);
+		\draw [thick, bend right] (6.center) to (8);
+		\draw [thick] (8) to (9.center);
+		\draw [->, thick] (10.center) to (6.center);
+		\draw [thick] (11.center) to (7.center);
+		\draw [thick, color=gray, dashed] (15) to (16.center);
+		\draw [thick, color=gray, dashed] (16.center) to (17.center);
+		\draw [thick, color=gray, dashed] (16.center) to (18.center);
+		\draw [thick, color=gray, dashed] (19.center) to (20.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+\quad \quad \to^{a_\oplus^\bullet}_{\simeq}   \quad \quad
+\xymatrix{ \blackman \ar@{<-}[rr]^{A}_{ch:X \oplus Y} & & \grayman}
+\]
+%------%
+\item $ d_\oplus^\circ : A \circ (X \oplus Y) \to (A \circ X) \oplus Y $
+\[ \xymatrix{ \blackman \ar@{->}[rr]^{A}_{ch:X \oplus Y} & & \grayman }  \quad \quad  \to^{d_\oplus^\circ}   \quad \quad \blackman \quad  \begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-3.75, 4) {};
+		\node [style=none] (1) at (-3.75, 3) {};
+		\node [style=oa] (2) at (-3, 3.5) {};
+		\node [style=none] (3) at (-2.25, 3.5) {};
+		\node [style=none] (4) at (-4.75, 4) {};
+		\node [style=none] (5) at (-4.75, 3) {};
+		\node [style=none] (6) at (-4.5, 4.25) {$A$};
+		\node [style=none] (7) at (-4.5, 3.75) {$ch:X$};
+		\node [style=none] (7) at (-4.5, 2.75) {$ch:Y$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick,bend right] (1.center) to (2);
+		\draw [thick,bend left] (0.center) to (2);
+		\draw [thick] (2) to (3.center);
+		\draw [->,thick] (4.center) to (0.center);
+		\draw [thick] (5.center) to (1.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \quad
+   \grayman \]
+%------%
+\item $d_\otimes^\bullet : (A \bullet X) \otimes Y \to  A \bullet (X \otimes Y) $
+\[ \blackman ~~~ \begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-3.25, 4) {};
+		\node [style=none] (1) at (-3.25, 3) {};
+		\node [style=ox] (2) at (-4, 3.5) {};
+		\node [style=none] (3) at (-4.75, 3.5) {};
+		\node [style=none] (4) at (-2.25, 4) {};
+		\node [style=none] (5) at (-2.25, 3) {};
+		\node [style=none] (6) at (-2.75, 4.5) {$A$};
+		\node [style=none] (7) at (-2.5, 3.75) {$ch:X$};
+		\node [style=none] (8) at (-2.5, 2.75) {$ch:Y$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [bend left, thick] (1.center) to (2);
+		\draw [bend right, thick] (0.center) to (2);
+		\draw [thick] (2) to (3.center);
+		\draw [->, thick] (4.center) to (0.center);
+		\draw [thick] (5.center) to (1.center);
+	\end{pgfonlayer}
+\end{tikzpicture} ~~~ \grayman \quad \quad \to^{d_\otimes^\bullet}   \quad \quad 
+ \xymatrix{ \blackman \ar@{<-}[rr]^{A}_{ch:X \ox Y} & & \grayman }
+ \]		
+%------%
+\item $d_\bullet^\circ : A \circ (B \bullet X)\to B \bullet (A \circ X) $ :- `Sending $A$ followed by receiving $B$' can be replaced by `Receiving $B$ first followed by sending $A$'. That is, in this framework, the value of $B$ is independent of $A$ from the perspective of the sender.
+\[ \xymatrix{ \blackman \ar@<2.5ex>[rr]^{A}_{ch:X} \ar@<-2.5ex>@{<-}[rr]^{B}_{ch:X} &  & \grayman } 
+\quad \quad \to^{d_\bullet^\circ} \quad \quad 
+\xymatrix{\blackman \ar@<-2.5ex>[rr]^{A}_{ch:X} \ar@<2.5ex>@{<-}[rr]^{B}_{ch:X} & & \grayman}  \]
+\end{itemize}
+
+\priyaa{Introduce linear actegories and what the isomorphisms and natural transformations could mean.}
+
+\subsection{Proarrow equipment as a linear actegory}
+
+\subsection{CaMPL (Categorical Message Passing Language) notes}
+
+CaMPL has concurrent and sequential types. Some useful tables and notes.
+
+The following table summarizes the analogues of sequential and conncurent worlds.
+
+\begin{center}
+\begin{tabular}{ c | c | c | c }
+ {\bf Sequential} & Datatypes  & Functions & Instances \\ 
+   & (and coDatatypes)  &  &  \\
+ \hline
+ {\bf Concurrent} & Procotols & Processes & Channels \\  
+ & (and coProtocols)  &  &  \\
+\end{tabular}
+\end{center}
+
+Channels are instances of (co)protocols. Given a process and a channel {\em connected} to it, the channel may have input (+) or output polarity (-) for that process. 
+
+Here are a few practical programming notes:
+\begin{itemize}
+	\item {\tt close} command closes a channel. {\tt halt} command is used on a process which has only one connected channel. Halt closes the channel and halts the process. 
+	
+	{\bf Design question:} Why not interpret closing all the channels as a signal to halt? For example: 
+	\begin{verbatim}
+		 close ch1  
+		 close ch2  
+		 halt
+	\end{verbatim}
+	
+	\item The handles \tt{ConsoleGet}, \tt{ConsolePut}, \tt{ConsoleClose}, \tt{StringTerminalGet}, \tt{StringTerminalPut}, and \tt{StringTerminalClose} which are used for reading from and writing to terminals are hard-coded.  
+	
+\begin{center}
+	\begin{tabular}{ c | c | c }
+		     (P)       & (+) & (-) \\
+		 \hline      
+		 {\tt Get}  & {\tt get}  & {\tt put} \\
+		 \hline
+		 {\tt Put}  & {\tt put}  & {\tt get} 
+	\end{tabular}
+	\quad \quad 
+	\begin{tabular}{ c | c | c }
+		     (coP)       & (+) & (-) \\
+		 \hline      
+		 {\tt Get}  & {\tt put}  & {\tt get} \\
+		 \hline
+		 {\tt Put}  & {\tt get}  & {\tt put} 
+	\end{tabular}
+	\quad \quad 
+	\begin{tabular}{ c | c | c }
+		            & (+) & (-) \\
+		 \hline      
+		 (P)  & {\tt hput}  & {\tt hcase} \\
+		 \hline
+		 (coP)  & {\tt hcase}  & {\tt hput} 
+	\end{tabular}
+\end{center}
+ 
+\end{itemize}
+
+\section{Logic of communicating quantum processes and quantum concurrency}
+
+\subsection{Term calculus}
+
+$\mathbb{M}$ is a symmetric multicategory and $\mathbb{D}$ is a dagger symmetric poly-actegory, with $\mathbb{M}$ being the acting multicategory.
+
+The inference rules for the logic of messages \Msg\ are in Figure \ref{fig:Msg}.
+The inference rules for the logic of message passing \PMsg\ are in Figure \ref{fig:PMsg}.
+
+All the appropriate cut and identity rules are admissible:
+\[
+\begin{array}{c}
+\infer[\idvdash]{A \vdash A}{}
+\qquad
+\infer[\cutvdash]{\Phi_1,\Phi_2 \vdash C}{
+\Phi_1 \vdash A
+&
+A,\Phi_2 \vdash C
+}
+\\[10pt]
+\infer[\idVdash]{\quad \mid X \vdash X}{}
+\qquad
+\infer[\cutA]{\Phi_1,\Phi_2 \mid \Gamma \Vdash \Delta}{
+\Phi_1 \vdash A
+&
+A,\Phi_2 \mid \Gamma \Vdash \Delta
+}
+\qquad
+\infer[\cutVdash]{\Phi_1,\Phi_2 \mid \Gamma_1,\Gamma_2 \vdash \Delta_1,\Delta_2}{
+\Phi_1 \mid \Gamma_1 \Vdash X,\Delta_1
+&
+\Phi_2 \mid X,\Gamma_2 \Vdash \Delta_2
+}
+\end{array}
+\]
+
+Dagger on formulae:
+\[ \begin{array}{c}
+X^\dagger = X^\dagger \text{ if } X \text{ object of the dagger polycategory underlying } \mathbb{D}
+\\
+\top^\dagger = \bot
+\qquad
+(X \ot Y)^\dagger = X^\dagger \oplus Y^\dagger 
+\qquad
+\bot^\dagger = \top
+\qquad
+(X \oplus Y)^\dagger = X^\dagger \ot Y^\dagger 
+\\
+(A \circ X)^\dagger = A \bullet X^\dagger
+\qquad
+(A \bullet X)^\dagger = A \circ X^\dagger
+\end{array}
+\]
+
+Given a derivation $f : \Phi \mid \Gamma \Vdash \Delta$ we can build a derivation $f^\dagger : \Phi \mid \Delta^\dagger \Vdash \Gamma^\dagger$. By structural induction on $f$.
+
+\begin{figure}
+    \centering
+    \[
+    \begin{array}{ll}
+        \infer[\ax]{\Phi \vdash C}{
+        \mathbb{M}(\Phi;C)
+        }
+        &
+        \\[10pt]
+        \infer[\IL]{I,\Phi \vdash C}{
+        \Phi \vdash C
+        }
+        &
+        \infer[\IR]{\quad \vdash I}{
+        }
+        \\[10pt]
+        \infer[\starL]{A*B,\Phi \vdash C}{
+        A,B,\Phi \vdash C
+        }
+        &
+        \infer[\starR]{\Phi,\Psi \vdash A * B}{
+        \Phi \vdash A 
+        &
+        \Psi \vdash B
+        }
+        \\[10pt]
+        \infer[\zeroL]{0,\Phi \vdash C}{
+        }
+        &
+        \\[10pt]
+        \infer[\coprodL]{A+B,\Phi \vdash C}{
+        A,\Phi \vdash C
+        &
+        B,\Phi \vdash C
+        }       
+        &
+        \infer[\coprodR_1]{\Phi \vdash A + B}{
+        \Phi \vdash A
+        }
+        \quad
+        \infer[\coprodR_2]{\Phi \vdash A + B}{
+        \Phi \vdash B
+        }
+    \end{array}
+    \]
+    \caption{The logic of messages \Msg}
+    \label{fig:Msg}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \[
+    \begin{array}{ll}
+         \infer[\ax]{\Phi \mid \Gamma \Vdash \Delta}{
+         \mathbb{D}(\Phi \mid \Gamma ; \Delta)
+         }
+         &
+         \\[10pt]
+         \infer[\topL]{\Phi \mid \top,\Gamma \Vdash \Delta}{
+         \Phi \mid \Gamma \Vdash \Delta
+         }
+         &  
+         \infer[\topR]{\quad \mid \quad \Vdash \top}{}
+         \\[10pt]
+         \infer[\otL]{\Phi \mid X \ot Y, \Gamma \Vdash \Delta}{
+         \Phi \mid X,Y,\Gamma \Vdash \Delta
+         }
+         &  
+         \infer[\otR]{\Phi_1,\Phi_2 \mid \Gamma_1,\Gamma_2 \Vdash X\ot Y, \Delta_1,\Delta_2}{
+         \Phi_1 \mid \Gamma_1 \Vdash X,\Delta_1 
+         &
+         \Phi_2 \mid \Gamma_2 \Vdash Y,\Delta_2
+         }
+         \\[10pt]
+         \infer[\botL]{\quad \mid \bot \Vdash \quad}{}
+         &
+         \infer[\botR]{\Phi \mid \Gamma \Vdash \bot,\Delta}{
+         \Phi \mid \Gamma \Vdash \Delta
+         }
+         \\[10pt]
+         \infer[\parL]{\Phi_1,\Phi_2 \mid X \oplus Y, \Gamma_1,\Gamma_2 \Vdash \Delta_1,\Delta_2}{
+         \Phi_1 \mid X, \Gamma_1 \Vdash \Delta_1 
+         &
+         \Phi_2 \mid Y,\Gamma_2 \Vdash \Delta_2
+         }
+         &
+         \infer[\parR]{\Phi \mid \Gamma \Vdash X \oplus Y, \Delta}{
+         \Phi \mid \Gamma \Vdash X,Y,\Delta
+         }
+         \\[10pt]
+         \infer[\circL]{\Phi \mid A \circ X, \Gamma \Vdash \Delta}{
+         A,\Phi \mid X,\Gamma \vdash \Delta
+         }
+         & 
+         \infer[\circR]{\Phi,\Psi \mid \Gamma \Vdash A \circ X,\Delta}{
+         \Phi \vdash A
+         &
+         \Psi \mid \Gamma \Vdash X, \Delta
+         }
+         \\[10pt]
+         \infer[\bulletR]{\Phi,\Psi \mid A \bullet X,\Gamma \Vdash \Delta}{
+         \Phi \vdash A
+         &
+         \Psi \mid X,\Gamma \Vdash \Delta
+         }
+         &
+         \infer[\bulletR]{\Phi \mid \Gamma \Vdash A \bullet X,\Delta}{
+         A,\Phi \mid \Gamma \Vdash X,\Delta
+         }
+         \\[10pt]
+         \infer[\IA]{I,\Phi \mid \Gamma \Vdash \Delta}{
+         \Phi \mid \Gamma \Vdash \Delta
+         }
+         &
+         \infer[\starA]{A * B,\Phi \mid \Gamma \Vdash \Delta}{
+         A,B,\Phi \mid \Gamma \Vdash \Delta
+         }
+         \\[10pt]
+         \infer[\zeroA]{0,\Phi \mid \Gamma \Vdash \Delta}{}
+         &
+         \infer[\coprodA]{A + B,\Phi \mid \Gamma \Vdash \Delta}{
+         A,\Phi \mid \Gamma \Vdash \Delta
+         &
+         B,\Phi \mid \Gamma \Vdash \Delta
+         }
+         \\[5pt]
+         \hline
+         \\[-10pt]
+         \infer[\mix_0]{\quad \mid \quad \Vdash \quad}{}
+         &
+         \infer[\mix]{\Phi_1,\Phi_2 \mid \Gamma_1,\Gamma_2 \Vdash \Delta_1,\Delta_2}{
+         \Phi_1 \mid \Gamma_1 \Vdash \Delta_1
+         &
+         \Phi_2 \mid \Gamma_2 \Vdash \Delta_2
+         }
+         \end{array}
+    \]
+    \caption{The logic of message passing \PMsg}
+    \label{fig:PMsg}
+\end{figure}
+
+TODO: Equality of derivations. This should be exactly the same as the one of Robin and Craig.
+If we add the mix rule in \PMsg, we need to add a number of permutative conversions for it.
+For isomix, we should probably also add the equations
+\[
+\begin{array}{ccc}
+\infer[\topL]{\quad \mid \top \Vdash \top}{
+\infer[\topR]{\quad \mid \quad \Vdash \top}{}
+}
+& = &
+\infer[\mix]{\quad \mid \top \Vdash \top}{
+\infer[\topL]{\quad \mid \top \Vdash \quad}{
+\infer[\mix_0]{\quad \mid \quad \Vdash \quad}{}
+}
+&
+\infer[\topR]{\quad \mid \quad \Vdash \top}{}
+}
+\\[20pt]
+\infer[\botR]{\quad \mid \bot \Vdash \bot}{
+\infer[\botL]{\quad \mid \bot \Vdash \quad}{}
+}
+& = &
+\infer[\mix]{\quad \mid \bot \Vdash \bot}{
+\infer[\botL]{\quad \mid \bot \Vdash \quad}{}
+&
+\infer[\botR]{\quad \mid \quad \Vdash \bot}{
+\infer[\mix_0]{\quad \mid \quad \Vdash \quad}{}
+}
+}
+\end{array}
+\]
+
+\subsection{Dagger Linear actegories}
+
+We define dagger linear actegories as follows:
+
+\begin{definition}
+    A {\bf dagger linear actegory} is a $\A$-linear actegory over an LDC $(\X, \ox, \top, \oa, \bot)$ such that:
+
+    \begin{itemize}
+        \item $(\A, *, I)$ is a monoidal category,
+        \item $(\X, \ox, \top, \oa, \bot)$ is a dagger linearly distributive category (dagger LDC), 
+        \item for all objects $A$ in $\A$, there exists natural isomorphisms, which we call "reflectors" 
+        \[
+        (\phi_\bullet)_X: A \bullet X^\dagger \to^{\simeq} (A \circ X)^\dagger \quad \quad \quad 
+        (\phi_\circ)_X: A \circ X^\dagger \to^{\simeq} (A \bullet X)^\dagger
+        \]
+    \end{itemize}
+    satisfying the coherences listed in {\bf [L1] - [L6]}. 
+\end{definition}
+
+The reflector isomorphisms imply that the distinction between left and right boundary of an object seems to vanish in the presence of a dagger: 
+\begin{figure}
+    \[ \xymatrix{ \blackman \ar@{<-}[rr]^{A^\bullet}_{ch:X^\dagger} & & } 
+    \quad \quad \simeq \quad \quad 
+       \xymatrix{ \ar[rr]^{(A^\circ)^\dagger}_{ch:X} & &\blackman  } \]
+    \caption{\large \( (\phi_\bullet)_X : A \bullet X^\dagger \xlongrightarrow[]{\simeq} (A \circ X)^\dagger \)}
+\end{figure}
+\begin{figure}
+    \centering
+    \[ \xymatrix{ \blackman \ar[rr]^{A^\circ}_{ch:X^\dagger} & & } 
+    \quad \quad \simeq \quad \quad 
+       \xymatrix{ \ar@{<-}[rr]^{(A^\bullet)^\dagger}_{ch:X} & &\blackman  } \]
+    \caption{ \large \( (\phi_\circ)_X : A \circ X^\dagger \xlongrightarrow[]{\simeq}  (A \bullet X)^\dagger \)}
+\end{figure}
+
+The coherence conditions for a dagger linear actegory are as follows:
+\begin{description}
+    \item[L1:] Coherent interaction of the reflectors with the involutor are given as follows:
+    \[ 
+    % https://q.uiver.app/#q=WzAsNCxbMCwwLCJBIFxcY2lyYyBYIl0sWzEsMCwiQSBcXGNpcmMgWF57XFxkYWdnZXIgXFxkYWdnZXJ9Il0sWzAsMSwiKEEgXFxjaXJjIFgpXntcXGRhZ2dlciBcXGRhZ2dlcn0iXSxbMSwxLCIoQSBcXGJ1bGxldCBYXlxcZGFnZ2VyKV5cXGRhZ2dlciJdLFswLDEsIlxcaWQgXFxidWxsZXQgXFxpb3RhIl0sWzAsMiwiXFxpb3RhIiwyXSxbMSwzLCJcXHBoaV9cXGJ1bGxldCJdLFsyLDMsIlxccGhpX1xcY2lyY15cXGRhZ2dlciIsMl1d
+    \begin{tikzcd}
+    	{A \circ X} & {A \circ X^{\dagger \dagger}} \\
+    	{(A \circ X)^{\dagger \dagger}} & {(A \bullet X^\dagger)^\dagger}
+    	\arrow["{\id \bullet \iota}", from=1-1, to=1-2]
+    	\arrow["\iota"', from=1-1, to=2-1]
+    	\arrow["{\phi_\bullet}", from=1-2, to=2-2]
+    	\arrow["{\phi_\circ^\dagger}"', from=2-1, to=2-2]
+     \end{tikzcd} \quad \quad
+     (b) % https://q.uiver.app/#q=WzAsNCxbMCwwLCJBIFxcYnVsbGV0IFgiXSxbMSwwLCJBIFxcYnVsbGV0IFhee1xcZGFnZ2VyIFxcZGFnZ2VyfSJdLFswLDEsIihBIFxcYnVsbGV0IFgpXntcXGRhZ2dlciBcXGRhZ2dlcn0iXSxbMSwxLCIoQSBcXGNpcmMgWF5cXGRhZ2dlcileXFxkYWdnZXIiXSxbMCwxLCJBIFxcYnVsbGV0IFxcaW90YSJdLFswLDIsIlxcaW90YSIsMl0sWzEsMywiXFxwaGlfXFxidWxsZXQiXSxbMiwzLCJcXHBoaV9cXGNpcmNeXFxkYWdnZXIiLDJdXQ==
+     \begin{tikzcd}
+    	{A \bullet X} & {A \bullet X^{\dagger \dagger}} \\
+    	{(A \bullet X)^{\dagger \dagger}} & {(A \circ X^\dagger)^\dagger}
+    	\arrow["{A \bullet \iota}", from=1-1, to=1-2]
+    	\arrow["\iota"', from=1-1, to=2-1]
+    	\arrow["{\phi_\bullet}", from=1-2, to=2-2]
+    	\arrow["{\phi_\circ^\dagger}"', from=2-1, to=2-2]
+    \end{tikzcd}
+    \]
+    \item[L2:] Coherent interaction of the reflectors with $u_\circ$ and $u_\bullet$ natural isomorphisms are given as follows:
+    \[ 
+    (a) ~~~ 
+       % https://q.uiver.app/#q=WzAsMyxbMCwwLCJYXlxcZGFnZ2VyIl0sWzEsMCwiSSBcXGJ1bGxldCBYXlxcZGFnZ2VyIl0sWzEsMSwiKEkgXFxjaXJjIFgpXlxcZGFnZ2VyIl0sWzAsMiwidV9cXGNpcmNeXFxkYWdnZXIiLDJdLFsxLDIsIlxccGhpX1xcYnVsbGV0Il0sWzAsMSwidV9cXGJ1bGxldCJdXQ==
+        \begin{tikzcd}
+        	{X^\dagger} & {I \bullet X^\dagger} \\
+        	& {(I \circ X)^\dagger}
+        	\arrow["{u_\bullet}", from=1-1, to=1-2]
+        	\arrow["{u_\circ^\dagger}"', from=1-1, to=2-2]
+        	\arrow["{\phi_\bullet}", from=1-2, to=2-2]
+        \end{tikzcd} \quad \quad 
+    (b) % https://q.uiver.app/#q=WzAsMyxbMCwwLCJJIFxcY2lyYyBYXlxcZGFnZ2VyIl0sWzAsMSwiKEkgXFxidWxsZXQgWCleXFxkYWdnZXIiXSxbMSwxLCJYXlxcZGFnZ2VyIl0sWzAsMiwidV9cXGNpcmMiXSxbMCwxLCJcXHBoaV9cXGNpcmMiLDJdLFsxLDIsInVfXFxidWxsZXReXFxkYWdnZXIiLDJdXQ==
+    \begin{tikzcd}
+    	{I \circ X^\dagger} \\
+    	{(I \bullet X)^\dagger} & {X^\dagger}
+    	\arrow["{\phi_\circ}"', from=1-1, to=2-1]
+    	\arrow["{u_\circ}", from=1-1, to=2-2]
+    	\arrow["{u_\bullet^\dagger}"', from=2-1, to=2-2]
+    \end{tikzcd}
+    \]
+    
+    \item[L3:] Coherent interaction of the reflectors with $a_\circ^*$ and $a_\bullet^*$ natural isomorphisms are given as follows:
+    \[ 
+      (a)~~~  % https://q.uiver.app/#q=WzAsNSxbMCwwLCJBIFxcYnVsbGV0IChCIFxcYnVsbGV0IFheXFxkYWdnZXIpIl0sWzEsMCwiKEEgKiBCKSBcXGJ1bGxldCBYXlxcZGFnZ2VyIl0sWzAsMSwiQSBcXGJ1bGxldCAoQiBcXGNpcmMgWCleXFxkYWdnZXIiXSxbMCwyLCIoQSBcXGNpcmMoQiBcXGNpcmMgWCkpXlxcZGFnZ2VyIl0sWzEsMiwiKChBICogQikgXFxjaXJjIFgpXlxcZGFnZ2VyIl0sWzAsMSwiYV9cXGJ1bGxldF4qIl0sWzAsMiwiXFxpZCBcXGJ1bGxldCBcXHBoaV9cXGJ1bGxldCIsMl0sWzIsMywiXFxwaGlfXFxidWxsZXQiLDJdLFszLDQsIihhX1xcY2lyY14qKVxcZGFnZ2VyIiwyXSxbMSw0LCJcXHBoaV9cXGJ1bGxldCJdXQ==
+        \begin{tikzcd}
+        	{A \bullet (B \bullet X^\dagger)} & {(A * B) \bullet X^\dagger} \\
+        	{A \bullet (B \circ X)^\dagger} \\
+        	{(A \circ(B \circ X))^\dagger} & {((A * B) \circ X)^\dagger}
+        	\arrow["{a_\bullet^*}", from=1-1, to=1-2]
+        	\arrow["{\id \bullet \phi_\bullet}"', from=1-1, to=2-1]
+        	\arrow["{\phi_\bullet}", from=1-2, to=3-2]
+        	\arrow["{\phi_\bullet}"', from=2-1, to=3-1]
+        	\arrow["{(a_\circ^*)\dagger}"', from=3-1, to=3-2]
+        \end{tikzcd}
+        \quad \quad  
+        (b) ~~~ % https://q.uiver.app/#q=WzAsNSxbMCwwLCJBIFxcY2lyYyAoQiBcXGNpcmMgWF5cXGRhZ2dlcikiXSxbMSwwLCIoQSAqIEIpIFxcY2lyYyBYXlxcZGFnZ2VyIl0sWzAsMSwiQSBcXGNpcmMgKEIgXFxidWxsZXQgWCleXFxkYWdnZXIiXSxbMCwyLCIoQSBcXGJ1bGxldCAoQiBcXGJ1bGxldCBYKSleXFxkYWdnZXIiXSxbMSwyLCIoKEEgKiBCKSBcXGJ1bGxldCBYKV5cXGRhZ2dlciJdLFswLDEsImFfXFxjaXJjXioiXSxbMCwyLCJcXGlkIFxcYnVsbGV0IFxccGhpX1xcY2lyYyIsMl0sWzIsMywiXFxwaGlfXFxjaXJjIiwyXSxbMyw0LCIoYV9cXGJ1bGxldF4qKVxcZGFnZ2VyIiwyXSxbMSw0LCJcXHBoaV9cXGNpcmMiXV0=
+        \begin{tikzcd}
+        	{A \circ (B \circ X^\dagger)} & {(A * B) \circ X^\dagger} \\
+        	{A \circ (B \bullet X)^\dagger} \\
+        	{(A \bullet (B \bullet X))^\dagger} & {((A * B) \bullet X)^\dagger}
+        	\arrow["{a_\circ^*}", from=1-1, to=1-2]
+        	\arrow["{\id \bullet \phi_\circ}"', from=1-1, to=2-1]
+        	\arrow["{\phi_\circ}", from=1-2, to=3-2]
+        	\arrow["{\phi_\circ}"', from=2-1, to=3-1]
+        	\arrow["{(a_\bullet^*)\dagger}"', from=3-1, to=3-2]
+        \end{tikzcd} \]
+    \item[L4:] Coherent interaction of the reflectors with $a_\ox^\circ$ and $a_\oa^\bullet$ natural isomorphisms are given as follows:
+     \[(a)~~  % https://q.uiver.app/#q=WzAsNixbMCwwLCIoQSBcXGJ1bGxldCBYXlxcZGFnZ2VyKSBcXG9wbHVzIFleXFxkYWdnZXIiXSxbMSwwLCJBIFxcYnVsbGV0IChYXlxcZGFnZ2VyIFxcb3BsdXMgWV5cXGRhZ2dlcikiXSxbMCwxLCIoQSBcXGNpcmMgWCleXFxkYWdnZXIgXFxvcGx1cyBZXlxcZGFnZ2VyIl0sWzEsMSwiQSBcXGJ1bGxldCAoWCBcXG9wbHVzIFkpXlxcZGFnZ2VyIl0sWzAsMiwiKChBIFxcY2lyYyBYKSBcXG90aW1lcyBZKV5cXGRhZ2dlciJdLFsxLDIsIihBIFxcY2lyYyAoWCBcXG90aW1lcyBZKSleXFxkYWdnZXIiXSxbMCwxLCJhX1xcb3BsdXNeXFxidWxsZXQiXSxbMCwyLCJcXHBoaV9cXGJ1bGxldCBcXG9wbHVzIFxcaWQiLDJdLFsyLDQsIlxcbGFtYmRhX1xcb3BsdXMiLDJdLFs0LDUsIihhX1xcb3RpbWVzXlxcY2lyYyleXFxkYWdnZXIiLDJdLFsxLDMsIlxcaWQgXFxidWxsZXQgXFxsYW1iZGFfXFxvcGx1cyJdLFszLDUsIlxccGhpX1xcYnVsbGV0XlxcZGFnZ2VyIl1d
+    \begin{tikzcd}
+    	{(A \bullet X^\dagger) \oplus Y^\dagger} & {A \bullet (X^\dagger \oplus Y^\dagger)} \\
+    	{(A \circ X)^\dagger \oplus Y^\dagger} & {A \bullet (X \oplus Y)^\dagger} \\
+    	{((A \circ X) \otimes Y)^\dagger} & {(A \circ (X \otimes Y))^\dagger}
+    	\arrow["{a_\oplus^\bullet}", from=1-1, to=1-2]
+    	\arrow["{\phi_\bullet \oplus \id}"', from=1-1, to=2-1]
+    	\arrow["{\id \bullet \lambda_\oplus}", from=1-2, to=2-2]
+    	\arrow["{\lambda_\oplus}"', from=2-1, to=3-1]
+    	\arrow["{\phi_\bullet}", from=2-2, to=3-2]
+    	\arrow["{(a_\otimes^\circ)^\dagger}"', from=3-1, to=3-2]
+    \end{tikzcd}
+        \quad \quad \quad 
+        (b)~~ % https://q.uiver.app/#q=WzAsNixbMCwwLCJBIFxcY2lyYyAoWF5cXGRhZ2dlciBcXG90aW1lcyBZXlxcZGFnZ2VyKSJdLFsxLDAsIihBIFxcY2lyYyBYXlxcZGFnZ2VyKSBcXG90aW1lcyBZXlxcZGFnZ2VyIl0sWzAsMSwiQSBcXGNpcmMgKFggXFxvcGx1cyBZKV5cXGRhZ2dlciJdLFsxLDEsIiggQSBcXGJ1bGxldCBYKV5cXGRhZ2dlciBcXG90aW1lcyBZXlxcZGFnZ2VyIl0sWzAsMiwiKEEgXFxidWxsZXQgKFggXFxvcGx1cyBZKSleXFxkYWdnZXIiXSxbMSwyLCIoKEEgXFxidWxsZXQgWCkgXFxvcGx1cyBZKV5cXGRhZ2dlciJdLFswLDEsImFfXFxvdGltZXNeXFxjaXJjIl0sWzAsMiwiXFxpZCBcXGNpcmNcXGxhbWJkYVxcb3RpbWVzIiwyXSxbMiw0LCJcXHBoaV9cXGNpcmMiLDJdLFsxLDMsIlxccGhpX1xcY2lyYyBcXG90aW1lcyBcXGlkIl0sWzMsNSwiXFxsYW1iZGFfXFxvdGltZXMiXSxbNCw1LCIoYV9cXG9wbHVzXlxcYnVsbGV0KV5cXGRhZ2dlciIsMl1d
+        \begin{tikzcd}
+        	{A \circ (X^\dagger \otimes Y^\dagger)} & {(A \circ X^\dagger) \otimes Y^\dagger} \\
+        	{A \circ (X \oplus Y)^\dagger} & {( A \bullet X)^\dagger \otimes Y^\dagger} \\
+        	{(A \bullet (X \oplus Y))^\dagger} & {((A \bullet X) \oplus Y)^\dagger}
+        	\arrow["{a_\otimes^\circ}", from=1-1, to=1-2]
+        	\arrow["{\id \circ\lambda\otimes}"', from=1-1, to=2-1]
+        	\arrow["{\phi_\circ \otimes \id}", from=1-2, to=2-2]
+        	\arrow["{\phi_\circ}"', from=2-1, to=3-1]
+        	\arrow["{\lambda_\otimes}", from=2-2, to=3-2]
+        	\arrow["{(a_\oplus^\bullet)^\dagger}"', from=3-1, to=3-2]
+        \end{tikzcd} \]
+    
+    \item[L5:] Coherent interaction of the reflectors with $d_\ox^\circ$ and $d_\oa^\bullet$ natural transformations are given as follows:
+    \[% https://q.uiver.app/#q=WzAsNixbMCwwLCIoQSBcXGJ1bGxldCBYXlxcZGFnZ2VyKSBcXG90aW1lcyBZXlxcZGFnZ2VyIl0sWzAsMSwiKEEgXFxjaXJjIFgpXlxcZGFnZ2VyIFxcb3RpbWVzIFleXFxkYWdnZXIiXSxbMCwyLCIoKEEgXFxjaXJjIFgpIFxcb3BsdXMgWSleXFxkYWdnZXIiXSxbMSwwLCJBIFxcYnVsbGV0IChYXlxcZGFnZ2VyIFxcb3RpbWVzIFleXFxkYWdnZXIpIl0sWzEsMSwiQSBcXGJ1bGxldCAoWCBcXG9wbHVzIFkpXlxcZGFnZ2VyIl0sWzEsMiwiKEEgXFxjaXJjIChYIFxcb3BsdXMgWSkpXlxcZGFnZ2VyIl0sWzAsMywiZF9cXG90aW1lc15cXGJ1bGxldCJdLFswLDEsIlxccGhpX1xcYnVsbGV0IFxcb3RpbWVzIFxcaWQiLDJdLFsxLDIsIlxcbGFtYmRhX1xcb3RpbWVzIiwyXSxbMiw1LCIoZF9cXG9wbHVzXlxcY2lyYyleXFxkYWdnZXIiLDJdLFszLDQsIlxcaWQgXFxidWxsZXQgXFxsYW1iZGFfXFxvdGltZXMiXSxbNCw1LCJcXHBoaV9cXGJ1bGxldCJdXQ==
+    \begin{tikzcd}
+    	{(A \bullet X^\dagger) \otimes Y^\dagger} & {A \bullet (X^\dagger \otimes Y^\dagger)} \\
+    	{(A \circ X)^\dagger \otimes Y^\dagger} & {A \bullet (X \oplus Y)^\dagger} \\
+    	{((A \circ X) \oplus Y)^\dagger} & {(A \circ (X \oplus Y))^\dagger}
+    	\arrow["{d_\otimes^\bullet}", from=1-1, to=1-2]
+    	\arrow["{\phi_\bullet \otimes \id}"', from=1-1, to=2-1]
+    	\arrow["{\id \bullet \lambda_\otimes}", from=1-2, to=2-2]
+    	\arrow["{\lambda_\otimes}"', from=2-1, to=3-1]
+    	\arrow["{\phi_\bullet}", from=2-2, to=3-2]
+    	\arrow["{(d_\oplus^\circ)^\dagger}"', from=3-1, to=3-2]
+     \end{tikzcd} 
+    \quad \quad \quad 
+    (b)~~ % https://q.uiver.app/#q=WzAsNixbMCwwLCJBIFxcY2lyYyAoWF5cXGRhZ2dlciBcXG90aW1lcyBZXlxcZGFnZ2VyKSJdLFswLDEsIkEgXFxjaXJjIChYIFxcb3RpbWVzIFkpXlxcZGFnZ2VyIl0sWzAsMiwiKEEgXFxidWxsZXQgKFggXFxvdGltZXMgWSkpXlxcZGFnZ2VyIl0sWzEsMCwiKEEgXFxjaXJjIFheXFxkYWdnZXIpIFxcb3BsdXMgWV5cXGRhZ2dlciJdLFsxLDEsIihBIFxcYnVsbGV0IFgpXlxcZGFnZ2VyIFxcb3BsdXMgWV5cXGRhZ2dlciJdLFsxLDIsIigoQSBcXGJ1bGxldCBYKSBcXG90aW1lcyBZKV5cXGRhZ2dlciJdLFswLDMsImRfXFxvcGx1c15cXGNpcmMiXSxbMCwxLCJcXGlkIFxcY2lyYyBcXGxhbWJkYVxcb3RpbWVzIiwyXSxbMSwyLCJcXHBoaV9cXGNpcmMiLDJdLFsyLDVdLFszLDQsIlxccGhpX1xcYnVsbGV0IFxcb3BsdXMgXFxpZCJdLFs0LDUsIlxcbGFtYmRhX1xcb3BsdXMiXV0=
+    \begin{tikzcd}
+    	{A \circ (X^\dagger \otimes Y^\dagger)} & {(A \circ X^\dagger) \oplus Y^\dagger} \\
+    	{A \circ (X \otimes Y)^\dagger} & {(A \bullet X)^\dagger \oplus Y^\dagger} \\
+    	{(A \bullet (X \otimes Y))^\dagger} & {((A \bullet X) \otimes Y)^\dagger}
+    	\arrow["{d_\oplus^\circ}", from=1-1, to=1-2]
+    	\arrow["{\id \circ \lambda\otimes}"', from=1-1, to=2-1]
+    	\arrow["{\phi_\bullet \oplus \id}", from=1-2, to=2-2]
+    	\arrow["{\phi_\circ}"', from=2-1, to=3-1]
+    	\arrow["{\lambda_\oplus}", from=2-2, to=3-2]
+    	\arrow[from=3-1, to=3-2]
+    \end{tikzcd} \]
+    
+    \item[L6:] Coherent interaction of the reflectors with $d_\bullet^\circ$ natural transformations are given as follows:
+    \[  \xymatrixcolsep{2cm}
+        \xymatrix{
+        B \circ (A \bullet X^\dag)
+        \ar[r]^{d_{A \bullet -}^{B \circ -}} \ar[d]_{1 \circ \phi_\bullet}
+        & A \bullet (B \circ X^\dag) 
+        \ar[d]^{1 \bullet \phi_\circ} \\ 
+        B \circ (A \circ X)^\dag \ar[d]_{\phi_\circ} 
+        & A \bullet (B \bullet X)^\dag \ar[d]^{\phi_\bullet} \\
+        (B \bullet (A \circ X))^\dag \ar[r]_{(d_{B \bullet -}^{A \circ -})^\dag} 
+        & (A \circ (B \bullet X))^\dag
+        } \]
+\end{description}
+
+\subsection{Mixed unitary categories as examples of dagger linear actegory}
+
+Think of canonical examples for dagger linear actegories. Here are a few examples of dagger linear actegories. 
+
+\begin{description}
+    \item[Mixed unitary categories:] Suppose $M: \U \to \C$ is a symmetric mixed unitary category with unitary duals. Then $M: \U \to \C$ is a $\U$-dagger linear actegory given as follows.
+
+    We first show that $M: \U \to \C$ is a $\U$-linear actegory. Note that $M$ is a strong monoidal functor.
+
+    \begin{itemize}[-]
+
+        \item $U$ is a symmetric unitary category, hence a compact LDC. By \cite[]{}, every compact LDC is linearly equivalent to a monoidal category. 
+        
+        \item $\C$ is a symmetric dagger isomix category, hence an LDC. 
+    
+        \item For all $U \in \U$, the functors $U \circ -$ and $U \bullet -$ as defined as follows:
+        \begin{align*}
+        U \circ C &:= M(U) \ox C \\
+        U \bullet C &:= M(U^\dag) \oa C  
+        \end{align*}
+    \end{itemize}
+
+    Next, we show that for all $U \in \U$, 
+    \[ U \circ - \dashv U \bullet - \]
+
+\pnote{It is not clear to me if we just need dagger duals or do we need unitary duals where $\eta^\dagger c_\ox = \epsilon$.}
+
+We assume $\U$ has unitary duals, that is for all objects $U \in \U$, $U$ is (unitary) dual to $U^\dagger$.
+
+For all $X \in \C$, the counit map, $X \to^{\eta_X} U \bullet ( U \circ X) $, and the unit map, $U \circ ( U \bullet X) \to^{\epsilon_X} X $ , of the adjunction are given as follows:
+are given as follows:
+% https://q.uiver.app/#q=WzAsNixbMCwwLCJYIl0sWzEsMCwiXFx0b3AgXFxvdGltZXMgWCJdLFsyLDAsIk0oXFx0b3ApIFxcb3RpbWVzIFgiXSxbMiwxLCIgTShVXlxcZGFnZ2VyIFxcb3BsdXMgVSkgXFxvdGltZXMgWCJdLFsxLDEsIihNKFVeXFxkYWdnZXIpIFxcb3BsdXMgTShVKSkgXFxvdGltZXMgWCJdLFswLDEsIk0oVV5cXGRhZ2dlcikgIFxcb3BsdXMgKE0oVSkgXFxvdGltZXMgWCkiXSxbMCwxLCJ1X1xcb3RpbWVzXnstMX0iXSxbMSwyLCIgbV9cXHRvcCBcXG90aW1lcyBcXGlkIl0sWzIsMywiXFxpZCBcXG90aW1lcyBNKFxcZXRhKSJdLFsxLDQsIjo9IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzAsNSwiXFxldGFfWCIsMl0sWzQsNSwiXFxwYXJ0aWFsXnIiXSxbMyw0LCJcXGlkIFxcb3RpbWVzIG5fXFxvcGx1cyJdXQ==
+\[\begin{tikzcd}[column sep=large]
+	X & {\top \otimes X} & {M(\top) \otimes X} \\
+	{M(U^\dagger)  \oplus (M(U) \otimes X)} & {(M(U^\dagger) \oplus M(U)) \otimes X} & { M(U^\dagger \oplus U) \otimes X}
+	\arrow["{u_\otimes^{-1}}", from=1-1, to=1-2]
+	\arrow["{\eta_X}"', from=1-1, to=2-1]
+	\arrow["{ m_\top \otimes \id}", from=1-2, to=1-3]
+	\arrow["{:=}"{description}, draw=none, from=1-2, to=2-2]
+	\arrow["{\id \otimes M(\eta)}", from=1-3, to=2-3]
+	\arrow["{\partial^r}", from=2-2, to=2-1]
+	\arrow["{\id \otimes n_\oplus}", from=2-3, to=2-2]
+\end{tikzcd}\]
+
+% https://q.uiver.app/#q=WzAsNyxbMCwwLCJNKFUpIFxcb3RpbWVzIChNKFVeXFxkYWdnZXIpIFxcb3BsdXMgWCkiXSxbMSwwLCIoTShVKSBcXG90aW1lcyBNKFVeXFxkYWdnZXIpKSBcXG9wbHVzIFgiXSxbMiwwLCJNKFUgXFxvdGltZXMgVV5cXGRhZ2dlcikgXFxvcGx1cyBYIl0sWzIsMSwiTShcXGJvdCkgXFxvcGx1cyBYIl0sWzIsMl0sWzEsMSwiXFxib3QgXFxvcGx1cyBYIl0sWzAsMSwiWCJdLFswLDEsIlxccGFydGlhbF5sIl0sWzEsMiwibV9cXG90aW1lcyBcXG9wbHVzIFxcaWQiXSxbMiwzLCJNKFxcZXBzaWxvbikgXFxvcGx1cyBcXGlkIl0sWzMsNSwibl9cXGJvdCBcXG9wbHVzIFxcaWQiXSxbNSw2LCJ1X1xcb3BsdXMiXSxbMCw2LCJcXGVwc2lsb25fWCIsMl0sWzEsNSwiOj0iLDEseyJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XV0=
+\[\begin{tikzcd}[column sep=large]
+	{M(U) \otimes (M(U^\dagger) \oplus X)} & {(M(U) \otimes M(U^\dagger)) \oplus X} & {M(U \otimes U^\dagger) \oplus X} \\
+	X & {\bot \oplus X} & {M(\bot) \oplus X} \\
+	&& {}
+	\arrow["{\partial^l}", from=1-1, to=1-2]
+	\arrow["{\epsilon_X}"', from=1-1, to=2-1]
+	\arrow["{m_\otimes \oplus \id}", from=1-2, to=1-3]
+	\arrow["{:=}"{description}, draw=none, from=1-2, to=2-2]
+	\arrow["{M(\epsilon) \oplus \id}", from=1-3, to=2-3]
+	\arrow["{u_\oplus}", from=2-2, to=2-1]
+	\arrow["{n_\bot \oplus \id}", from=2-3, to=2-2]
+\end{tikzcd}\]
+
+The natural isomorphisms and the natural transformations are defined as follows. 
+\begin{enumerate}[(a)]
+    \item $( \bot \circ X \to^{u_\circ}_\simeq X ) :=$
+    
+    $ M(\bot) \ox X \to^{\m \ox \id} M(\top) \ox X 
+    \to^{\m_\top^{-1} \ox \id} \top \ox X \to^{u_\ox} X$
+
+    \item $(X \to^{u_\bullet}_\simeq \bot \bullet X) :=$
+    
+    $ X \to^{u_\oa^{-1}} \bot \oa X \to^{\m \oa \id} \top \oa X  \to^{\m_I}  M(\top) \oa X \to^{M(\lambda_\top) \oa \id} M(\bot^\dagger) \oa X $
+
+    \item $((U * U') \circ X \to^{a_\circ^*}_\simeq U \circ (U' \circ X)) := $
+    
+    $M(U \oa U') \ox X \to^{n_\oa \ox \id} (M(U) \oa M(U')) \ox X 
+    \to^{\indep \ox \id} (M(U) \ox M(U')) \ox X
+    \to^{a_\ox} M(U) \ox (M(U') \ox X)$
+
+    \item $(U \bullet ( U' \bullet X) \to^{a_\bullet^*}_{\simeq} (U * U') \bullet X) :=$
+    
+    $ M(U^\dagger) \oa (M(V^\dagger) \oa X) 
+    \to^{a_\oa^{-1}} (M(U^\dagger) \oa M(V^\dagger)) \oa X 
+    \to^{\indep \oa \id} (M(U^\dagger) \ox M(V^\dagger)) \oa X
+    \to^{m_\ox \oa \id} M(U^\dagger \ox V^\dagger) \oa X 
+    \to^{\lambda_\ox \oa \id} M((U \oa V)^\dagger) \oa X $
+
+    \item $(U \circ (X \ox Y) \to^{a_\ox^\circ} (U \circ X) \ox Y) :=$
+    
+    $ M(U) \ox (X \ox Y) \to^{a_\ox^{-1}}_{\simeq} (M(U) \ox X) \ox Y$
+
+    \item $(A \bullet X) \oa Y \to^{a_\oa^\bullet}_{\simeq} A \bullet (X \oa Y)) :=$
+    
+    $ (M(A) \oa X) \oa Y \to^{a_\oa}_{\simeq} M(A) \oa (X \oa Y)$
+
+    \item $ A \circ (X \oa Y) \to^{d_\oa^\circ} (A \circ X) \oa Y :=$
+
+    $M(A) \ox (X \oa Y) \to^{\partial^L} (M(A) \ox X) \oa Y$
+
+    \item $(A \bullet X) \ox Y \to^{d_\ox^\bullet} A \bullet (X \ox Y) :=$
+
+    $M(A^\dagger) \oa X) \ox Y \to^{\partial^r} M(A^\dagger) \oa (X \ox Y)$
+
+    \item $A \circ (B \bullet X) \to^{d_\bullet^\circ} B \bullet (A \circ X):= $
+
+    $M(A) \ox (M(B^\dagger) \oa X) \to^{c_\ox} (M(B^\dagger) \oa X) \ox M(A) \to^{\partial^r} M(B^\dagger) \oa (X \ox M(A)) \to^{1 \oa c_\oa} 
+    M(B^\dagger) \oa (M(A) \oa X)$
+\end{enumerate}
+    
+This proves that $M: \U \to \C$ is a $\U$-linear actegory. 
+
+Next we show that it is a $\dagger$-linear actegory:
+
+\begin{itemize}[-]
+    \item $\U$ is dagger-monoidal:- by \cite[Proposition 4.11]{Sri21} we have that every unitary category is $\dagger$-linearly equivalent to the underlying dagger-monoidal category on the $\oa$-product. Additionally, when a unitary category comes with unitary duals, it is $\dagger$-linearly equivalent to a dagger-compact closed category;
+
+    \item $\C$ is $\dagger$-isomix category;
+
+    \item The reflector natural isomorphisms $\phi_\circ$ and $\phi_\bullet$ are defined as follows: For all $U \in \U$ and $C \in \C$,
+    \begin{align*}
+        \phi_\bullet &:= (U \bullet C^\dagger 
+        = M(U^\dagger) \oa C^\dagger \to^{\rho \oa \id} M(U)^\dagger \oa C^\dagger \to^{\lambda_\oa} (M(U) \ox C)^\dagger = (U \circ C)^\dagger) \\ 
+        \phi_\circ &:= (U \circ C^\dagger = M(U) \ox C^\dagger \to^{\iota \ox \id} M(U)^{\dagger \dagger} \ox C^\dagger \to^{\lambda_\ox} 
+        (M(U)^\dagger \oa C)^\dagger = (U \bullet C)^\dagger)
+    \end{align*}
+
+\end{itemize}
+
+Next, we prove the coherences for $\phi_\circ$ and $\phi_\bullet$. Assume $U, V \in \U$ and $C, D \in \D$.
+
+\begin{description}
+    \item[L1 holds:] 
+    % https://q.uiver.app/#q=WzAsOSxbMCwwLCJNKFUpIFxcb3RpbWVzIEMiXSxbMSwwLCJNKFUpIFxcb3RpbWVzIENee1xcZGFnZ2VyIFxcZGFnZ2VyfSJdLFsyLDAsIk0oVV57XFxkYWdnZXIgXFxkYWdnZXJ9KSBcXG90aW1lcyBDXntcXGRhZ2dlciBcXGRhZ2dlcn0iXSxbMCwxLCIoTShVKSBcXG90aW1lcyBDKV57XFxkYWdnZXIgXFxkYWdnZXJ9Il0sWzEsMSwiTShVKV57XFxkYWdnZXIgXFxkYWdnZXJ9IFxcb3RpbWVzIENee1xcZGFnZ2VyIFxcZGFnZ2VyfSJdLFsyLDEsIk0oVV5cXGRhZ2dlcileXFxkYWdnZXIgXFxvdGltZXMgQ157XFxkYWdnZXIgXFxkYWdnZXJ9Il0sWzAsMiwiKE0oVSleXFxkYWdnZXIgXFxvcGx1cyBDXlxcZGFnZ2VyKV5cXGRhZ2dlciJdLFsyLDIsIihNKFVeXFxkYWdnZXIpIFxcb3BsdXMgQ15cXGRhZ2dlcileXFxkYWdnZXIiXSxbMSwyLCIoTShVKV5cXGRhZ2dlciBcXG9wbHVzIENeXFxkYWdnZXIpXlxcZGFnZ2VyIl0sWzAsMywiXFxpb3RhIiwyXSxbMCwxLCJcXGlkIFxcb3RpbWVzIFxcaW90YSJdLFsxLDIsIk0oXFxpb3RhKSBcXG90aW1lcyBcXGlvdGEiXSxbMiw1LCJcXHJobyBcXG90aW1lcyBcXGlkIl0sWzUsNywiXFxsYW1iZGFfXFxvdGltZXMiXSxbMSw0LCJcXGlvdGEgXFxvdGltZXMgXFxpZCJdLFs0LDUsIlxccmhvXlxcZGFnZ2VyIFxcb3RpbWVzIFxcaWQiXSxbMSw1LCJcXHRleHR7XFxncmF5eygqKX19IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzMsNiwiXFxsYW1iZGFfXFxvcGx1c15cXGRhZ2dlciIsMl0sWzQsOCwiXFxsYW1iZGFfXFxvdGltZXMiLDJdLFs2LDgsIlxcaWQiLDJdLFs4LDcsIihcXHJobyBcXG9wbHVzIFxcaWQpXlxcZGFnZ2VyIiwyXSxbNCw3LCI9XFx0ZXh0e25hdC59IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzAsNCwiPVtcXGRhZ2dlci1cXHRleHRiZntsZGMuNH1dIiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV1d
+    \[\begin{tikzcd}[column sep=2.25em,row sep=large]
+    	{M(U) \otimes C} & {M(U) \otimes C^{\dagger \dagger}} & {M(U^{\dagger \dagger}) \otimes C^{\dagger \dagger}} \\
+    	{(M(U) \otimes C)^{\dagger \dagger}} & {M(U)^{\dagger \dagger} \otimes C^{\dagger \dagger}} & {M(U^\dagger)^\dagger \otimes C^{\dagger \dagger}} \\
+    	{(M(U)^\dagger \oplus C^\dagger)^\dagger} & {(M(U)^\dagger \oplus C^\dagger)^\dagger} & {(M(U^\dagger) \oplus C^\dagger)^\dagger}
+    	\arrow["{\id \otimes \iota}", from=1-1, to=1-2]
+    	\arrow["\iota"', from=1-1, to=2-1]
+    	\arrow["{=[\dagger-\textbf{ldc.4}]}"{description}, draw=none, from=1-1, to=2-2]
+    	\arrow["{M(\iota) \otimes \iota}", from=1-2, to=1-3]
+    	\arrow["{\iota \otimes \id}", from=1-2, to=2-2]
+    	\arrow["{\text{(*)}}"{description}, draw=none, from=1-2, to=2-3]
+    	\arrow["{\rho \otimes \id}", from=1-3, to=2-3]
+    	\arrow["{\lambda_\oplus^\dagger}"', from=2-1, to=3-1]
+    	\arrow["{\rho^\dagger \otimes \id}", from=2-2, to=2-3]
+    	\arrow["{\lambda_\otimes}"', from=2-2, to=3-2]
+    	\arrow["{=\text{nat.}}"{description}, draw=none, from=2-2, to=3-3]
+    	\arrow["{\lambda_\otimes}", from=2-3, to=3-3]
+    	\arrow["\id"', from=3-1, to=3-2]
+    	\arrow["{(\rho \oplus \id)^\dagger}"', from=3-2, to=3-3]
+    \end{tikzcd}\]
+    (*) commutes because $M$ is a $\dagger$-isomix functor.
+
+    \item[L2-(a) holds:]
+   % https://q.uiver.app/#q=WzAsMTQsWzAsMCwiWF5cXGRhZ2dlciJdLFsxLDAsIlxcYm90IFxcb3BsdXMgWF5cXGRhZ2dlciJdLFsyLDAsIlxcdG9wIFxcb3BsdXMgWF5cXGRhZ2dlciJdLFszLDAsIk0oXFx0b3ApIFxcb3BsdXMgWF5cXGRhZ2dlciAiXSxbMiwxLCJNKFxcYm90KSBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMywxLCJNKFxcYm90XlxcZGFnZ2VyKSBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMSwyLCJcXHRvcF5cXGRhZ2dlciBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMywyLCJNKFxcYm90KV5cXGRhZ2dlciBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMCwzLCIoXFx0b3AgXFxvdGltZXMgWCleXFxkYWdnZXIiXSxbMywzLCIoTShcXGJvdCkgXFxvdGltZXMgWCleXFxkYWdnZXIiXSxbMCwyLCIoXFx0b3AgXFxvdGltZXMgWCleXFxkYWdnZXIiXSxbMiwyLCJcXGJvdF5cXGRhZ2dlciBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMSwzXSxbMiwzLCIoXFxib3QgXFxvdGltZXMgWCleXFxkYWdnZXIiXSxbMCwxLCJ1X1xcb3BsdXNeey0xfSJdLFsxLDIsIlxcbSBcXG9wbHVzIFxcaWQiXSxbMiwzLCJcXG1fXFx0b3AgXFxvcGx1cyBcXGlkIl0sWzMsNSwiTShcXGxhbWJkYV9cXHRvcCkgXFxvcGx1cyBcXGlkIiwwLHsiY3VydmUiOi00fV0sWzUsNywiXFxyaG8gXFxvcGx1cyBcXGlkIl0sWzcsOSwiXFxsYW1iZGFfXFxvcGx1cyJdLFszLDQsIk0oXFxtXnstMX0pIFxcb3BsdXMgXFxpZCIsMV0sWzEsNCwibl9cXGJvdF57LTF9IFxcb3RpbWVzIFxcaWQiLDFdLFs0LDUsIk0oXFx2YXJwaGkpIFxcb3BsdXMgXFxpZCIsMl0sWzIsNCwiPVxcdGV4dHsoYSl9IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzEsNiwiXFxsYW1iZGFfXFxib3QgXFxvcGx1cyBcXGlkIiwyXSxbMCwxMCwidV9cXG90aW1lc15cXGRhZ2dlciIsMl0sWzEwLDgsIlxcaWQiLDJdLFsxMCw2LCJcXGxhbWJkYV9cXG9wbHVzXnstMX0iLDJdLFs2LDExLCJcXG1eXFxkYWdnZXIgXFxvcGx1cyBcXGlkIiwyXSxbMTEsNywibl9cXGJvdF5cXGRhZ2dlciBcXG9wbHVzIFxcaWQiLDJdLFs4LDEzLCIoXFxtIFxcb3RpbWVzIFxcaWQpXlxcZGFnZ2VyIiwyXSxbMTMsOSwiKG5fXFxib3QgXFxvdGltZXMgXFxpZCleXFxkYWdnZXIiLDJdLFszLDUsIj1cXHRleHR7KGIpfSIsMCx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxMSwxMywiXFxsYW1iZGFfXFxvcGx1cyJdLFsxMSw5LCI9XFx0ZXh0e25hdC59IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzEwLDEzLCI9XFx0ZXh0e25hdC59IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzQsMTEsIigqKSIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFswLDI0LCI9W1xcZGFnZ2VyLVxcdGV4dGJme2xkYy4yfV0iLDEseyJsZXZlbCI6MSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV1d&macro_url=https%3A%2F%2Fgithub.com%2Fpriyaasrini%2Fmacros%2Fblob%2Fmain%2Fmacros.tex
+    \[\begin{tikzcd}[column sep=large]
+    	{X^\dagger} & {\bot \oplus X^\dagger} & {\top \oplus X^\dagger} & {M(\top) \oplus X^\dagger } \\
+    	&& {M(\bot) \oplus X^\dagger} & {M(\bot^\dagger) \oplus X^\dagger} \\
+    	{(\top \otimes X)^\dagger} & {\top^\dagger \oplus X^\dagger} & {\bot^\dagger \oplus X^\dagger} & {M(\bot)^\dagger \oplus X^\dagger} \\
+    	{(\top \otimes X)^\dagger} & {} & {(\bot \otimes X)^\dagger} & {(M(\bot) \otimes X)^\dagger}
+    	\arrow["{u_\oplus^{-1}}", from=1-1, to=1-2]
+    	\arrow["{u_\otimes^\dagger}"', from=1-1, to=3-1]
+    	\arrow["{\m \oplus \id}", from=1-2, to=1-3]
+    	\arrow["{n_\bot^{-1} \otimes \id}"{description}, from=1-2, to=2-3]
+    	\arrow[""{name=0, anchor=center, inner sep=0}, "{\lambda_\bot \oplus \id}"', from=1-2, to=3-2]
+    	\arrow["{\m_\top \oplus \id}", from=1-3, to=1-4]
+    	\arrow["{=\text{(a)}}"{description}, draw=none, from=1-3, to=2-3]
+    	\arrow["{M(\m^{-1}) \oplus \id}"{description}, from=1-4, to=2-3]
+    	\arrow["{M(\lambda_\top) \oplus \id}", bend left={64pt}, from=1-4, to=2-4]
+    	\arrow["{=\text{(b)}}", draw=none, from=1-4, to=2-4]
+    	\arrow["{M(\varphi) \oplus \id}"', from=2-3, to=2-4]
+    	\arrow["{(*)}"{description}, draw=none, from=2-3, to=3-3]
+    	\arrow["{\rho \oplus \id}", from=2-4, to=3-4]
+    	\arrow["{\lambda_\oplus^{-1}}"', from=3-1, to=3-2]
+    	\arrow["\id"', from=3-1, to=4-1]
+    	\arrow["{=\text{nat.}}"{description}, draw=none, from=3-1, to=4-3]
+    	\arrow["{\m^\dagger \oplus \id}"', from=3-2, to=3-3]
+    	\arrow["{n_\bot^\dagger \oplus \id}"', from=3-3, to=3-4]
+    	\arrow["{\lambda_\oplus}", from=3-3, to=4-3]
+    	\arrow["{=\text{nat.}}"{description}, draw=none, from=3-3, to=4-4]
+    	\arrow["{\lambda_\oplus}", from=3-4, to=4-4]
+    	\arrow["{(\m \otimes \id)^\dagger}"', from=4-1, to=4-3]
+    	\arrow["{(n_\bot \otimes \id)^\dagger}"', from=4-3, to=4-4]
+    	\arrow["{=[\dagger-\textbf{ldc.2}]}"{description}, draw=none, from=1-1, to=0]
+    \end{tikzcd}\]
+
+    Proof that $(*)$ commutes:- 
+    % https://q.uiver.app/#q=WzAsMTAsWzAsMCwiXFxib3QiXSxbMSwwXSxbMiwwLCJNKFxcYm90KSJdLFszLDAsIk0oXFxib3ReXFxkYWdnZXIpIl0sWzEsMSwiXFx0b3AiXSxbMiwxLCJNKFxcdG9wKSJdLFszLDEsIk0oXFxib3ReXFxkYWdnZXIpIl0sWzAsMiwiXFx0b3BeXFxkYWdnZXIiXSxbMiwyLCJcXGJvdF5cXGRhZ2dlciJdLFszLDIsIk0oXFxib3QpXlxcZGFnZ2VyIl0sWzAsMiwibl9cXGJvdCJdLFsyLDMsIk0oXFx2YXJwaGkpIl0sWzMsNiwiXFxyaG8iXSxbMiw1LCJNKFxcbSkiLDJdLFs1LDYsIk0oXFxsYW1iZGFfXFx0b3ApIiwyXSxbMiw2LCI9XFx0ZXh0YmZ7W1UuNF19IiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzAsNCwiXFxtIiwyXSxbNCw1LCJcXG1fXFx0b3AiLDJdLFs3LDgsIlxcbV5cXGRhZ2dlciIsMl0sWzAsNywiXFxsYW1iZGFfXFx0b3AiLDJdLFs0LDgsIlxcbGFtYmRhX1xcdG9wIiwyXSxbNyw0LCI9W1xcZGFnZ2VyLVxcdGV4dGJme21peH1dIiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzYsOSwiXFxyaG8iXSxbOCw5LCJuX1xcYm90XlxcZGFnZ2VyIiwyXSxbMiw0LCIoKykiLDEseyJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMTQsMjMsIj1cXHRleHRiZntbUC4xXX0iLDEseyJzaG9ydGVuIjp7InNvdXJjZSI6MjAsInRhcmdldCI6MjB9LCJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XV0=
+    % https://q.uiver.app/#q=WzAsMTAsWzAsMCwiXFxib3QiXSxbMSwwXSxbMiwwLCJNKFxcYm90KSJdLFszLDAsIk0oXFxib3ReXFxkYWdnZXIpIl0sWzEsMSwiXFx0b3AiXSxbMiwxLCJNKFxcdG9wKSJdLFszLDEsIk0oXFxib3ReXFxkYWdnZXIpIl0sWzAsMiwiXFx0b3BeXFxkYWdnZXIiXSxbMiwyLCJcXGJvdF5cXGRhZ2dlciJdLFszLDIsIk0oXFxib3QpXlxcZGFnZ2VyIl0sWzAsMiwibl9cXGJvdCJdLFsyLDMsIk0oXFx2YXJwaGkpIl0sWzMsNiwiXFxpZCJdLFsyLDUsIk0oXFxtKSIsMl0sWzUsNiwiTShcXGxhbWJkYV9cXHRvcCkiLDJdLFsyLDYsIj1cXHRleHRiZntbVS40XX0iLDEseyJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMCw0LCJcXG0iLDJdLFs0LDUsIlxcbV9cXHRvcCIsMl0sWzcsOCwiXFxtXlxcZGFnZ2VyIiwyXSxbMCw3LCJcXGxhbWJkYV9cXHRvcCIsMl0sWzQsOCwiXFxsYW1iZGFfXFx0b3AiLDJdLFs3LDQsIj1bXFxkYWdnZXItXFx0ZXh0YmZ7bWl4fV0iLDEseyJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbNiw5LCJcXHJobyJdLFs4LDksIm5fXFxib3ReXFxkYWdnZXIiLDJdLFsyLDQsIigrKSIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxNCwyMywiPVxcdGV4dGJme1tQLjFdfSIsMSx7InNob3J0ZW4iOnsic291cmNlIjoyMCwidGFyZ2V0IjoyMH0sInN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dXQ==
+    \[\begin{tikzcd}
+    	\bot & {} & {M(\bot)} & {M(\bot^\dagger)} \\
+    	& \top & {M(\top)} & {M(\bot^\dagger)} \\
+    	{\top^\dagger} && {\bot^\dagger} & {M(\bot)^\dagger}
+    	\arrow["{n_\bot}", from=1-1, to=1-3]
+    	\arrow["\m"', from=1-1, to=2-2]
+    	\arrow["{\lambda_\top}"', from=1-1, to=3-1]
+    	\arrow["{M(\varphi)}", from=1-3, to=1-4]
+    	\arrow["{(**)}"{description}, draw=none, from=1-3, to=2-2]
+    	\arrow["{M(\m)}"', from=1-3, to=2-3]
+    	\arrow["{=\textbf{[U.4]}}"{description}, draw=none, from=1-3, to=2-4]
+    	\arrow["\id", from=1-4, to=2-4]
+    	\arrow["{\m_\top}"', from=2-2, to=2-3]
+    	\arrow["{\lambda_\top}"', from=2-2, to=3-3]
+    	\arrow[""{name=0, anchor=center, inner sep=0}, "{M(\lambda_\top)}"', from=2-3, to=2-4]
+    	\arrow["\rho", from=2-4, to=3-4]
+    	\arrow["{=[\dagger-\textbf{mix}]}"{description}, draw=none, from=3-1, to=2-2]
+    	\arrow["{\m^\dagger}"', from=3-1, to=3-3]
+    	\arrow[""{name=1, anchor=center, inner sep=0}, "{n_\bot^\dagger}"', from=3-3, to=3-4]
+    	\arrow["{=\textbf{[P.1]}}"{description}, draw=none, from=0, to=1]
+    \end{tikzcd}\]
+    $(**)$ commutes because $M$ is mix functor.
+    
+    \item[L3-(a) holds:]
+% https://q.uiver.app/#q=WzAsMTIsWzAsMCwiTShBXlxcZGFnZ2VyKSBcXG9wbHVzIChNKEJeXFxkYWdnZXIpIFxcb3BsdXMgWF5cXGRhZ2dlcikiXSxbMSwwLCIoTShBXlxcZGFnZ2VyKSBcXG9wbHVzIE0oQl5cXGRhZ2dlcikpIFxcb3BsdXMgWF5cXGRhZ2dlciJdLFsyLDAsIk0oQV5cXGRhZ2dlciBcXG9wbHVzIEJeXFxkYWdnZXIpIFxcb3BsdXMgWF5cXGRhZ2dlciJdLFswLDEsIk0oQSleXFxkYWdnZXIgXFxvcGx1cyAoTShCKV5cXGRhZ2dlciBcXG9wbHVzIFheXFxkYWdnZXIpIl0sWzEsMSwiKE0oQSleXFxkYWdnZXIgXFxvcGx1cyBNKEIpXlxcZGFnZ2VyKSBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMiwxLCJNKChBIFxcb3RpbWVzIEIpXlxcZGFnZ2VyKSBcXG9wbHVzIFheXFxkYWdnZXIiXSxbMCwyLCJNKEEpXlxcZGFnZ2VyIFxcb3BsdXMgKE0oQikgXFxvcGx1cyBYKV5cXGRhZ2dlciJdLFsxLDIsIihNKEEpIFxcb3RpbWVzIE0oQikpXlxcZGFnZ2VyIFxcb3BsdXMgWF5cXGRhZ2dlciJdLFsyLDIsIihNKEEgXFxvdGltZXMgQikpXlxcZGFnZ2VyIFxcb3BsdXMgWF5cXGRhZ2dlciJdLFswLDMsIihNKEEpIFxcb3RpbWVzIChNKEIpIFxcb3RpbWVzIFgpKV5cXGRhZ2dlciJdLFsxLDMsIigoTShBKSBcXG90aW1lcyBNKEIpKSBcXG90aW1lcyBYKV5cXGRhZ2dlciJdLFsyLDMsIihNKEEgXFxvdGltZXMgQikgXFxvdGltZXMgWCleXFxkYWdnZXIiXSxbMCwzLCJcXHJobyBcXG9wbHVzIChcXHJobyBcXG9wbHVzIFxcaWQpIiwyXSxbMCwxLCJhX1xcb3BsdXNeey0xfSJdLFsxLDQsIihcXHJobyBcXG9wbHVzIFxccmhvKSBcXG9wbHVzIFxcaWQiXSxbMyw0LCJhX1xcb3BsdXNeey0xfSJdLFsxLDIsIm5fXFxvcGx1c157LTF9IFxcb3BsdXMgXFxpZCJdLFsyLDUsIk0oXFxsYW1iZGFfXFxvcGx1cykgXFxvcGx1cyBcXGlkIl0sWzUsOCwiXFxyaG8gXFxvcGx1cyBcXGlkIl0sWzQsNywiXFxsYW1iZGFfXFxvcGx1cyBcXG9wbHVzIFxcaWQiXSxbNyw4LCJtX1xcb3RpbWVzXnstMX0gXFxvcGx1cyBcXGlkIl0sWzMsNiwiXFxpZCBcXG9wbHVzIFxcbGFtYmRhX1xcb3BsdXMiLDJdLFs2LDksIlxcbGFtYmRhX1xcb3BsdXMiLDJdLFs5LDEwLCJhX1xcb3RpbWVzXlxcZGFnZ2VyIiwyXSxbMTAsMTEsIihtX1xcb3RpbWVzIFxcb3RpbWVzIDEpXlxcZGFnZ2VyIiwyXSxbOCwxMSwiXFxsYW1iZGFfXFxvcGx1cyJdLFs3LDEwLCJcXGxhbWJkYV9cXG9wbHVzIl0sWzEsNSwiPVxcdGV4dGJme1tQLjJdfSIsMSx7InNob3J0ZW4iOnsic291cmNlIjoyMCwidGFyZ2V0IjoyMH0sImxldmVsIjoyLCJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMyw3LCI9W1xcZGFnZ2VyXFx0ZXh0YmZ7LWxkYy4xfV0iLDEseyJzaG9ydGVuIjp7InNvdXJjZSI6MjAsInRhcmdldCI6MjB9LCJsZXZlbCI6Miwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzIwLDI0LCI9IFxcdGV4dHtuYXQufSBcXGxhbWJkYV9cXG9wbHVzIiwwLHsic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzEzLDE1LCI9XFx0ZXh0e25hdC59YV9cXG9wbHVzIiwwLHsic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV1d
+    \[\begin{tikzcd}[column sep=large]
+    	{M(A^\dagger) \oplus (M(B^\dagger) \oplus X^\dagger)} & {(M(A^\dagger) \oplus M(B^\dagger)) \oplus X^\dagger} & {M(A^\dagger \oplus B^\dagger) \oplus X^\dagger} \\
+    	{M(A)^\dagger \oplus (M(B)^\dagger \oplus X^\dagger)} & {(M(A)^\dagger \oplus M(B)^\dagger) \oplus X^\dagger} & {M((A \otimes B)^\dagger) \oplus X^\dagger} \\
+    	{M(A)^\dagger \oplus (M(B) \oplus X)^\dagger} & {(M(A) \otimes M(B))^\dagger \oplus X^\dagger} & {(M(A \otimes B))^\dagger \oplus X^\dagger} \\
+    	{(M(A) \otimes (M(B) \otimes X))^\dagger} & {((M(A) \otimes M(B)) \otimes X)^\dagger} & {(M(A \otimes B) \otimes X)^\dagger}
+    	\arrow[""{name=0, anchor=center, inner sep=0}, "{a_\oplus^{-1}}", from=1-1, to=1-2]
+    	\arrow["{\rho \oplus (\rho \oplus \id)}"', from=1-1, to=2-1]
+    	\arrow["{n_\oplus^{-1} \oplus \id}", from=1-2, to=1-3]
+    	\arrow["{(\rho \oplus \rho) \oplus \id}", from=1-2, to=2-2]
+    	\arrow["{=\textbf{[P.2]}}"{description}, draw=none, from=1-2, to=2-3]
+    	\arrow["{M(\lambda_\oplus) \oplus \id}", from=1-3, to=2-3]
+    	\arrow[""{name=1, anchor=center, inner sep=0}, "{a_\oplus^{-1}}", from=2-1, to=2-2]
+    	\arrow["{\id \oplus \lambda_\oplus}"', from=2-1, to=3-1]
+    	\arrow["{=[\dagger\textbf{-ldc.1}]}"{description}, draw=none, from=2-1, to=3-2]
+    	\arrow["{\lambda_\oplus \oplus \id}", from=2-2, to=3-2]
+    	\arrow["{\rho \oplus \id}", from=2-3, to=3-3]
+    	\arrow["{\lambda_\oplus}"', from=3-1, to=4-1]
+    	\arrow[""{name=2, anchor=center, inner sep=0}, "{m_\otimes^{-1} \oplus \id}", from=3-2, to=3-3]
+    	\arrow["{\lambda_\oplus}", from=3-2, to=4-2]
+    	\arrow["{\lambda_\oplus}", from=3-3, to=4-3]
+    	\arrow["{a_\otimes^\dagger}"', from=4-1, to=4-2]
+    	\arrow[""{name=3, anchor=center, inner sep=0}, "{(m_\otimes \otimes 1)^\dagger}"', from=4-2, to=4-3]
+    	\arrow["{=\text{nat.}a_\oplus}", draw=none, from=0, to=1]
+    	\arrow["{= \text{nat.} \lambda_\oplus}", draw=none, from=2, to=3]
+    \end{tikzcd}\]
+
+    \item[L4-(a) holds:]
+    % https://q.uiver.app/#q=WzAsMTEsWzAsMCwiKE0oQV5cXGRhZ2dlcikgXFxvcGx1cyBYXlxcZGFnZ2VyKVxcb3BsdXMgWV5cXGRhZ2dlciJdLFsxLDAsIk0oQV5cXGRhZ2dlcikgXFxvcGx1cyAoWF5cXGRhZ2dlciBcXG9wbHVzIFleXFxkYWdnZXIpIl0sWzIsMCwiTShBXlxcZGFnZ2VyKSBcXG9wbHVzIChYXlxcZGFnZ2VyIFxcb3BsdXMgWV5cXGRhZ2dlcikiXSxbMSwxLCJNKEEpXlxcZGFnZ2VyIFxcb3BsdXMgKFheXFxkYWdnZXIgXFxvcGx1cyBZXlxcZGFnZ2VyKSJdLFsyLDEsIk0oQV5cXGRhZ2dlcikgXFxvcGx1cyAoWCBcXG90aW1lcyBZKV5cXGRhZ2dlciJdLFswLDEsIihNKEEpXlxcZGFnZ2VyIFxcb3BsdXMgWF5cXGRhZ2dlcilcXG9wbHVzIFleXFxkYWdnZXIiXSxbMCwyLCIoTShBKSBcXG90aW1lcyBYKV5cXGRhZ2dlciBcXG9wbHVzIFleXFxkYWdnZXIiXSxbMiwyLCJNKEEpXlxcZGFnZ2VyIFxcb3BsdXMoWCBcXG9wbHVzIFkpXlxcZGFnZ2VyIl0sWzAsMywiKE0oQSkgXFxvdGltZXMgWCkgXFxvdGltZXMgWSleXFxkYWdnZXIiXSxbMiwzLCIoTShBKSBcXG90aW1lcyhYIFxcb3RpbWVzIFkpKV5cXGRhZ2dlciJdLFsxLDIsIk0oQSleXFxkYWdnZXIgXFxvcGx1cyhYIFxcb3BsdXMgWSleXFxkYWdnZXIiXSxbMCw1LCIoXFxyaG8gXFxvcGx1c1xcaWQpXFxvcGx1cyBcXGlkIiwyXSxbMCwxLCJhX1xcb3BsdXMiXSxbMSwyLCJcXGlkIl0sWzIsNCwiXFxpZCBcXG9wbHVzXFxsYW1iZGFfXFxvcGx1cyJdLFsxLDMsIlxccmhvIFxcb3BsdXMgXFxpZCJdLFs1LDMsImFfXFxvcGx1cyIsMl0sWzUsNiwiXFxsYW1iZGFfXFxvcGx1cyBcXG9wbHVzIFxcaWQiLDJdLFs0LDcsIlxccmhvIFxcb3BsdXMgXFxpZCJdLFs2LDgsIlxcbGFtYmRhX1xcb3BsdXMiLDJdLFs4LDksIihhX1xcb3RpbWVzXnstMX0pXlxcZGFnZ2VyIiwyXSxbNyw5LCJcXGxhbWJkYV9cXG9wbHVzIl0sWzMsMTAsIlxcaWQgXFxvcGx1cyBcXGxhbWJkYV9cXG9wbHVzIl0sWzEwLDcsIlxcaWQiXSxbMTAsMjAsIlxcZGFnZ2VyXFx0ZXh0YmZ7LWxkYy4xfSIsMSx7InNob3J0ZW4iOnsidGFyZ2V0IjoyMH0sInN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxMiwxNiwiXFx0ZXh0e25hdC59IiwwLHsic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV1d&macro_url=https%3A%2F%2Fgithub.com%2Fpriyaasrini%2Fmacros%2Fblob%2Fmain%2Fmacros.tex
+    \[\begin{tikzcd}
+    	{(M(A^\dagger) \oplus X^\dagger)\oplus Y^\dagger} & {M(A^\dagger) \oplus (X^\dagger \oplus Y^\dagger)} & {M(A^\dagger) \oplus (X^\dagger \oplus Y^\dagger)} \\
+    	{(M(A)^\dagger \oplus X^\dagger)\oplus Y^\dagger} & {M(A)^\dagger \oplus (X^\dagger \oplus Y^\dagger)} & {M(A^\dagger) \oplus (X \otimes Y)^\dagger} \\
+    	{(M(A) \otimes X)^\dagger \oplus Y^\dagger} & {M(A)^\dagger \oplus(X \oplus Y)^\dagger} & {M(A)^\dagger \oplus(X \oplus Y)^\dagger} \\
+    	{(M(A) \otimes X) \otimes Y)^\dagger} && {(M(A) \otimes(X \otimes Y))^\dagger}
+    	\arrow[""{name=0, anchor=center, inner sep=0}, "{a_\oplus}", from=1-1, to=1-2]
+    	\arrow["{(\rho \oplus\id)\oplus \id}"', from=1-1, to=2-1]
+    	\arrow["\id", from=1-2, to=1-3]
+    	\arrow["{\rho \oplus \id}", from=1-2, to=2-2]
+    	\arrow["{\id \oplus\lambda_\oplus}", from=1-3, to=2-3]
+    	\arrow[""{name=1, anchor=center, inner sep=0}, "{a_\oplus}"', from=2-1, to=2-2]
+    	\arrow["{\lambda_\oplus \oplus \id}"', from=2-1, to=3-1]
+    	\arrow["{\id \oplus \lambda_\oplus}", from=2-2, to=3-2]
+    	\arrow["{\rho \oplus \id}", from=2-3, to=3-3]
+    	\arrow["{\lambda_\oplus}"', from=3-1, to=4-1]
+    	\arrow["\id", from=3-2, to=3-3]
+    	\arrow["{\lambda_\oplus}", from=3-3, to=4-3]
+    	\arrow[""{name=2, anchor=center, inner sep=0}, "{(a_\otimes^{-1})^\dagger}"', from=4-1, to=4-3]
+    	\arrow["{\text{=nat.}}", draw=none, from=0, to=1]
+    	\arrow["=[{\dagger\textbf{-ldc.1}]}"{description}, draw=none, from=3-2, to=2]
+    \end{tikzcd}\]
+
+    \item[L5-(a) holds:]
+    % https://q.uiver.app/#q=WzAsMTIsWzAsMCwiKE0oQV5cXGRhZ2dlcikgXFxvcGx1cyBYXlxcZGFnZ2VyKVxcb3RpbWVzIFleXFxkYWdnZXIiXSxbMSwwLCJNKEFeXFxkYWdnZXIpIFxcb3BsdXMgKFheXFxkYWdnZXIgXFxvdGltZXMgWV5cXGRhZ2dlcikiXSxbMiwwLCJNKEFeXFxkYWdnZXIpIFxcb3BsdXMgKFheXFxkYWdnZXIgXFxvdGltZXMgWV5cXGRhZ2dlcikiXSxbMSwxLCJNKEEpXlxcZGFnZ2VyIFxcb3BsdXMgKFheXFxkYWdnZXIgXFxvdGltZXMgWV5cXGRhZ2dlcikiXSxbMiwxLCJNKEFeXFxkYWdnZXIpIFxcb3BsdXMgKFggXFxvcGx1cyBZKV5cXGRhZ2dlciJdLFswLDEsIihNKEEpXlxcZGFnZ2VyIFxcb3BsdXMgWF5cXGRhZ2dlcilcXG90aW1lcyBZXlxcZGFnZ2VyIl0sWzAsMiwiKE0oQSkgXFxvdGltZXMgWCleXFxkYWdnZXIgXFxvdGltZXMgWV5cXGRhZ2dlciJdLFsyLDIsIk0oQSleXFxkYWdnZXIgXFxvcGx1cyhYIFxcb3BsdXMgWSleXFxkYWdnZXIiXSxbMCwzLCIoTShBKSBcXG90aW1lcyBYKSBcXG9wbHVzIFkpXlxcZGFnZ2VyIl0sWzIsMywiKE0oQSkgXFxvdGltZXMoWCBcXG9wbHVzIFkpKV5cXGRhZ2dlciJdLFsxLDIsIk0oQSleXFxkYWdnZXIgXFxvcGx1cyhYIFxcb3BsdXMgWSleXFxkYWdnZXIiXSxbMSwzLCJcXGJ1bGxldCJdLFswLDUsIihcXHJobyBcXG9wbHVzXFxpZClcXG9wbHVzIFxcaWQiLDJdLFswLDEsIlxccGFydGlhbF5yIl0sWzEsMiwiXFxpZCJdLFsyLDQsIlxcaWQgXFxvcGx1c1xcbGFtYmRhX1xcb3RpbWVzIl0sWzEsMywiXFxyaG8gXFxvcGx1cyBcXGlkIl0sWzUsNiwiXFxsYW1iZGFfXFxvcGx1cyBcXG9wbHVzIFxcaWQiLDJdLFs0LDcsIlxccmhvIFxcb3BsdXMgXFxpZCJdLFs2LDgsIlxcbGFtYmRhX1xcb3RpbWVzIiwyXSxbOCw5LCIoXFxwYXJ0aWFsXmwpXlxcZGFnZ2VyIiwyXSxbNyw5LCJcXGxhbWJkYV9cXG9wbHVzIl0sWzMsMTAsIlxcaWQgXFxvcGx1cyBcXGxhbWJkYV9cXG90aW1lcyJdLFsxMCw3LCJcXGlkIl0sWzUsMywiXFxwYXJ0aWFsXnIiLDJdLFsxLDQsIj0iLDEseyJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbMTAsMjAsIj0gXFxkYWdnZXJcXHRleHRiZnstbGRjLjN9IiwxLHsic2hvcnRlbiI6eyJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzEzLDI0LCJcXHRleHR7PW5hdC59IiwwLHsic2hvcnRlbiI6eyJzb3VyY2UiOjIwLCJ0YXJnZXQiOjIwfSwic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV1d&macro_url=https%3A%2F%2Fgithub.com%2Fpriyaasrini%2Fmacros%2Fblob%2Fmain%2Fmacros.tex
+    \[\begin{tikzcd}
+    	{(M(A^\dagger) \oplus X^\dagger)\otimes Y^\dagger} & {M(A^\dagger) \oplus (X^\dagger \otimes Y^\dagger)} & {M(A^\dagger) \oplus (X^\dagger \otimes Y^\dagger)} \\
+    	{(M(A)^\dagger \oplus X^\dagger)\otimes Y^\dagger} & {M(A)^\dagger \oplus (X^\dagger \otimes Y^\dagger)} & {M(A^\dagger) \oplus (X \oplus Y)^\dagger} \\
+    	{(M(A) \otimes X)^\dagger \otimes Y^\dagger} & {M(A)^\dagger \oplus(X \oplus Y)^\dagger} & {M(A)^\dagger \oplus(X \oplus Y)^\dagger} \\
+    	{(M(A) \otimes X) \oplus Y)^\dagger} &  & {(M(A) \otimes(X \oplus Y))^\dagger}
+    	\arrow[""{name=0, anchor=center, inner sep=0}, "{\partial^r}", from=1-1, to=1-2]
+    	\arrow["{(\rho \oplus\id)\oplus \id}"', from=1-1, to=2-1]
+    	\arrow["\id", from=1-2, to=1-3]
+    	\arrow["{\rho \oplus \id}", from=1-2, to=2-2]
+    	\arrow["{=}"{description}, draw=none, from=1-2, to=2-3]
+    	\arrow["{\id \oplus\lambda_\otimes}", from=1-3, to=2-3]
+    	\arrow[""{name=1, anchor=center, inner sep=0}, "{\partial^r}"', from=2-1, to=2-2]
+    	\arrow["{\lambda_\oplus \oplus \id}"', from=2-1, to=3-1]
+    	\arrow["{\id \oplus \lambda_\otimes}", from=2-2, to=3-2]
+    	\arrow["{\rho \oplus \id}", from=2-3, to=3-3]
+    	\arrow["{\lambda_\otimes}"', from=3-1, to=4-1]
+    	\arrow["\id", from=3-2, to=3-3]
+    	\arrow["{\lambda_\oplus}", from=3-3, to=4-3]
+    	\arrow[""{name=2, anchor=center, inner sep=0}, "{(\partial^l)^\dagger}"', from=4-1, to=4-3]
+    	\arrow["{\text{=nat.}}", draw=none, from=0, to=1]
+    	\arrow["{[= \dagger\textbf{-ldc.3}]}"{description}, draw=none, from=3-2, to=2]
+    \end{tikzcd} \]
+
+    \item[L6-(a) holds:]     
+    % https://q.uiver.app/#q=WzAsMjAsWzAsMCwiTShCKSBcXG90aW1lcyAoTShBXlxcZGFnZ2VyKSBcXG9wbHVzIFheXFxkYWdnZXIpIl0sWzEsMCwiKE0oQV5cXGRhZ2dlcikgXFxvcGx1cyBYXlxcZGFnZ2VyKSBcXG90aW1lcyBNKEIpIl0sWzIsMCwiTShBXlxcZGFnZ2VyKSBcXG9wbHVzIChYXlxcZGFnZ2VyIFxcb3RpbWVzIE0oQikpIl0sWzMsMCwiTShBXlxcZGFnZ2VyKSBcXG9wbHVzICggTShCKSBcXG9wbHVzIFheXFxkYWdnZXIpIl0sWzAsMSwiTShCXntcXGRhZ2dlciBcXGRhZ2dlcn0pIFxcb3RpbWVzIChNKEFeXFxkYWdnZXIpIFxcb3BsdXMgWF5cXGRhZ2dlcikiXSxbMSwxLCIoTShBXlxcZGFnZ2VyKSBcXG9wbHVzIFheXFxkYWdnZXIpIFxcb3RpbWVzIE0oQl57XFxkYWdnZXIgXFxkYWdnZXJ9KSJdLFsyLDEsIk0oQV5cXGRhZ2dlcikgXFxvcGx1cyAoWF5cXGRhZ2dlciBcXG90aW1lcyBNKEJee1xcZGFnZ2VyIFxcZGFnZ2VyfSkiXSxbMywxLCJNKEFeXFxkYWdnZXIpIFxcb3BsdXMgKE0oQl57XFxkYWdnZXIgXFxkYWdnZXJ9KSBcXG90aW1lcyBYXlxcZGFnZ2VyKSJdLFswLDIsIk0oQl5cXGRhZ2dlcileXFxkYWdnZXIgXFxvdGltZXMgKE0oQSleXFxkYWdnZXIgXFxvcGx1cyBYXlxcZGFnZ2VyKSJdLFsxLDIsIiAgKE0oQSleXFxkYWdnZXIgXFxvcGx1cyBYXlxcZGFnZ2VyKVxcb3RpbWVzIE0oQl5cXGRhZ2dlcileXFxkYWdnZXIiXSxbMiwyLCJNKEFeXFxkYWdnZXIpIFxcb3BsdXMgKFggXFxvcGx1cyBNKEJeXFxkYWdnZXIpKV5cXGRhZ2dlciJdLFszLDIsIk0oQV5cXGRhZ2dlcikgXFxvcGx1cyAoTShCXlxcZGFnZ2VyKSBcXG9wbHVzIFgpXlxcZGFnZ2VyIl0sWzAsMywiKE0oQl5cXGRhZ2dlcikgXFxvcGx1cyAoTShBKSBcXG90aW1lcyBYKSleXFxkYWdnZXIiXSxbMSwzLCIoKE0oQSkgXFxvdGltZXMgWCleXFxkYWdnZXIgXFxvcGx1cyBNKEJeXFxkYWdnZXIpKV5cXGRhZ2dlciJdLFsyLDMsIihNKEEpIFxcb3RpbWVzIChYIFxcb3BsdXMgTShCXlxcZGFnZ2VyKSleXFxkYWdnZXIiXSxbMywzLCIoTShBKSBcXG90aW1lcyAoTShCXlxcZGFnZ2VyKSBcXG9wbHVzIFgpKV5cXGRhZ2dlciJdLFsxLDQsIigoWCBcXG90aW1lcyBNKEEpKSBcXG9wbHVzIE0oQl5cXGRhZ2dlcikpXlxcZGFnZ2VyIl0sWzIsNCwiKChYIFxcb3BsdXMgTShCXlxcZGFnZ2VyKSBcXG90aW1lcyBNKEEpKV5cXGRhZ2dlciJdLFsxLDUsIihNKEJeXFxkYWdnZXIpIFxcb3BsdXMgKFggXFxvdGltZXMgTShBKSkpXlxcZGFnZ2VyIl0sWzIsNSwiKChNKEJeXFxkYWdnZXIpIFxcb3BsdXMgWCkgXFxvdGltZXMgTShBKSleXFxkYWdnZXIiXSxbMCwxLCJjX1xcb3RpbWVzIl0sWzEsMiwiXFxwYXJ0aWFsXnIiXSxbMiwzLCJcXGlkIFxcb3BsdXMgY19cXG90aW1lcyJdLFswLDQsIk0oXFxpb3RhKSBcXG90aW1lcyBcXGlkIiwyXSxbNCw1LCJjX1xcb3RpbWVzIiwyXSxbMSw1LCJcXGlkIFxcb3RpbWVzIE0oXFxpb3RhKSIsMl0sWzUsNiwiXFxwYXJ0aWFsXnIiLDJdLFs2LDcsIlxcaWQgXFxvcGx1cyBjX1xcb3RpbWVzIiwyXSxbMyw3LCJcXGlkIFxcb3BsdXMgXFxpb3RhIFxcb3RpbWVzIFxcaWQiXSxbMiw2LCJcXGlkIFxcb3BsdXMgXFxpZCBcXG90aW1lcyBcXGlvdGEiXSxbMCw1LCI9XFx0ZXh0e25hdC59Y19cXG90aW1lcyIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxLDYsIj1cXHRleHR7bmF0Ln1cXHBhcnRpYWxeciIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsyLDcsIj1cXHRleHR7bmF0Ln1jX1xcb3RpbWVzIiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzQsOCwiXFxyaG8gXFxvcGx1cyAoXFxyaG8gXFxvcGx1cyBcXGlkKSIsMl0sWzUsOSwiKFxccmhvIFxcb3BsdXMgXFxpZCkgXFxvdGltZXMgXFxyaG8iLDJdLFs2LDEwLCJcXHJobyBcXG9wbHVzIChcXGlkIFxcb3RpbWVzIFxccmhvKSIsMl0sWzcsMTEsIlxccmhvIFxcb3BsdXMgKFxccmhvIFxcb3RpbWVzIFxcaWQpIl0sWzgsOSwiY19cXG90aW1lcyJdLFsxMywxNCwiKFxccGFydGlhbF5sKVxcZGFnZ2VyIl0sWzEwLDExLCJcXGlkIFxcb3BsdXMgY19cXG9wbHVzXlxcZGFnZ2VyIiwyXSxbOSwxMywiXFxsYW1iZGFfXFxvdGltZXMiLDJdLFsxMCwxNCwiXFxsYW1iZGFfXFxvcGx1cyIsMl0sWzUsMTAsIj1bXFxkYWdnZXJcXHRleHRiZnstbGRjLjN9XSIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFs0LDksIj1cXHRleHR7bmF0Ln1jX1xcb3RpbWVzIiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzYsMTEsIj1bXFxkYWdnZXJcXHRleHRiZnstbGRjLjd9XSIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxMSwxNSwiXFxsYW1iZGFfXFxvcGx1cyJdLFsxNCwxNSwiKFxcaWQgXFxvdGltZXMgY19cXG9wbHVzKV5cXGRhZ2dlciJdLFsxMCwxNSwiPVxcdGV4dHtuYXQufVxcbGFtYmRhX1xcb3BsdXMiLDEseyJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XSxbOCwxMiwiXFxsYW1iZGFfXFxvdGltZXMiLDJdLFsxMiwxMywiY19cXG9wbHVzXlxcZGFnZ2VyIl0sWzgsMTMsIj1bXFxkYWdnZXJcXHRleHRiZnstbGRjLjd9XSIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxMywxNiwiKGNfXFxvdGltZXMgXFxvcGx1cyBcXGlkKV5cXGRhZ2dlciIsMl0sWzE0LDE3LCJjX1xcb3RpbWVzXlxcZGFnZ2VyIl0sWzE2LDE4LCJjX1xcb3BsdXNeXFxkYWdnZXIiLDJdLFsxOCwxOSwiKFxccGFydGlhbF5sKV5cXGRhZ2dlciIsMl0sWzE3LDE5LCIoY19cXG9wbHVzIFxcb3RpbWVzIFxcaWQpXlxcZGFnZ2VyIl0sWzEyLDE4LCIoMSBcXG90aW1lcyBjX1xcb3RpbWVzKV5cXGRhZ2dlciIsMSx7ImN1cnZlIjozfV0sWzE5LDE1LCJjX1xcb3RpbWVzXlxcZGFnZ2VyIiwxLHsiY3VydmUiOjN9XSxbMTMsMTcsIigqKSIsMSx7InN0eWxlIjp7ImJvZHkiOnsibmFtZSI6Im5vbmUifSwiaGVhZCI6eyJuYW1lIjoibm9uZSJ9fX1dLFsxMiwxNiwiKCopIiwxLHsic3R5bGUiOnsiYm9keSI6eyJuYW1lIjoibm9uZSJ9LCJoZWFkIjp7Im5hbWUiOiJub25lIn19fV0sWzE0LDU3LCIoKikiLDEseyJzaG9ydGVuIjp7InRhcmdldCI6MjB9LCJzdHlsZSI6eyJib2R5Ijp7Im5hbWUiOiJub25lIn0sImhlYWQiOnsibmFtZSI6Im5vbmUifX19XV0=
+    \[  \footnotesize
+        \begin{tikzcd}[column sep=small]
+    	{M(B) \otimes (M(A^\dagger) \oplus X^\dagger)} & {(M(A^\dagger) \oplus X^\dagger) \otimes M(B)} & {M(A^\dagger) \oplus (X^\dagger \otimes M(B))} & {M(A^\dagger) \oplus ( M(B) \oplus X^\dagger)} \\
+    	{M(B^{\dagger \dagger}) \otimes (M(A^\dagger) \oplus X^\dagger)} & {(M(A^\dagger) \oplus X^\dagger) \otimes M(B^{\dagger \dagger})} & {M(A^\dagger) \oplus (X^\dagger \otimes M(B^{\dagger \dagger})} & {M(A^\dagger) \oplus (M(B^{\dagger \dagger}) \otimes X^\dagger)} \\
+    	{M(B^\dagger)^\dagger \otimes (M(A)^\dagger \oplus X^\dagger)} & {  (M(A)^\dagger \oplus X^\dagger)\otimes M(B^\dagger)^\dagger} & {M(A^\dagger) \oplus (X \oplus M(B^\dagger))^\dagger} & {M(A^\dagger) \oplus (M(B^\dagger) \oplus X)^\dagger} \\
+    	{(M(B^\dagger) \oplus (M(A) \otimes X))^\dagger} & {((M(A) \otimes X)^\dagger \oplus M(B^\dagger))^\dagger} & {(M(A) \otimes (X \oplus M(B^\dagger))^\dagger} & {(M(A) \otimes (M(B^\dagger) \oplus X))^\dagger} \\
+    	& {((X \otimes M(A)) \oplus M(B^\dagger))^\dagger} & {((X \oplus M(B^\dagger) \otimes M(A))^\dagger} \\
+    	& {(M(B^\dagger) \oplus (X \otimes M(A)))^\dagger} & {((M(B^\dagger) \oplus X) \otimes M(A))^\dagger}
+    	\arrow["{c_\otimes}", from=1-1, to=1-2]
+    	\arrow["{M(\iota) \otimes \id}"', from=1-1, to=2-1]
+    	\arrow["{=\text{nat.}c_\otimes}"{description}, draw=none, from=1-1, to=2-2]
+    	\arrow["{\partial^r}", from=1-2, to=1-3]
+    	\arrow["{\id \otimes M(\iota)}"', from=1-2, to=2-2]
+    	\arrow["{=\text{nat.}\partial^r}"{description}, draw=none, from=1-2, to=2-3]
+    	\arrow["{\id \oplus c_\otimes}", from=1-3, to=1-4]
+    	\arrow["{\id \oplus \id \otimes \iota}", from=1-3, to=2-3]
+    	\arrow["{=\text{nat.}c_\otimes}"{description}, draw=none, from=1-3, to=2-4]
+    	\arrow["{\id \oplus \iota \otimes \id}", from=1-4, to=2-4]
+    	\arrow["{c_\otimes}"', from=2-1, to=2-2]
+    	\arrow["{\rho \oplus (\rho \oplus \id)}"', from=2-1, to=3-1]
+    	\arrow["{=\text{nat.}c_\otimes}"{description}, draw=none, from=2-1, to=3-2]
+    	\arrow["{\partial^r}"', from=2-2, to=2-3]
+    	\arrow["{(\rho \oplus \id) \otimes \rho}"', from=2-2, to=3-2]
+    	\arrow["{=[\dagger\textbf{-ldc.3}]}"{description}, draw=none, from=2-2, to=3-3]
+    	\arrow["{\id \oplus c_\otimes}"', from=2-3, to=2-4]
+    	\arrow["{\rho \oplus (\id \otimes \rho)}"', from=2-3, to=3-3]
+    	\arrow["{=[\dagger\textbf{-ldc.7}]}"{description}, draw=none, from=2-3, to=3-4]
+    	\arrow["{\rho \oplus (\rho \otimes \id)}", from=2-4, to=3-4]
+    	\arrow["{c_\otimes}", from=3-1, to=3-2]
+    	\arrow["{\lambda_\otimes}"', from=3-1, to=4-1]
+    	\arrow["{=[\dagger\textbf{-ldc.7}]}"{description}, draw=none, from=3-1, to=4-2]
+    	\arrow["{\lambda_\otimes}"', from=3-2, to=4-2]
+    	\arrow["{\id \oplus c_\oplus^\dagger}"', from=3-3, to=3-4]
+    	\arrow["{\lambda_\oplus}"', from=3-3, to=4-3]
+    	\arrow["{=\text{nat.}\lambda_\oplus}"{description}, draw=none, from=3-3, to=4-4]
+    	\arrow["{\lambda_\oplus}", from=3-4, to=4-4]
+    	\arrow["{c_\oplus^\dagger}", from=4-1, to=4-2]
+    	\arrow["{(*)}"{description}, draw=none, from=4-1, to=5-2]
+    	\arrow["{(1 \otimes c_\otimes)^\dagger}"{description}, bend right={18pt}, from=4-1, to=6-2]
+    	\arrow["{(\partial^l)\dagger}", from=4-2, to=4-3]
+    	\arrow["{(c_\otimes \oplus \id)^\dagger}"', from=4-2, to=5-2]
+    	\arrow["{(*)}"{description}, draw=none, from=4-2, to=5-3]
+    	\arrow["{(\id \otimes c_\oplus)^\dagger}", from=4-3, to=4-4]
+    	\arrow["{c_\otimes^\dagger}", from=4-3, to=5-3]
+    	\arrow["{c_\oplus^\dagger}"', from=5-2, to=6-2]
+    	\arrow["{(c_\oplus \otimes \id)^\dagger}", from=5-3, to=6-3]
+    	\arrow["{(\partial^l)^\dagger}"', from=6-2, to=6-3]
+    	\arrow[""{name=0, anchor=center, inner sep=0}, "{c_\otimes^\dagger}"{description}, bend right={18pt}, from=6-3, to=4-4]
+    	\arrow["{(*)}"{description}, draw=none, from=4-3, to=0]
+    \end{tikzcd}\]
+
+\end{description}
+\end{description}
+
+\subsection{A model for quantum communication}
+
+The $\CP^*$ construction \cite{CHK16} on the category of finite dimensional Hilbert spaces and linear maps produces a category equivalent to finite-dimensional $\C^*$-algebras and completely positive maps. The resulting category is a setting where classical and quantum processes occur on equal footing. Setting $\CP^*(\FHilb)$ as the category of messages, and the category of finiteness spaces and finiteness matrices over complex numbers as the category of channels, one could construct a mixed unitary category as follows: 
+
+\begin{proposition}
+    The category ${\sf CP}^*({\sf FHilb})$ acting on finiteness spaces, $M: {\sf CP}^*(\FHilb) \to {\sf FMat}(\C)$ is a dagger linear actegory.
+\end{proposition}
+\begin{proof}
+    
+    By \cite[Corollary 2.47]{Sri21}, the core of the category of finiteness matrices over a rig $R$, $\FMat(R)$ is equivalent to the category of finite-dimensional matrices over $R$, $\Mat(R)$. 
+
+    By \cite[Theorem 6.6]{CHK16}, the category ${\sf CP}^*(\FHilb)$ is equivalent to the category of finite-dimensional $\C^*$-algebras and completely positive maps.  
+
+    There is a faithful functor from ${\sf CP}^*(\FHilb)$ into $\Core({\FMat(\C)})$.
+
+    Every $n$-dimensional $\C^*$-algebra is mapped to a set of cardinality $n$. There is only one finiteness topology over finite set of cardinality $n$. By Choi's theorem, every (finite-dimensional) completely positive map corresponds to a unique complex matrix upto isomorphism. The functor is not full since not every linear map ($n \times m$ matrix) is completely positive. 
+
+    The functor is strong monoidal. Moreover it is $\dagger$-isomix with the preservator to be the identity natural transformation. 
+\end{proof}
+
+%===========================================================%
+\iffalse
+
+\section{Case studies of quantum protocols}
+
+\subsection{Teleporation}
+
+Quantum teleportation is string diagrammatically represented as below:
+
+\[ \includegraphics[scale=0.45]{figs/teleportation.png} \]
+
+Agent A teleports a quantum bit (qbit) to Agent B. They begin by sharing a Bell state -- each agent has one of the two entangled qubits. Agent A performs a few local (quantum) computation and transmits two classical bits of information to Agent B. Agent B reconstructs 
+
+\subsection{Superdense coding}
+
+\subsection{BB84}
+
+\subsection{Other protocols}
+
+\fi
+
+\setcounter{tocdepth}{1}
+
+% Sections here
+\printbibliography
+
+\begin{appendix}
+
+\section{Sample conversations based on the sum-product logic}
+\label{Appendix-A}
+
+We list a few sample conversations between Kiki and Bouba protocols mediated by Process {\bf P}. Note that the Kiki and Bouba channels represents "what can be done" and the process determines "what will be done" over these protocols.
+
+\subsection*{Sample Conversation 2: Process {\bf P} starts at the root of the tree.}
+\begin{description}
+\item[] Process listens over Kiki.
+\item[Receives (from Kiki):] left
+\item[] Process moves down one step to the left branch and listens to Bouba.
+\item[Receives (from Bouba):] right
+\item[] Process moves down one step and outputs B over Bouba.
+\item[Sends (over Bouba):] B
+\item[] Process moves down one step and outputs B over Kiki.
+\item[Sends (over Kiki)] B
+\end{description} 
+
+\subsection*{Sample Conversation 3: Process starts at the root of the tree.}
+\begin{description}
+\item[] Process listens to Kiki.
+\item[Receives (from Kiki):] right
+\item[] Process moves down one step to the right branch and listens to Bouba.
+\item[Receives (from Bouba):] right
+\item[] Process moves down one step and outputs C to Bouba.
+\item[Sends (over Bouba):] C
+\item[] Process moves down one step and outputs C to Kiki.
+\item[Sends (over Kiki):] C
+\end{description} 
+
+\subsection*{Sample Conversation 3: Process starts at the root of the tree.}
+
+\begin{description}
+\item[] Process listens to Kiki.
+\item[Recives (from Kiki):] right
+\item[] Process moves down one step to the right branch and listens to Bouba.
+\item[Receives (from Bouba):] left
+\item[] Process moves down one step and outputs A over Kiki.
+\item[Send (over Kiki):] A
+\end{description} 
+
+\end{appendix}
+
+\end{document}

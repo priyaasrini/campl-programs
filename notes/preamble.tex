@@ -1,0 +1,685 @@
+\usepackage[utf8]{inputenc}
+
+\usepackage{bussproofs}
+
+%%% -- Use biblatex instead of bibtex
+%\usepackage[english]{babel}
+%\usepackage[style=numeric, sorting=nty]{biblatex}
+
+
+\usepackage[pdftex,dvipsnames]{xcolor}  % Coloured text etc.
+%\usepackage[top=2cm, bottom=2.5cm, right=1.5cm, left=1.5cm]{geometry} 
+%\usepackage{breakurl}
+\usepackage{amsmath,amsthm,amssymb,amsfonts,graphicx}
+\usepackage{xypic}
+\usepackage{stmaryrd}
+\usepackage{tikz}
+\usepackage{proof}
+\usepackage[shortlabels]{enumitem}
+\usepackage{mathtools}
+\usepackage{lscape}
+\usepackage{tocloft}
+\usepackage{multicol} 
+\usepackage{leftidx}
+\usepackage{bbm}
+\usepackage{rotating}
+\usepackage{extarrows}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{dsfont}
+\usepackage{caption}
+\providecommand{\event}{ACT 2023}
+\usepackage{tikz-cd}
+\usepackage[margin=1in, top=1in, bottom=1in]{geometry}
+\usepackage{bussproofs}
+\usepackage{dutchcal}
+\usepackage{newpxtext}
+\usepackage[varg,bigdelims]{newpxmath}
+\usepackage[backend=biber, backref=true, maxbibnames = 10, style = alphabetic]{biblatex}
+\usepackage[bookmarks=true, colorlinks=true, linkcolor=blue!50!black,
+citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperref}
+\usepackage[capitalize]{cleveref}
+\usepackage{bbm}
+\usepackage{floatpag}
+
+%\newtheorem{observation}{dummy}[section]
+\newcounter{dummy} 
+\numberwithin{dummy}{section}
+
+\newtheorem{lemma}[dummy]{Lemma}  %%share counter with remark
+\newtheorem{theorem}[dummy]{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}[dummy]{Definition}
+\newtheorem{ob}[dummy]{Observation}
+\newtheorem{notation}[dummy]{Notation}
+\newtheorem{proposition}[dummy]{Proposition} 
+\newtheorem{corollary}[dummy]{Corollary} 
+\theoremstyle{definition}
+\newtheorem{example}[dummy]{Example}
+\newtheorem{hypothesis}[dummy]{Hypothesis}
+\numberwithin{equation}{section}
+
+
+\newcommand{\tri
+}{\triangleleft
+}
+
+\setlength{\cftbeforesecskip}{1pt}
+\setlength{\cftbeforesubsecskip}{1pt}
+\setlength{\cftbeforesubsubsecskip}{1pt}
+
+
+\newcommand{\funfact}[1]{\noindent\fbox{\begin{minipage}{\textwidth}
+#1
+\end{minipage}}}
+
+\newcommand{\s}{{\sf s}}
+\renewcommand{\t}{{\sf t}}
+\renewcommand{\u}{{\sf{u}}}
+\renewcommand{\v}{{\sf{v}}}
+\newcommand{\<}{\langle}
+\renewcommand{\>}{\rangle}
+\newcommand{\X}{\mathbb{X}}
+\newcommand{\A}{\mathbb{A}}
+\newcommand{\B}{\mathbb{B}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\D}{\mathbb{D}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\J}{\mathbb{J}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\U}{\mathbb{U}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\Y}{\mathbb{Y}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\dsa}{$\dag$-$*$-autonomous}  
+\newcommand{\dldc}{$\dag$-LDC}  
+\newcommand{\m}{{\sf m}}
+\newcommand{\f}{{\sf f}}
+
+\newcommand{\Set}{{\sf Set}}
+\newcommand{\duo}{\mathsf{duo}}
+\newcommand{\indep}{{\sf indep}}
+\newcommand{\Cocore}{{\sf Cocore}}
+\newcommand{\Poly}{{\sf Poly}}
+\newcommand{\lCore}{{\sf core_{\ell}}}
+\newcommand{\rCore}{{\sf core_r}}
+\newcommand{\nD}{{\sf normalDuo}}
+\newcommand{\Iso}{{\sf Isomix}}
+\newcommand{\coeval}{{\sf coev}}
+\newcommand{\eval}{{\sf ev}}
+
+\newcommand{\dashvv}{\dashv \!\!\!\! \dashv}  
+\newcommand{\yon}{\mathcal{y}}
+\newcommand{\then}{\fatsemi}
+
+\newcommand{\priyaa}[1]{\textcolor{purple}{#1}}
+
+\newcommand{\nat}{\text{nat. }} 
+\newcommand{\id}{{\sf id}} 
+\newcommand{\CP}{\mathsf{CP}}
+\newcommand{\ox}{\otimes}
+\newcommand{\pr}{\oplus}
+\newcommand{\oa}{\oplus}
+\newcommand{\op}{\mathsf{op}}
+\newcommand{\rev}{\mathsf{rev}}
+\newcommand{\mx}{\mathsf{mx}}
+\newcommand{\Chu}{\mathsf{Chu}}
+\newcommand{\FRel}{\mathsf{FRel}}
+\newcommand{\FMat}{\mathsf{FMat}}
+\newcommand{\Rel}{\mathsf{Rel}}
+\newcommand{\Mat}{\mathsf{Mat}}
+\newcommand{\Core}{\mathsf{Core}}
+\newcommand{\FHilb}{\mathsf{FHilb}}
+\newcommand{\Unitary}{\mathsf{Unitary}}
+\newcommand{\dual}{\mathbin{\text{\reflectbox{$\Vdash$}}}}
+\newcommand{\fin}{\mathsf{FinSp}}
+\newcommand{\lollipop}{\ensuremath{\!-\!\!\circ}}
+\renewcommand{\bar}[1]{\overline{#1}}
+\newcommand{\x}{\times}
+\newcommand {\poppilol} {\reflectbox{$\multimap$}}
+
+
+\iffalse
+\let\oldsection\section% Store \section
+\renewcommand{\section}{% Update \section
+  \renewcommand{\theequation}{\thesection.\arabic{equation}}% Update equation number
+  \oldsection}% Regular \section
+\let\oldsubsection\subsection% Store \subsection
+\renewcommand{\subsection}{% Update \subsection
+  \renewcommand{\theequation}{\thesubsection.\arabic{equation}}% Update equation number
+  \oldsubsection}% Regular \subsection  
+\let\oldsubsubsection\subsubsection% Store \subsection
+\renewcommand{\subsubsection}{% Update \subsection
+  \renewcommand{\theequation}{\thesubsubsection.\arabic{equation}}% Update equation number
+  \oldsubsubsection}% Regular \subsection
+\fi 
+
+% Jeff Egger's tensor and par
+\newlength{\llcfoo}
+\def\superimpose#1#2{
+  \settowidth{\llcfoo}{#2}
+  \makebox[\llcfoo]{\makebox[0pt]{#1}\makebox[0pt]{#2}}}
+%% \superimpose assumes that the first argument is narrower (or
+%% equal-in-width) to the second.
+\def\mathsuperimpose#1#2{\mathchoice{
+  \superimpose{\ensuremath{\displaystyle#1}}{\ensuremath{\displaystyle#2}}}{
+  \superimpose{\ensuremath{\textstyle#1}}{\ensuremath{\textstyle#2}}}{
+  \superimpose{\ensuremath{\scriptstyle#1}}{\ensuremath{\scriptstyle#2}}}{
+  \superimpose{\ensuremath{\scriptscriptstyle#1}}{\ensuremath{\scriptscriptstyle#2}}}}
+
+      \def\quasipt{1pt}     	% if 12pt font
+%     \def\quasipt{0.75pt}  	% if 11pt font
+%     \def\quasipt{0.67pt}  	% if 10pt font
+      \def\minipt{0.6pt}	% seems to work reasonably well in all fonts
+      \def\tinypt{0.4pt}	% seems to work reasonably well in all fonts
+    \def\smalltimes{\raisebox{\quasipt}{$\scriptstyle\times$}}
+    \def\tinytimes{\raisebox{\minipt}{$\scriptscriptstyle\times$}}
+    \def\teenytimes{\cdot} % or {\scriptscriptstyle\ast}} or similar
+    \def\fixnormalcup{\raisebox{-\quasipt}{$\cup$}}
+    \def\fixsmallcup{\raisebox{-\minipt}{$\scriptstyle\cup$}}
+    \def\fixtinycup{\raisebox{-\tinypt}{$\scriptscriptstyle\cup$}}
+  \def\fixtimes{
+    \mathchoice{\smalltimes}{\smalltimes}{\tinytimes}{\teenytimes}}
+  \def\fixcup{
+    \mathchoice{\fixnormalcup}{\fixnormalcup}{\fixsmallcup}{\fixtinycup}}
+\def\ocap{\mathrel{\mathsuperimpose{\fixtimes}{\cap}}}
+\def\ocup{\mathrel{\mathsuperimpose{\fixtimes}{\fixcup}}}
+\def\bigocap{\mathop{\mathsuperimpose{\times}{\bigcap}}\limits}
+\def\bigocup{\mathop{\mathsuperimpose{\times}{\bigcup}}\limits}
+\def\bip{\mathop{\mathsuperimpose{\times}{+}}\limits}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% M. Barr uses the following:  "It gives a \to that can be used as
+% $A\to B$ or $A\to^f B$ or $A\to^{f\o g\o h}B$ or even $A\to^f_gB$.  The
+% arrow will grow to fit the label(s).  There are similar definitions for
+% \two and \tofro, for which you really might want labels both above and
+% below.  Actually, by reading your definition of \kto, I was able to
+% simplify this.  But it is still nice to have the optional arguments.
+% There is only caveat: although you can have one or the other or both
+% labels, if you have both the upper must precede the lower.  These defs
+% must either be placed in a style file xor surrounded by \makeatletter
+% and \makeatother (but NOT both)."  (Modifications by rags)
+% The definitions below look more elaborate than they need to be.
+% The reason is that an empty asscript will still cause extra vertical
+% spacing and the only way to avoid ugly extra space seems to be using
+% some such method as this.
+
+\makeatletter
+\newenvironment{myproof}[1][\proofname]{\par
+    \pushQED{\qed}%
+    \normalfont \topsep6\p@\@plus6\p@\relax
+    \trivlist
+    \item[\hskip\labelsep
+        \itshape
+        #1\@addpunct{.} ]\mbox{}\par\nobreak}
+    {\popQED\endtrivlist\@endpefalse}
+\makeatother
+
+\makeatletter
+
+% In-text size:
+
+\newdimen\w@dth
+
+\def\setw@dth#1#2{\setbox\z@\hbox{\scriptsize $#1$}\w@dth=\wd\z@
+\setbox\@ne\hbox{\scriptsize $#2$}\ifnum\w@dth<\wd\@ne \w@dth=\wd\@ne \fi
+\advance\w@dth by 1.2em}
+
+\def\t@^#1_#2{\allowbreak\def\n@one{#1}\def\n@two{#2}\mathrel
+{\setw@dth{#1}{#2}
+\mathop{\hbox to \w@dth{\rightarrowfill}}\limits
+\ifx\n@one\empty\else ^{\box\z@}\fi
+\ifx\n@two\empty\else _{\box\@ne}\fi}}
+\def\t@@^#1{\@ifnextchar_ {\t@^{#1}}{\t@^{#1}_{}}}
+
+
+\def\t@left^#1_#2{\def\n@one{#1}\def\n@two{#2}\mathrel{\setw@dth{#1}{#2}
+\mathop{\hbox to \w@dth{\leftarrowfill}}\limits
+\ifx\n@one\empty\else ^{\box\z@}\fi
+\ifx\n@two\empty\else _{\box\@ne}\fi}}
+\def\t@@left^#1{\@ifnextchar_ {\t@left^{#1}}{\t@left^{#1}_{}}}
+
+
+\def\two@^#1_#2{\def\n@one{#1}\def\n@two{#2}\mathrel{\setw@dth{#1}{#2}
+\mathop{\vcenter{\hbox to \w@dth{\rightarrowfill}\kern-1.7ex
+                 \hbox to \w@dth{\rightarrowfill}}%
+       }\limits
+\ifx\n@one\empty\else ^{\box\z@}\fi
+\ifx\n@two\empty\else _{\box\@ne}\fi}}
+\def\tw@@^#1{\@ifnextchar_ {\two@^{#1}}{\two@^{#1}_{}}}
+
+
+\def\tofr@^#1_#2{\def\n@one{#1}\def\n@two{#2}\mathrel{\setw@dth{#1}{#2}
+\mathop{\vcenter{\hbox to \w@dth{\rightarrowfill}\kern-1.7ex
+                 \hbox to \w@dth{\leftarrowfill}}%
+       }\limits
+\ifx\n@one\empty\else ^{\box\z@}\fi
+\ifx\n@two\empty\else _{\box\@ne}\fi}}
+\def\t@fr@^#1{\@ifnextchar_ {\tofr@^{#1}}{\tofr@^{#1}_{}}}
+
+% Displaysize:
+
+\newdimen\W@dth
+\def\setW@dth#1#2{\setbox\z@\hbox{$#1$}\W@dth=\wd\z@
+\setbox\@ne\hbox{$#2$}\ifnum\W@dth<\wd\@ne \W@dth=\wd\@ne \fi
+\advance\W@dth by 1.2em}
+
+\def\T@^#1_#2{\allowbreak\def\N@one{#1}\def\N@two{#2}\mathrel
+{\setW@dth{#1}{#2}
+\mathop{\hbox to \W@dth{\rightarrowfill}}\limits
+\ifx\N@one\empty\else ^{\box\z@}\fi
+\ifx\N@two\empty\else _{\box\@ne}\fi}}
+\def\T@@^#1{\@ifnextchar_ {\T@^{#1}}{\T@^{#1}_{}}}
+
+
+\def\T@left^#1_#2{\def\N@one{#1}\def\N@two{#2}\mathrel{\setW@dth{#1}{#2}
+\mathop{\hbox to \W@dth{\leftarrowfill}}\limits
+\ifx\N@one\empty\else ^{\box\z@}\fi
+\ifx\N@two\empty\else _{\box\@ne}\fi}}
+\def\T@@left^#1{\@ifnextchar_ {\T@left^{#1}}{\T@left^{#1}_{}}}
+
+
+\def\Tofr@^#1_#2{\def\N@one{#1}\def\N@two{#2}\mathrel{\setW@dth{#1}{#2}
+\mathop{\vcenter{\hbox to \W@dth{\rightarrowfill}\kern-1.7ex
+                 \hbox to \W@dth{\leftarrowfill}}%
+       }\limits
+\ifx\N@one\empty\else ^{\box\z@}\fi
+\ifx\N@two\empty\else _{\box\@ne}\fi}}
+\def\T@fr@^#1{\@ifnextchar_ {\Tofr@^{#1}}{\Tofr@^{#1}_{}}}
+
+
+\def\Two@^#1_#2{\def\N@one{#1}\def\N@two{#2}\mathrel{\setW@dth{#1}{#2}
+\mathop{\vcenter{\hbox to \W@dth{\rightarrowfill}\kern-1.7ex
+                 \hbox to \W@dth{\rightarrowfill}}%
+       }\limits
+\ifx\N@one\empty\else ^{\box\z@}\fi
+\ifx\N@two\empty\else _{\box\@ne}\fi}}
+\def\Tw@@^#1{\@ifnextchar_ {\Two@^{#1}}{\Two@^{#1}_{}}}
+
+
+\def\to{\@ifnextchar^ {\t@@}{\t@@^{}}}
+\def\from{\@ifnextchar^ {\t@@left}{\t@@left^{}}}
+\def\tofro{\@ifnextchar^ {\t@fr@}{\t@fr@^{}}}
+\def\To{\@ifnextchar^ {\T@@}{\T@@^{}}}
+\def\From{\@ifnextchar^ {\T@@left}{\T@@left^{}}}
+\def\Two{\@ifnextchar^ {\Tw@@}{\Tw@@^{}}}
+\def\Tofro{\@ifnextchar^ {\T@fr@}{\T@fr@^{}}}
+
+\makeatother
+\newcommand{\vcenteredinclude}[2]{\begingroup
+\setbox0=\hbox{\includegraphics[#1]{#2}}%
+\parbox{\wd0}{\box0}\endgroup}
+% for pullback corner
+\newcommand{\pullbackcorner}[1][ul]{\save*!/#1+1.2pc/#1:(1,-1)@^{|-}\restore}
+\newcommand{\pushoutcorner}[1][dr]{\save*!/#1-1.2pc/#1:(-1,1)@^{|-}\restore}
+
+%%%%%%%%%%%%%%%%%% TikZ %%%%%%%%%%%%%%%%%%%%%%
+\tikzstyle{strings}=[baseline={([yshift=-.5ex]current bounding box.center)}]
+
+%Global tikz scaling
+
+\tikzset{every picture/.append style={scale=.5}, transform shape, strings}
+
+\tikzset{%
+symbol/.style={%
+draw=none,
+every to/.append style={%
+edge node={node [sloped, allow upside down, auto=false]{$#1$}}}
+}
+}
+
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{patterns}
+\usetikzlibrary{fit}
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
+\usetikzlibrary{arrows}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{shapes}
+
+%% -------------------------------------- Declare the layers
+\pgfdeclarelayer{nodelayer}
+\pgfdeclarelayer{edgelayer}
+\pgfsetlayers{edgelayer,nodelayer,main}
+
+
+%% -------------------------------------- Declare the styles
+\tikzset{simple/.style={}}
+\tikzset{nothing/.style={outer sep=-3.4pt}}
+
+\tikzset{map/.style={draw,fill=white, thick, rectangle}}
+\tikzset{mapblack/.style={draw,fill=black, rectangle}}
+
+% Edge styles
+\tikzstyle{filled}=[-, fill=black]
+
+\tikzset{dot/.style={thick, fill=black, circle, scale=1, inner sep = .05cm}}
+
+\tikzset{oa/.style={draw, scale=0.9,minimum height=.1cm,circle,append after command={
+[shorten >=\pgflinewidth, shorten <=\pgflinewidth,]
+(\tikzlastnode.north) edge (\tikzlastnode.south)
+(\tikzlastnode.east) edge (\tikzlastnode.west)
+} } }
+
+\tikzset{ox/.style={draw, scale=0.9,minimum height=.1cm,circle,append after command={
+[shorten >=\pgflinewidth, shorten <=\pgflinewidth,]
+(\tikzlastnode.north west) edge (\tikzlastnode.south east)
+(\tikzlastnode.north east) edge (\tikzlastnode.south west) } } }
+
+
+\tikzset{coprod/.style={draw, thick, scale=0.75, circle } }
+
+\tikzset{prod/.style={draw, fill=black, scale=0.75, circle } }
+
+
+\tikzset{circ/.style={
+shape=circle, inner sep=1pt, draw}}
+
+% Styles added by Priyaa
+\tikzstyle{none}=[inner sep=-1pt]
+\tikzstyle{circle}=[shape=circle,draw]
+
+\tikzstyle{onehalfcircle}=[shape=circle, scale=1.5, draw]
+\tikzstyle{twocircle}=[shape=circle, scale=2, draw]
+\tikzstyle{black}=[shape=circle, fill=black, draw]
+
+\tikzstyle{head}=[fill=white, draw=black, shape=circle, scale=2, thick]
+\tikzstyle{grayhead}=[dashed, fill=white, draw=gray, shape=circle, scale=2]
+\tikzstyle{process}=[fill=white, draw=black, shape=circle, scale=2, thick]
+
+
+\newcommand*{\StrikeThruDistance}{0.15cm}%
+\newcommand*{\StrikeThru}{\StrikeThruDistance,\StrikeThruDistance}%
+
+\tikzset{wires/.style={}}
+
+\tikzset{box/.style={inner sep=0pt, thick, draw=black, text height=1.5ex, text depth=.25ex, 
+text centered, minimum height=3em, anchor=center}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\tikzcdset{every label/.append style = {font = \Large}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\linmonw} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\circ} & }}
+%\newcommand{\linmonwr} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\triangleright} & }}
+\newcommand{\linmonwl} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\otimes\;\tri} & }}
+\newcommand{\linmonwr} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\tri\;\otimes} & }}
+\newcommand{\linmonwrdavid} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\otimes\;\tri} & }}
+\newcommand{\linmonwldavid} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\tri\;\otimes} & }}
+\newcommand{\linmondavid} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r] & }}
+
+\newcommand{\lincomonb} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]_{\bullet} & }}
+\newcommand{\lincomonw} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]_{\circ} & }}
+\newcommand{\lincomonwr} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]_{\tri\;\otimes} & }}
+\newcommand{\lincomonwl} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]_{\otimes\;\tri} & }}
+
+\newcommand{\linbialgw} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\circ}_{\circ} & }}
+\newcommand{\linbialgwl} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\otimes\;\tri}_{\otimes\;\tri} & }}
+\newcommand{\linbialgwr} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\tri\;\otimes}_{\tri\;\otimes} & }}
+\newcommand{\linbialgwb} {\xymatrixcolsep{4mm} \xymatrix{ \ar@{-||}[r]^{\circ}_{\bullet} & }}
+
+
+\newcommand{\monoid}[1]{(#1, \mulmap{1.5}{white}: #1 \ox #1 \to #1, \unitmap{1.5}{white}: \yon \to #1)}
+\newcommand{\comonoid}[1]{(#1, \comulmap{1.5}{white}: #1 \to #1 \ox #1, \counitmap{1.5}{white}: #1 \to \yon)}
+\newcommand{\comonoidb}[1]{(#1, \comulmap{1.5}{black}: #1 \to #1 \ox #1, \counitmap{1.5}{black}: #1 \to \yon)}
+\newcommand{\Frob}[1]{(#1, \mulmap{1.5}{white}, \unitmap{1.5}{white}, \comulmap{1.5}{white}, \counitmap{1.5}{white})}
+\newcommand{\bFrob}[1]{(#1, \mulmap{1.5}{black}, \unitmap{1.5}{black}, \comulmap{1.5}{black}, \counitmap{1.5}{black})}
+\newcommand{\bialg}[1]{(#1, \mulmap{1.5}{white}, \unitmap{1.5}{white}, \comulmap{1.5}{black}, \counitmap{1.5}{black})}
+\newcommand{\bialgb}[1]{(#1, \mulmap{1.5}{black}, \unitmap{1.5}{black}, \comulmap{1.5}{white}, \counitmap{1.5}{white})}
+\newcommand{\trimonoid}[1]{(#1, \trianglemult{0.65}: #1 \tri #1 \to #1, \triangleunit{0.65}: \yon \to #1)}
+\newcommand{\tricomonoid}[1]{(#1, \trianglecomult{0.65}: #1 \to #1 \tri #1, \trianglecounit{0.65}: #1 \to \yon)}
+
+\newcommand{\blackman}{
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head] (0) at (-3, 5) {};
+		\node [style=none] (1) at (-3, 4) {};
+		\node [style=none] (2) at (-3.25, 3.75) {};
+		\node [style=none] (3) at (-2.75, 3.75) {};
+		\node [style=none] (4) at (-3.25, 4.45) {};
+		\node [style=none] (5) at (-2.75, 4.45) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw[thick] (0) to (1.center);
+		\draw[thick] (1.center) to (2.center);
+		\draw[thick] (1.center) to (3.center);
+		\draw[thick] (4.center) to (5.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+
+\newcommand{\grayman}{
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=grayhead,thick] (0) at (-3, 5) {};
+		\node [style=none] (1) at (-3, 4) {};
+		\node [style=none] (2) at (-3.25, 3.75) {};
+		\node [style=none] (3) at (-2.75, 3.75) {};
+		\node [style=none] (4) at (-3.25, 4.45) {};
+		\node [style=none] (5) at (-2.75, 4.45) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw[thick, color=gray, dashed] (0) to (1.center);
+		\draw[thick, color=gray, dashed] (1.center) to (2.center);
+		\draw[thick, color=gray, dashed] (1.center) to (3.center);
+		\draw[thick, color=gray, dashed] (4.center) to (5.center);
+	\end{pgfonlayer}
+\end{tikzpicture}  }
+
+
+
+\newcommand{\linbialgwtik} {\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-2.8, 1.17) {};
+		\node [style=none] (1) at (-1.85, 1.17) {};
+		\node [style=none] (2) at (-2, 1.35) {};
+		\node [style=none] (3) at (-2, 1) {};
+		\node [style=none] (4) at (-1.85, 1) {};
+		\node [style=none] (5) at (-1.85, 1.35) {};
+		\node [style=none] (6) at (-2.2, 1) {};
+		\node [style=none] (7) at (-2.5, 1) {};
+		\node [style=none] (8) at (-2.35, 0.82) {};
+		\node [style=none] (9) at (-1.6, 1.17) {};
+		\node [style=none] (10) at (-3.05, 1.17) {};
+		\node [style=circle, scale=0.6] (11) at (-2.35, 1.45) {};
+		%\node [style=none] (12) at (-2.25, 0.5) {}; %extra node for spacing
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (2.center) to (3.center);
+		\draw (5.center) to (4.center);
+		\draw (0.center) to (1.center);
+		\draw (6.center) -- (7.center) -- (8.center) -- (6.center);
+	\end{pgfonlayer}
+\end{tikzpicture}}
+
+
+\newcommand{\linmonwtik} {\begin{tikzpicture}
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-2.7, 1.17) {};
+		\node [style=none] (1) at (-1.85, 1.17) {};
+		\node [style=none] (2) at (-2, 1.35) {};
+		\node [style=none] (3) at (-2, 1) {};
+		\node [style=none] (4) at (-1.85, 1) {};
+		\node [style=none] (5) at (-1.85, 1.35) {};
+		\node [style=circle, scale=0.6] (6) at (-2.35, 1.45) {};
+		\node [style=none] (7) at (-1.6, 1.17) {};
+		\node [style=none] (8) at (-2.95, 1.17) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (2.center) to (3.center);
+		\draw (5.center) to (4.center);
+		\draw (0.center) to (1.center);
+	\end{pgfonlayer}
+\end{tikzpicture}}
+
+\newcommand{\tricomul}[1]{\trianglecomult{#1}}
+\newcommand{\trimul}[1]{\trianglemul{#1}}
+\newcommand{\tricounit}[1]{\trianglecounit{#1}}
+\newcommand{\triunit}[1]{\triangleunit{#1}}
+
+% for multiplication and comultiplication maps
+% arguments - scale and color of dot
+\newcommand{\mulmap}[2]{
+	\begin{tikzpicture}[scale={#1}]
+		\begin{pgfonlayer}{nodelayer}
+			\node [style=circle, scale=0.4, fill={#2}] (5) at (0.32, 0.25) {};
+			\node [style=none] (6) at (0.07, 0.5) {};
+			\node [style=none] (7) at (0.57, 0.5) {};
+			\node [style=none] (8) at (0.32, 0) {};
+			\node [style=none] (9) at (0.64, 0.5) {};
+		\end{pgfonlayer}
+		\begin{pgfonlayer}{edgelayer}
+			\draw [style=none] (8.center) to (5);
+			\draw [style=none, bend left, looseness=1.25] (5) to (6.center);
+			\draw [style=none, bend right, looseness=1.25] (5) to (7.center);
+		\end{pgfonlayer}
+	\end{tikzpicture}	
+}
+
+% need to specify scale and color of dot
+\newcommand{\unitmap}[2]{
+\begin{tikzpicture}[scale=#1]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=circle, scale=0.4, fill=#2] (0) at (0, 0) {};
+		\node [style=none] (1) at (0, -0.4) {};
+		\node [style=none] (4) at (0.13, 0) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=none] (0) to (1.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+
+\newcommand{\trianglecomult}[1]{
+\begin{tikzpicture}[scale=#1]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-0.25, 3.75) {};
+		\node [style=none] (1) at (-0.5, 3.5) {};
+		\node [style=none] (2) at (0, 3.5) {};
+		\node [style=none] (3) at (-0.25, 4.25) {};
+		\node [style=none] (4) at (0.25, 3) {};
+		\node [style=none] (5) at (-0.75, 3) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [bend left, looseness=1.00] (2.center) to (4.center);
+		\draw (0.center) to (1.center);
+		\draw (0.center) to (2.center);
+		\draw (2.center) to (1.center);
+		\draw [in=90, out=-165, looseness=0.75] (1.center) to (5.center);
+		\draw (0.center) to (3.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+}
+
+
+\newcommand{\trianglecounit}[1]{
+\begin{tikzpicture}[scale=#1]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-0.25, 3.5) {};
+		\node [style=none] (1) at (-0.5, 3.25) {};
+		\node [style=none] (2) at (0, 3.25) {};
+		\node [style=none] (3) at (-0.25, 4.25) {};
+		\node [style=none] (4) at (-0.25, 2.8) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (0.center) to (1.center);
+		\draw (0.center) to (2.center);
+		\draw (2.center) to (1.center);
+		\draw (0.center) to (3.center);
+	\end{pgfonlayer}
+\end{tikzpicture}~\!\!}
+
+\newcommand{\trianglemult}[1]{
+\begin{tikzpicture}[scale=#1]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-0.25, 3.5) {};
+		\node [style=none] (1) at (-0.5, 3.75) {};
+		\node [style=none] (2) at (0, 3.75) {};
+		\node [style=none] (3) at (-0.25, 3) {};
+		\node [style=none] (4) at (0.25, 4.25) {};
+		\node [style=none] (5) at (-0.75, 4.25) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [bend right, looseness=1.00] (2.center) to (4.center);
+		\draw (0.center) to (1.center);
+		\draw (0.center) to (2.center);
+		\draw (2.center) to (1.center);
+		\draw [in=-90, out=165, looseness=0.75] (1.center) to (5.center);
+		\draw (0.center) to (3.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+
+\newcommand{\triangleunit}[1]{
+\begin{tikzpicture}[scale=#1]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=none] (0) at (-0.25, 4) {};
+		\node [style=none] (1) at (-0.5, 4.25) {};
+		\node [style=none] (2) at (0, 4.25) {};
+		\node [style=none] (3) at (-0.25, 3.25) {};
+		\node [style=none] (4) at (-0.25, 3) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw (0.center) to (1.center);
+		\draw (0.center) to (2.center);
+		\draw (2.center) to (1.center);
+		\draw (0.center) to (3.center);
+	\end{pgfonlayer}
+\end{tikzpicture}~\!\!}
+
+\newcommand{\comulmap}[2]{
+	\begin{tikzpicture}[scale={#1}]
+		\begin{pgfonlayer}{nodelayer}
+			\node [style=circle, scale=0.4, fill={#2}] (5) at (0.32, 0.25) {};
+			\node [style=none] (6) at (0.07, 0) {};
+			\node [style=none] (7) at (0.57, 0) {};
+			\node [style=none] (8) at (0.32, 0.5) {};
+			\node [style=none] (9) at (0.64, 0) {};
+		\end{pgfonlayer}
+		\begin{pgfonlayer}{edgelayer}
+			\draw [style=none] (8.center) to (5);
+			\draw [style=none, bend right, looseness=1.25] (5) to (6.center);
+			\draw [style=none, bend left, looseness=1.25] (5) to (7.center);
+		\end{pgfonlayer}
+	\end{tikzpicture}
+}
+
+% need to specify scale and color of dot
+\newcommand{\counitmap}[2]{
+\begin{tikzpicture}[scale=#1, rotate=180]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=circle, scale=0.4, fill=#2] (0) at (0, 0) {};
+		\node [style=none] (1) at (0, -0.4) {};
+		\node [style=none] (4) at (0.13, 0) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [style=none] (0) to (1.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+}
+
+\newcommand{\pnote}[1]{{\quad \color{blue}$\lozenge$\;Priyaa says:}~#1\;{\color{blue}$\lozenge$}\quad}
+\newcommand{\rnote}[1]{{\quad \color{red}$\lozenge$\;Robin says:}~#1\;{\color{red}$\lozenge$}\quad}
+
+\newcommand{\gray}[1]{\textcolor{gray}{#1}}
+
+\newcommand{\biglens}[2]{
+     \begin{bmatrix}{\vphantom{f_f^f}#2} \\ {\vphantom{f_f^f}#1} \end{bmatrix}
+}
+\newcommand{\littlelens}[2]{
+     \begin{bsmallmatrix}{\vphantom{f}#2} \\ {\vphantom{f}#1} \end{bsmallmatrix}
+}
+\newcommand{\coclose}[2]{
+  \relax\if@display
+     \biglens{#2}{#1}
+  \else
+     \littlelens{#2}{#1}
+  \fi
+}
+
+
+\newcommand{\qqand}{\qquad\textnormal{and}\qquad}
+
+\newcommand{\mygray}[1]{{\color{gray}#1}}
