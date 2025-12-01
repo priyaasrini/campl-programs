@@ -1,4 +1,4 @@
-{- Does not compile. Because the server_echo expects a put (|) type but the server sends Colors type.
+{- Does not compile. Because in server_echo the race expects a put (|) type but the server sends Colors type.
    See colors-splitfork-Put-simplified-withterminals.mpl for working example. 
 -}
 
