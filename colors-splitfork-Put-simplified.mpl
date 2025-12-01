@@ -1,4 +1,4 @@
-{- Does not compile because -}
+{- Just compiles -}
 
 protocol Echo => S =
     EchoSend :: Put( [Char] | Get( [Char] | S)) => S
