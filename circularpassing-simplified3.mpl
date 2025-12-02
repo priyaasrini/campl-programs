@@ -1,7 +1,8 @@
 {- Pass echo server around a circle. 
    The echo server is passed from left to right (during which it interacts with each client.) 
    When it reaches the rightmost end, it is passed right to left.
-   Has bug.
+   with terminal -- no dummy.
+   Has bug
 -}
 
 protocol Passer( | M) => S =
@@ -58,39 +59,31 @@ defn
                     circular_corner_left( tag | new_pass => ch )
 
 proc circular_client_send_then_close :: [Char] | Passer(| Echo) => Neg(Passer(| Echo)), Echo, Terminal =
-    tag | send => neg_recv, ch, term -> plug
-        send, dummy => neg_recv, ch -> do
-            close dummy
-            hcase send of
-                Passer -> do
-                    fork send as
-                        ch2 with ch -> do
-                            on ch do
-                                hput EchoSend
-                                put echo_from_left('*' : tag)
-                                get echoed
-                            ch2 |=| ch 
-                        neg_new_send with neg_recv ->
-                            -- Version(A): |=| negated channels (does not work at runtime)
-                            -- for this program, closing a terminal leads to deadlock
-                            neg_new_send |=| neg_recv
-                            -- Version(B): we need to unnegate both channels (neg_new_send and neg_recv), before |=| them
-                            {- plug 
-                                => neg_recv, recv -> neg_recv |=| neg recv
-                                neg_new_send, new_send => -> neg_new_send |=| neg new_send 
-                                recv => new_send -> new_send |=| recv
-                            -}
-        => dummy, term -> do
-            close dummy
+    tag | send => neg_recv, ch, term -> hcase send of
+        Passer -> do
             on term do
                 hput StringTerminalPut
                 put append(tag, " Closing Everything")
 
-                hput StringTerminalGet
-                get _
-
                 hput StringTerminalClose
-            halt term
+                close
+            fork send as
+                ch2 with ch -> do
+                    on ch do
+                        hput EchoSend
+                        put echo_from_left('*' : tag)
+                        get echoed
+                    ch2 |=| ch
+                neg_new_send with neg_recv -> do
+                    -- Version(A): |=| negated channels (does not work at runtime)
+                    -- for this program, closing a terminal leads to deadlock
+                    neg_new_send |=| neg_recv
+                    -- Version(B): we need to unnegate both channels (neg_new_send and neg_recv), before |=| them
+                    {- plug 
+                        => neg_recv, recv -> neg_recv |=| neg recv
+                        neg_new_send, new_send => -> neg_new_send |=| neg new_send 
+                        recv => new_send -> new_send |=| recv
+                    -}
 
 defn
     proc circular_client_wait :: [Char] | Passer(| Echo) => Passer(| Echo), Terminal =
@@ -186,10 +179,12 @@ proc server :: | Echo, LogConsole => =
                 close console
                 halt ch
 
-proc run :: | LogConsole => Terminal, Terminal =
-    | console => term1, term2 -> plug
+proc run :: | LogConsole => Terminal, Terminal, Terminal =
+    | console => term1, term2, term3 -> plug
         circular_corner_left( "l" | pass0 => ch )
         circular_client_wait( "A" | pass1 => pass0, term1 )
         circular_client_wait( "B" | pass2 => pass1, term2 )
+        -- circular_client_wait( "C" | pass3 => pass2, term3 )
+        -- circular_corner_right( "r" | => pass3 )
         circular_corner_right( "r" | => pass2 )
         server( | ch, console => )

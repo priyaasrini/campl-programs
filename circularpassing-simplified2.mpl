@@ -1,7 +1,7 @@
 {- Pass echo server around a circle. 
    The echo server is passed from left to right (during which it interacts with each client.) 
    When it reaches the rightmost end, it is passed right to left.
-   Has bug.
+   Input hardcoded -- with terminals.
 -}
 
 protocol Passer( | M) => S =
@@ -93,41 +93,42 @@ proc circular_client_send_then_close :: [Char] | Passer(| Echo) => Neg(Passer(| 
             halt term
 
 defn
-    proc circular_client_wait :: [Char] | Passer(| Echo) => Passer(| Echo), Terminal =
-        tag | send => recv, term -> do
+    proc circular_client_wait :: [Char], [[Char]] | Passer(| Echo) => Passer(| Echo), Terminal =
+        tag, reqs | send => recv, term -> do
             on term do
                 hput StringTerminalPut
                 put "Waiting for channel . . ."
 
             on recv do hput Passer
             split recv into ch, neg_new_recv
-            circular_client_go(tag | send => neg_new_recv, ch, term )
+            circular_client_go( tag, reqs | send => neg_new_recv, ch, term )
 
-    proc circular_client_go :: [Char] | Passer(| Echo) => Neg(Passer(| Echo)), Echo, Terminal =
-        tag | send => neg_recv, ch, term -> do
+    proc circular_client_go :: [Char], [[Char]] | Passer(| Echo) => Neg(Passer(| Echo)), Echo, Terminal =
+        tag, reqs | send => neg_recv, ch, term -> do
             on term do
                 hput StringTerminalPut
                 put tag
 
-                hput StringTerminalGet
-                get input
-
-            case input of
+            case reqs of
                 [] -> circular_client_send_then_close( tag | send => neg_recv, ch, term )
-                _:_ -> do
+                req:reqs_left -> do
+                    on term do
+                        hput StringTerminalPut
+                        put req
+
                     on ch do
                         hput EchoSend
-                        put append(tag, append(": ", input))
+                        put append(tag, append(": ", req))
                         get echoed
 
                     on term do
                         hput StringTerminalPut
                         put append(tag, append(" > ", echoed))
 
-                    circular_client_pass( tag | send => neg_recv, ch, term )
+                    circular_client_pass( tag, reqs_left | send => neg_recv, ch, term )
 
-    proc circular_client_pass :: [Char] | Passer(| Echo) => Neg(Passer(| Echo)), Echo, Terminal =
-        tag | send => neg_recv, ch, term -> do
+    proc circular_client_pass :: [Char], [[Char]] | Passer(| Echo) => Neg(Passer(| Echo)), Echo, Terminal =
+        tag, reqs | send => neg_recv, ch, term -> do
             on term do
                 hput StringTerminalPut
                 put "Passing channel around to the >> right >>"
@@ -140,11 +141,11 @@ defn
             hcase send of
                 Passer -> fork send as
                     ch2 with ch -> ch2 |=| ch
-                    neg_new_send with neg_recv, term -> circular_client_passback( tag | neg_new_send => neg_recv, term)
+                    neg_new_send with neg_recv, term -> circular_client_passback( tag, reqs | neg_new_send => neg_recv, term )
                     
 
-    proc circular_client_passback :: [Char] | Neg(Passer(| Echo)) => Neg(Passer(| Echo)), Terminal =
-        tag | neg_send => neg_recv, term -> plug
+    proc circular_client_passback :: [Char], [[Char]] | Neg(Passer(| Echo)) => Neg(Passer(| Echo)), Terminal =
+        tag, reqs | neg_send => neg_recv, term -> plug
             neg_send, send => -> neg_send |=| neg send
             => neg_recv, recv -> neg_recv |=| neg recv
             recv => send, term -> do
@@ -166,7 +167,7 @@ defn
                         neg_new_recv with neg_new_send, term -> plug
                             => neg_new_send, new_send -> neg_new_send |=| neg new_send
                             neg_new_recv, new_recv => -> neg_new_recv |=| neg new_recv
-                            circular_client_wait(tag | new_send => new_recv, term)
+                            circular_client_wait( tag, reqs | new_send => new_recv, term )
 
 proc server :: | Echo, LogConsole => =
     | ch, console => -> do
@@ -186,10 +187,10 @@ proc server :: | Echo, LogConsole => =
                 close console
                 halt ch
 
-proc run :: | LogConsole => Terminal, Terminal =
-    | console => term1, term2 -> plug
+proc run :: | LogConsole => Terminal, Terminal, Terminal =
+    | console => term1, term2, term3 -> plug
         circular_corner_left( "l" | pass0 => ch )
-        circular_client_wait( "A" | pass1 => pass0, term1 )
-        circular_client_wait( "B" | pass2 => pass1, term2 )
+        circular_client_wait( "A", ["apple", "a bee", "a cee"] | pass1 => pass0, term1 )
+        circular_client_wait( "B", ["banana"] | pass2 => pass1, term2 )
         circular_corner_right( "r" | => pass2 )
         server( | ch, console => )
