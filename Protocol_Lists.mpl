@@ -120,19 +120,17 @@ proc p_map :: | PList( | M) => Proc( | M, P), PList( | P) =
 
 -- homework for priyaa: simplify using plist_cons (and perhas equate_2)
 proc cp_map :: | CoProc( | M, P), PList( | M) => PList( | P) =
-    | cp, chs => ret -> hcase chs of
+    | cp, chs => ret_chs -> hcase chs of
         PListEmpty -> do
             on chs do close
             on cp do
                 hput CoProcClose
                 close
-            on ret do
+            on ret_chs do
                 hput PListEmpty
                 halt
         PListCons -> do
             split chs into ch,new_chs
-
-
             on cp do
                 hput CoProcDup
                 split into cp1, new_cp
@@ -144,6 +142,22 @@ proc cp_map :: | CoProc( | M, P), PList( | M) => PList( | P) =
                     fork ret as
                         r with r1 -> r1 |=| r
                         new_ret with new_chs, new_cp -> cp_map( | new_cp, new_chs => new_ret )
+
+            -- this should work, but the compliler complains that plug has a cycle
+            {-
+            split chs into ch,new_chs
+            plug 
+                plist_cons( | applied_ch, step_chs => ret_chs ) 
+                cp, ch => step_cp, applied_ch -> do
+                    on cp do
+                        hput CoProcDup
+                        split into cp1, new_step_cp
+                    on cp1 do hput CoProcRun
+                    fork cp1 as 
+                        neg_ch with ch -> neg_ch |=| neg ch
+                        applied_ch1 with applied_ch, step_cp, new_step_cp -> equate_2( | applied_ch1, new_step_cp => applied_ch, step_cp )
+                cp_map( | step_cp, new_chs => step_chs )
+            -}
 
 -- because we only can race on Put: M = Put(A | P)
 proc p_listrace :: | Put(A | P), PList( | Put(A | P)) => Put(A | P), PList( | Put(A | P)) =
