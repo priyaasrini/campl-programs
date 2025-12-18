@@ -90,11 +90,13 @@ Here are a few practical programming notes:
  
 \end{itemize}
 
+
+
 \section{Example: Echo Server}
 
 \subsection*{Expected program behavior} There are two processes {\em a client} and {\em a server} communicating with one another. The server is connected to the environment via a console, and the client via a \texttt{StringTerminal}. The server reads a string from the terminal, relays it to the server who prints it on the console, and sends the string back to the client. When the user provides an empty string, the processes terminate. 
 
-The topology is shown in the diagram below:
+The topology of the processes and their connection remains the same throughout the program. The topology is shown in the diagram below:
 <DIAGRAM>
 
 
@@ -186,6 +188,14 @@ proc run :: | LogConsole => ClientConsole =
 
 \end{verbatim}
 
-         
+The following items were suggested by Hashimoto as improvements to CaMPL syntax:
+
+\begin{itemize}
+	\item While we have \texttt{Get} and \texttt{Put} for protocols (which means get and put on the output polarity), it will be user-friendly \texttt{coGet} and \texttt{coPut} for coprotocols (to mean \texttt{put} and \texttt{get} respectively on the output terminal.
+	\item Racing on handles instead of \texttt{put}. So be able to race on \texttt{hput}, and \texttt{fork} handles.
+	\item Merge the \texttt{hput} followed by the get or put. 
+	\item \texttt{on <channel> hput <handle>} instead of \texttt{hput <handle> on <channel>}. 
+	\item Currently, to halt a process, the channels are first closed and the final \texttt{halt <channel>} command takes in the name of the last channel to be closed. Instead, close all the channels followed by \texttt{halt} command.
+\end{itemize}
 
 \end{document}
