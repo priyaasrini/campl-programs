@@ -4,7 +4,7 @@
 \addbibresource{refs.bib}
 \linespread{1.11}
 
-\title{Logic of concurrency (from scratch)}
+\title{Categorical Message Passing Language (CaMPL)}
 \author{
     Robin Cockett\thanks{University of Calgary} \and Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
 %\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
@@ -15,27 +15,138 @@
 \maketitle
 
 \begin{abstract}
-Notes on CaMPL language. 
+This document is a simple introduction to  a novel concurrent programming language called the 
+categorical message passing language built on the mathematics of linear actegories. 
+Categorical Message Passing Language, to the best of our knowledge, 
+the only\footnote{Is this true?} concurrent programming language with mathematical underpinnings. 
+It is a functional-style programming language with the abstract machine built on Haskell. 
+The current version of CaMPL compiler is to be considered a proto-alpha, a proof-of-concept 
+of language built from the mathematics of linear actegories.
 \end{abstract}
 
-\addcontentsline{toc}{section}{References}
+%\addcontentsline{toc}{section}{References}
 
 \tableofcontents
 
 \section{Introduction}
 
-\section{Message passing logic}
+Explain current state of concurrency and why CaMPL is novel, and its history.
+
+\section{Mathematical Underpinning}
+
+The categorical semantics of CaMPL is modeled by a {\em linear actegory} \cite{..}, where a symmetric monoidal categorical category $\X$ --- representing the semantics of of the sequential side --- acts on a symmetric linearly distributive category $\C$ --- representing the semantics of the concurrent side. This interaction is defined by two action functors:
+
+\[ \circ: \A \times \C \to \C \quad \quad \text{ and } \quad \quad \bullet: \A^{\sf op} \times \C \to \C \]
+
+These functors describe how sequential data, or {\em messages}, are transmitted through {\em channels}, which are modeled as concurrent types. The $\circ$ functor is the left parametrized left adjoint of $\bullet$ in the sense that 
+
+\[ A \in \A,  \quad X \circ - \dashv A \bullet - : \C \to \C \]
+
+and this parametrized adjunction. The adjunction signifies that a process transmitting or receiving a message can do so either end of a channel. 
 
 \[ \includegraphics[scale=0.5]{figs/term-rules.png} \]
 
 \[ \includegraphics[scale=0.5]{figs/programming-syntax.png} \]
+
+\section{CaMPL constructs and keywords}
+
+CaMPL has concurrent and sequential types.
+
+\subsection{Sequential types}
+
+\subsection{Concurrent types}
+
+A semantics of the concurrent side of CaMPL is given by a linearly distributive category $\C$ which comes with two monoidal structures $\otimes$ (tensor) and $\oplus$ (par). In this category, objects are concurrent channel types and morphisms are processes between channels.  
+
+\subsection*{Protocols and co-protocols}
+
+In CaMPL, channels are instances of protocols (similar to variables are instances of data types) and co-protocols. 
+
+A protocol of sequential input type of $A$, 
+
+\subsection*{Processes}
+
+A process with a sequential input of type $A$, an input channel of type $X$, and an output channel of type $Y$ is defined in CAMPL as in Figure \ref{..}. It can be equivalently expressed as a circuit diagram, show in Figure{..} and the sequent calculus shown in Figure {..}. The black dot at the lower end of the input wire in the circuit diagram indicates the wire carries a sequential input. 
+
+% Side-by-side figures
+\begin{figure}[h]
+\centering
+\begin{minipage}{.5\textwidth}
+  \begin{verbatim}
+  	proc p :: A | X => Y =
+	a | x => y -> ...
+  \end{verbatim} 
+  \captionof{figure}{Syntax for defining a process}
+  \label{fig:test1}
+  
+  \vspace{1em}
+  
+  \[  A ~|~ X ~\Rightarrow~ Y \]
+  \captionof{figure}{Sequent calculus}
+  \label{fig:test1}  
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \[ \includegraphics[scale=0.5]{figs/process-circuit.PNG} \]
+  \captionof{figure}{Circuit diagram}
+  \label{fig:test2}
+\end{minipage}
+\end{figure} 
+
+\subsection{Concurrent constructs}
+
+The following table summarizes the operations on the concurrent types.
+
+ \begin{table}[!h]
+\centering
+	\begin{tabular}{|l|l|}
+	\hline
+	\textsf{id} & equates two channels \\ \hline
+	\textsf{neg} & negates a channel \\ \hline
+	\textsf{plug} & connects two processes by a channel \\ \hline
+	\textsf{get} & gets a value on a channel \\ \hline
+	\textsf{put} & puts a value on a channel \\ \hline
+	\textsf{hput} & puts a handle on a channel \\ \hline
+	\textsf{hcase} & cases on the handles obtained on channel \\ \hline
+	\textsf{split} & splits a channel into two channels \\ \hline
+	\textsf{fork} & forks two new processes \\ \hline
+	\textsf{close} & closes a channel \\ \hline
+	\textsf{halt} & closes a channel. Usually the last channel is halted. \\ \hline
+	\end{tabular}
+\caption{Concurrent MPL Constructs}
+\label{tab:mpl-constructs}
+\end{table} 
+
+
+\subsection*{plug}
+
+Composition of two processes in the concurrent side of CaMPL is defined by 
+{\em plug} command (which is the {\em cut} rule in linear logic. 
+When two processes that are running in parallel are plugged to each other 
+along a channel, they can communicate and pass
+messages through that channel in both directions. Two processes can only be plugged to
+each other along a channel, if they both have a channel of the same type but opposite
+polarity. One channel can be used to connect exactly two processes. 
+
+The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. Process \texttt{p} is connected to the output end of channel \texttt{y} while process \texttt{q} is connected to the input end of channel \texttt{y}.
+
+\begin{verbatim}
+	proc r :: A, B | X => Z = 
+		a, b | x => z -> 
+			plug 
+				p(a | x => y)
+				q(b | y => z)
+\end{verbatim}
+
+The sequent calculus version of the above program is as follows:
+\[ \infer[cut]{A, B ~|~ X \dashvv Z}{A ~|~ X \dashvv Y \quad \quad B ~|~ Y \dashvv Z } \]
 
 
 \section{CaMPL (Categorical Message Passing Language) notes}
 
 CaMPL has concurrent and sequential types. Some useful tables and notes.
 
-The following table summarizes the analogues of sequential and conncurent worlds.
+The following table summarizes the analogues of sequential and concurrent worlds.
 
 \begin{center}
 \begin{tabular}{ c | c | c | c }
