@@ -95,30 +95,30 @@ A process with a sequential input of type $A$, an input channel of type $X$, and
 
 \subsection{Concurrent constructs}
 
-The following table summarizes the operations on the concurrent types.
+Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types.
 
  \begin{table}[!h]
 \centering
-	\begin{tabular}{|l|l|}
+	\begin{tabular}{|l|l|l|}
 	\hline
-	\textsf{id} & equates two channels \\ \hline
-	\textsf{neg} & negates a channel \\ \hline
-	\textsf{plug} & connects two processes by a channel \\ \hline
-	\textsf{get} & gets a value on a channel \\ \hline
-	\textsf{put} & puts a value on a channel \\ \hline
-	\textsf{hput} & puts a handle on a channel \\ \hline
-	\textsf{hcase} & cases on the handles obtained on channel \\ \hline
-	\textsf{split} & splits a channel into two channels \\ \hline
-	\textsf{fork} & forks two new processes \\ \hline
-	\textsf{close} & closes a channel \\ \hline
-	\textsf{halt} & closes a channel. Usually the last channel is halted. \\ \hline
+	\textsf{id} & equates two channels &  non-blocking  \\ \hline
+	\textsf{neg} & negates a channel & non-blocking \\ \hline
+	\textsf{plug} & connects two processes by a channel & non-blocking \\ \hline
+	\textsf{get} & send/receive a message on a channel & depends on the polarity \\ \hline
+	\textsf{put} & send/receive a value on a channel &  depends on the polarity \\ \hline
+	\textsf{hput} & puts a handle on a channel & non-blocking \\ \hline
+	\textsf{hcase} & cases on the handles obtained on channel & blocking \\ \hline
+	\textsf{split} & splits a channel into two channels  & blocking\\ \hline
+	\textsf{fork} & forks two new processes & non-blocking \\ \hline
+	\textsf{close} & closes a channel & non-blocking \\ \hline
+	\textsf{halt} & closes a channel. Usually the last channel is halted. & non-blocking \\ \hline
 	\end{tabular}
 \caption{Concurrent MPL Constructs}
 \label{tab:mpl-constructs}
 \end{table} 
 
 
-\subsection*{plug}
+\subsection*{{\sf plug} connects processes}
 
 Composition of two processes in the concurrent side of CaMPL is defined by 
 {\em plug} command (which is the {\em cut} rule in linear logic. 
@@ -130,6 +130,8 @@ polarity. One channel can be used to connect exactly two processes.
 
 The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. Process \texttt{p} is connected to the output end of channel \texttt{y} while process \texttt{q} is connected to the input end of channel \texttt{y}.
 
+\begin{center}
+\begin{varwidth}{\linewidth}
 \begin{verbatim}
 	proc r :: A, B | X => Z = 
 		a, b | x => z -> 
@@ -137,11 +139,163 @@ The following program plugs process \texttt{p} with process \texttt{q} via chann
 				p(a | x => y)
 				q(b | y => z)
 \end{verbatim}
+\end{varwidth}
+\end{center}
 
 The sequent calculus version of the above program is as follows:
 \[ \infer[cut]{A, B ~|~ X \dashvv Z}{A ~|~ X \dashvv Y \quad \quad B ~|~ Y \dashvv Z } \]
 
 
+\subsection*{{\sf Split} and {\sf Fork}}
+
+\begin{figure}[h]
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			fork <bundled_channel> as 
+				<new_ch1> [with <channels>] -> <process1>
+				<new_ch2> [with <channels>] -> <process2>
+		\end{verbatim}
+	\end{varwidth}
+
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			split <bundled_ch> into <new_ch1>, <new_ch2>
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+\vspace{-2em}
+\caption{Syntax for fork and split}
+\label{Fig: fork and split}
+\end{figure}
+
+As mentioned earlier, the underlying mathematics allows plugging two processes along utmost one channel to avoid cycles. However, if one wishes to plug processes along more than one channel, one may do so safely (with no deadlocking) using {\sf split} and {\sf fork}. The tensor $(*)$ and the par $(+)$ functors (operators) bundles two or more channels together, and produces a new channel for communication (in linear actegories, $(*)$ and $(+)$ are written as $\otimes$ and $\oplus$ respectively).
+
+If a process is connected to a channel of type $A (*) B$ at its output end, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of output polarity. Dually, if a process is connected to a channel of type $A (+) B$ at its  input end, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of input polarity. {\sf fork} is a non-blocking call. Accordingly, sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}:
+\begin{figure}[h]
+	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
+	\[ \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
+\vspace{-2em}
+\caption{Sequent rules for fork}
+\label{Fig: sequent rules fork}
+\end{figure}
+
+Figures \ref{Fig: fork1} show a process {\sf p} connected to a channel of type $Y1 (*) Y2$ at its output end. Using the compound channel, the process forks into a process {\sf p} and a process {\sf q}. Similarly, Figure \ref{Fig: fork2} is an example of process forking at the input end.
+
+% Side-by-side figures
+\begin{figure}[h]
+\centering
+\begin{minipage}{.5\textwidth}
+	\begin{verbatim}
+		proc p :: A, B | X1, X2 => Y1 (*) Y2 = 
+			a, b | x1, x2 => y -> 
+				fork y as 
+					y1 -> p( a | x1 => y1)
+					y2 -> q( b | x2 => y2)
+	\end{verbatim}
+  	\vspace{-2em}
+  \captionof{figure}{Process forking at the output end}
+  \label{Fig: fork1}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+	\begin{verbatim}
+		proc p :: A, B | X1 (+) X2 => Y1 ,Y2 = 
+			a, b | x => y1, y2 -> 
+				fork x as 
+					x1 -> p( a | x1 => y1)
+					x2 -> q( b | x2 => y2)
+	\end{verbatim}  
+	\vspace{-2em}
+  \captionof{figure}{Process forking at the input end}
+  \label{Fig: fork2}
+\end{minipage}
+\end{figure}
+
+If a process is connected to a channel of type $A (*) B$ at its input end, then it can {\sf split} the bundle into two distinct channels $A$ and $B$ of input polarity to be used by the process for further computations. Dually, if a process is connected to a channel of type $A (+) B$ at its  output end, then it can {\sf split} the bundle into two two distinct channels $A$ and $B$ of output polarity. {\sf split} is a blocking call --- that is a process calling split will be blocked unless a {\sf fork} occurs at the other end of the same channel.
+
+The sequent rules for {\sf split call} are shown in Figure \ref{Fig: sequent rules for split}.
+
+\begin{figure}[h]
+	\[ \infer[\otimes_R]{A ~|~ X1 \dashvv Y1 \oplus Y2}{A ~|~ X1 \dashvv Y1, Y2} \]
+	\[ \infer[\oplus_L]{A ~|~ X1, X2 \dashvv Y1}{A ~|~ X1 \otimes X2 \dashvv Y1} \]
+\vspace{-2em}
+\caption{Sequent rules for fork}
+\label{Fig: sequent rules for split}
+\end{figure}
+
+Figure \ref{Fig: split1} shows a process {\sf q} splitting an input channel and calling a process $p$. Dually, Figure \ref{Fig: split2} shows a process splitting on the output channel.
+
+% Side-by-side figures
+\begin{figure}[h]
+\centering
+\begin{minipage}{.5\textwidth}
+	\begin{verbatim}
+		proc p :: A | X => Y1, Y2 = 
+			a | x => y1, y2 -> ... 
+			
+		proc q :: A | X => Y1 (+) Y2 = 
+			a, b | x => y -> do
+					split y into y1, y2
+					p( a | x => y1,y2)
+	\end{verbatim}
+  	\vspace{-2em}
+  \captionof{figure}{Process splitting at the output end}
+  \label{Fig: split1}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+	\begin{verbatim}
+		proc p :: A | X => Y1, Y2 = 
+			a | x => y1, y2 -> ... 
+		
+		proc q :: A | X1 (*) X2 => Y = 
+			a, b | x => y -> do
+					split x into x1, x2
+					p( a | x1,x2 => y)
+	\end{verbatim}
+	\vspace{-2em}
+  \captionof{figure}{Process splitting at the input end}
+  \label{Fig: split2}
+\end{minipage}
+\end{figure}
+
+\subsection*{{\sf Put} and {\sf Get} for sending and receiving messsages}
+
+\begin{figure}[h]
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			Put( <sequential_type> | <concurrent_type> )
+		\end{verbatim}
+	\end{varwidth}
+
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			Get( <sequential_type> | <concurrent_type> )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+\vspace{-2em}
+\caption{Syntax for Put and Get}
+\label{Fig: fork and split}
+\end{figure}
+
+The semantics of message passing in CaMPL is given by linear actegory.. The operator $\circ$ in linear actegory corresponds to the {\sf Put} and the operator $\bullet$ corresponds to the {\sf Get} in CaMPL.Given channel of type $A \circ X$ or \texttt{Put(A | X)} means that process connected to its output end may send a message of type $A$ to the process connected to the input end. 
+
+Figure \ref{Fig: sequent rules for Put} shows the sequent rules for \texttt{Put}. 
+\begin{figure}[h]
+	\[ \infer[\circ_R]{A,B ~|~ X \dashvv A' \circ Y}{A \dashv A' \quad B ~|~ X \dashvv Y} \]
+	\[ \infer[\circ_L]{A ~|~ B \circ X \dashvv Y}{A,B ~|~ X \dashvv Y} \]
+\vspace{-2em}
+\caption{Sequent rules for Put}
+\label{Fig: sequent rules for Put}
+\end{figure}
+
+Figure \ref{fig: process Put} shows a sample communication via \texttt{Put} type. Process \texttt{p} is connected to the output end while process \texttt{q} is connected to the input end of channel $x$ of type \texttt{Put([Char]|X)}. Process \texttt{p} send a string using \texttt{put} which is received by process \texttt{q} via \texttt{get}. 
+
+PROGRAM...
+	
 \section{CaMPL (Categorical Message Passing Language) notes}
 
 CaMPL has concurrent and sequential types. Some useful tables and notes.
