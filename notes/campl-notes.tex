@@ -66,7 +66,13 @@ A protocol of sequential input type of $A$,
 
 \subsection*{Processes}
 
-A process with a sequential input of type $A$, an input channel of type $X$, and an output channel of type $Y$ is defined in CAMPL as in Figure \ref{..}. It can be equivalently expressed as a circuit diagram, show in Figure{..} and the sequent calculus shown in Figure {..}. The black dot at the lower end of the input wire in the circuit diagram indicates the wire carries a sequential input. 
+A process comes with an optional list of:
+\begin{itemize}
+	\item sequential input types;
+	\item left polarity channels;
+	\item right polarity channels.
+\end{itemize}
+For example, Figure \ref{fig:proc} shows a process \texttt{p} with a sequential input of type $A$, a left polarity channel of type $X$, and a right polarity channel of type $Y$ as defined in CAMPL (Process \texttt{p} is connected to the right end of \texttt{x} and to the left end of {\tt y}). It can be equivalently expressed as a circuit diagram, show in Figure \ref{fig:proc circuit} and the sequent calculus shown in Figure \ref{fig:proc sequent}. The black dot at the lower end of the input wire in the circuit diagram indicates the wire carries a sequential input. 
 
 % Side-by-side figures
 \begin{figure}[h]
@@ -77,19 +83,19 @@ A process with a sequential input of type $A$, an input channel of type $X$, and
 	a | x => y -> ...
   \end{verbatim} 
   \captionof{figure}{Syntax for defining a process}
-  \label{fig:test1}
+  \label{fig:proc}
   
   \vspace{1em}
   
-  \[  A ~|~ X ~\Rightarrow~ Y \]
+  \[  A ~|~ X ~\dashvv~ Y \]
   \captionof{figure}{Sequent calculus}
-  \label{fig:test1}  
+  \label{fig:proc sequent}  
 \end{minipage}%
 \begin{minipage}{.5\textwidth}
   \centering
   \[ \includegraphics[scale=0.5]{figs/process-circuit.PNG} \]
   \captionof{figure}{Circuit diagram}
-  \label{fig:test2}
+  \label{fig:proc circuit}
 \end{minipage}
 \end{figure} 
 
@@ -104,8 +110,8 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 	\textsf{id} & equates two channels &  non-blocking  \\ \hline
 	\textsf{neg} & negates a channel & non-blocking \\ \hline
 	\textsf{plug} & connects two processes by a channel & non-blocking \\ \hline
-	\textsf{get} & send/receive a message on a channel & depends on the polarity \\ \hline
-	\textsf{put} & send/receive a value on a channel &  depends on the polarity \\ \hline
+	\textsf{Get} & send/receive a message on a channel & depends on the polarity \\ \hline
+	\textsf{Put} & send/receive a value on a channel &  depends on the polarity \\ \hline
 	\textsf{hput} & puts a handle on a channel & non-blocking \\ \hline
 	\textsf{hcase} & cases on the handles obtained on channel & blocking \\ \hline
 	\textsf{split} & splits a channel into two channels  & blocking\\ \hline
@@ -128,7 +134,7 @@ messages through that channel in both directions. Two processes can only be plug
 each other along a channel, if they both have a channel of the same type but opposite
 polarity. One channel can be used to connect exactly two processes. 
 
-The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. Process \texttt{p} is connected to the output end of channel \texttt{y} while process \texttt{q} is connected to the input end of channel \texttt{y}.
+The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. For Process \texttt{p}, channel \texttt{y} has right polarity while for process \texttt{q} the same channel has left polarity.
 
 \begin{center}
 \begin{varwidth}{\linewidth}
@@ -171,7 +177,7 @@ The sequent calculus version of the above program is as follows:
 
 As mentioned earlier, the underlying mathematics allows plugging two processes along utmost one channel to avoid cycles. However, if one wishes to plug processes along more than one channel, one may do so safely (with no deadlocking) using {\sf split} and {\sf fork}. The tensor $(*)$ and the par $(+)$ functors (operators) bundles two or more channels together, and produces a new channel for communication (in linear actegories, $(*)$ and $(+)$ are written as $\otimes$ and $\oplus$ respectively).
 
-If a process is connected to a channel of type $A (*) B$ at its output end, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of output polarity. Dually, if a process is connected to a channel of type $A (+) B$ at its  input end, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of input polarity. {\sf fork} is a non-blocking call. Accordingly, sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}:
+If a process has a right polarity channel of type $A (*) B$, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of right polarity. Dually, if a process is has a left polarity channel of type $A (+) B$, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of left polarity. {\sf fork} is a non-blocking call. Accordingly, sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}:
 \begin{figure}[h]
 	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
 	\[ \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
@@ -180,7 +186,7 @@ If a process is connected to a channel of type $A (*) B$ at its output end, then
 \label{Fig: sequent rules fork}
 \end{figure}
 
-Figures \ref{Fig: fork1} show a process {\sf p} connected to a channel of type $Y1 (*) Y2$ at its output end. Using the compound channel, the process forks into a process {\sf p} and a process {\sf q}. Similarly, Figure \ref{Fig: fork2} is an example of process forking at the input end.
+Figures \ref{Fig: fork1} show a process {\sf p} with a right polarity channel of type $Y1 (*) Y2$. Using the compound channel, the process forks into a process {\sf p} and a process {\sf q}. Similarly, Figure \ref{Fig: fork2} is an example of process forking.
 
 % Side-by-side figures
 \begin{figure}[h]
@@ -194,7 +200,7 @@ Figures \ref{Fig: fork1} show a process {\sf p} connected to a channel of type $
 					y2 -> q( b | x2 => y2)
 	\end{verbatim}
   	\vspace{-2em}
-  \captionof{figure}{Process forking at the output end}
+  \captionof{figure}{Process forking using {\tt (*)}}
   \label{Fig: fork1}
 \end{minipage}%
 \begin{minipage}{.5\textwidth}
@@ -207,12 +213,12 @@ Figures \ref{Fig: fork1} show a process {\sf p} connected to a channel of type $
 					x2 -> q( b | x2 => y2)
 	\end{verbatim}  
 	\vspace{-2em}
-  \captionof{figure}{Process forking at the input end}
+  \captionof{figure}{Process forking using {\tt (+)}}
   \label{Fig: fork2}
 \end{minipage}
 \end{figure}
 
-If a process is connected to a channel of type $A (*) B$ at its input end, then it can {\sf split} the bundle into two distinct channels $A$ and $B$ of input polarity to be used by the process for further computations. Dually, if a process is connected to a channel of type $A (+) B$ at its  output end, then it can {\sf split} the bundle into two two distinct channels $A$ and $B$ of output polarity. {\sf split} is a blocking call --- that is a process calling split will be blocked unless a {\sf fork} occurs at the other end of the same channel.
+If a process is connected to a left polarity channel of type {\tt A (*) B}, then it can {\sf split} the bundle into two distinct channels {\tt A} and {\tt B} of left polarity to be used by the process for further computations. Dually, if a process is connected to a right polarity channel of type {\tt A (+) B}, then it can {\sf split} the bundle into two two distinct channels $A$ and $B$ of right polarity. {\sf split} is a blocking call --- that is a process calling split will be blocked unless a {\sf fork} occurs at the other end of the same channel.
 
 The sequent rules for {\sf split call} are shown in Figure \ref{Fig: sequent rules for split}.
 
@@ -224,7 +230,7 @@ The sequent rules for {\sf split call} are shown in Figure \ref{Fig: sequent rul
 \label{Fig: sequent rules for split}
 \end{figure}
 
-Figure \ref{Fig: split1} shows a process {\sf q} splitting an input channel and calling a process $p$. Dually, Figure \ref{Fig: split2} shows a process splitting on the output channel.
+Figure \ref{Fig: split1} shows a process {\sf q} splitting an left polarity and calling a process $p$. Dually, Figure \ref{Fig: split2} shows a process splitting on the right polarity.
 
 % Side-by-side figures
 \begin{figure}[h]
@@ -281,20 +287,96 @@ Figure \ref{Fig: split1} shows a process {\sf q} splitting an input channel and 
 \label{Fig: fork and split}
 \end{figure}
 
-The semantics of message passing in CaMPL is given by linear actegory.. The operator $\circ$ in linear actegory corresponds to the {\sf Put} and the operator $\bullet$ corresponds to the {\sf Get} in CaMPL.Given channel of type $A \circ X$ or \texttt{Put(A | X)} means that process connected to its output end may send a message of type $A$ to the process connected to the input end. 
+The semantics of message passing in CaMPL is given by a linear actegory. The operator $\circ$ in linear actegory corresponds to the {\sf Put} and the operator $\bullet$ corresponds to the {\sf Get} in CaMPL.Given channel of type $A \circ X$ or \texttt{Put(A | X)} means that process connected to its output end may send a message of type $A$ to the process connected to the input end. 
 
 Figure \ref{Fig: sequent rules for Put} shows the sequent rules for \texttt{Put}. 
+
+% Side-by-side figures
 \begin{figure}[h]
-	\[ \infer[\circ_R]{A,B ~|~ X \dashvv A' \circ Y}{A \dashv A' \quad B ~|~ X \dashvv Y} \]
+\begin{minipage}{.5\textwidth}
+	\[ \infer[\circ_R]{B ~|~ X \dashvv A' \circ Y}{A \dashv A' \quad A, B ~|~ X \dashvv Y} \]
 	\[ \infer[\circ_L]{A ~|~ B \circ X \dashvv Y}{A,B ~|~ X \dashvv Y} \]
-\vspace{-2em}
-\caption{Sequent rules for Put}
-\label{Fig: sequent rules for Put}
+  	\vspace{-2em}
+  \captionof{figure}{Sequent rules for Put}
+  \label{Fig: sequent rules for Put}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+	\[ \infer[\bullet_R]{B ~|~ X \dashvv A \circ Y}{A,B ~|~ X \dashvv Y} \]
+	\[ \infer[\bullet_L]{A ~|~ B' \bullet X \dashvv Y}{B \dashv B' \quad \quad A,B ~|~ X \dashvv Y} \]
+	\vspace{-2em}
+  \captionof{figure}{Sequent rules for Get}
+  \label{Fig: sequent rules for Get}
+\end{minipage}
 \end{figure}
 
-Figure \ref{fig: process Put} shows a sample communication via \texttt{Put} type. Process \texttt{p} is connected to the output end while process \texttt{q} is connected to the input end of channel $x$ of type \texttt{Put([Char]|X)}. Process \texttt{p} send a string using \texttt{put} which is received by process \texttt{q} via \texttt{get}. 
+Figure \ref{Fig: Put process} shows a sample communication via the \texttt{Put} type. Process \texttt{p} has a right polarity channel {\tt y} while process \texttt{q} has a left polarity channel \texttt{y}, both of type \texttt{Put([Char]|X)}. 
+Process \texttt{p} sends the string ``Hello" using \texttt{send} on its channel \texttt{y} which is received by process \texttt{q} on its channel {\tt y} using \texttt{recv}. 
+Dually, in Figure \ref{Fig: Get process}, Process \texttt{p} has a left polarity channel {\tt y} while process \texttt{q} has a right polarity channel \texttt{y}, each of type \texttt{Get([Char]|X)}. 
+Process \texttt{p} sends a string {\tt "Hello"} on \texttt{y} using \texttt{send} call and process \texttt{q} receives it on {\tt y} using the \texttt{recv} call. 
 
-PROGRAM...
+% Side-by-side figures
+\begin{figure}[h]
+\centering
+\begin{minipage}{.5\textwidth}
+	\begin{verbatim}
+		proc p :: A | => Put( [Char] | Y ) = 
+			a | => y -> do
+				send "Hello" on y
+				halt y
+			
+		proc q ::  | Put( [Char] | Y ) =>  = 
+			| y => do
+				recv b on y
+				halt y
+
+	\end{verbatim}
+  	\vspace{-3em}
+  \captionof{figure}{Send-Receive via \texttt{Put}}
+  \label{Fig: Put process}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+	\begin{verbatim}
+		proc p :: A | Get( [Char] | Y ) => = 
+			a | y => -> do
+				send "Hello" on y
+				halt y
+			
+		proc q ::  | => Get( [Char] | Y )  = 
+			| => y do
+				recv b on y
+				halt y
+
+	\end{verbatim}
+	\vspace{-3em}
+  \captionof{figure}{Send-Receive via \texttt{Get}}
+  \label{Fig: Get process}
+\end{minipage}
+\end{figure}
+
+A process may send on a left polarity channel when the channel is of type {\tt Get} and on a right polarity channel when the channel is of type {\tt Put}. A process may receive on a left polarity channel when the channel is of type {\tt Put} and on a right polarity channel when the channel is of type {\tt Get}. This usage of \texttt{Put} and \texttt{Get} channel types apply for channels which are instances of Protocols. For coProtocols, the interpretation is dual, as shown in the tables below:
+
+
+\begin{center}
+	\begin{tabular}{ c | c | c }
+		     (P)       & (+) & (-) \\
+		 \hline      
+		 {\tt Get}  & {\tt recv}  & {\tt send} \\
+		 \hline
+		 {\tt Put}  & {\tt send}  & {\tt recv} 
+	\end{tabular}
+	\quad \quad 
+	\begin{tabular}{ c | c | c }
+		     (coP)       & (+) & (-) \\
+		 \hline      
+		 {\tt Get}  & {\tt send}  & {\tt recv} \\
+		 \hline
+		 {\tt Put}  & {\tt recv}  & {\tt send} 
+	\end{tabular}
+\end{center}
+
+One may think of a channel of type \texttt{Put} as allowing information flow from left to right, and the type \texttt{Get} as allowing information flow from right to left. 
+
 	
 \section{CaMPL (Categorical Message Passing Language) notes}
 
