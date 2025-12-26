@@ -36,29 +36,31 @@ Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek
 
 \section{Concurrent types}
 
-A semantics of the concurrent side of CaMPL is given by a linearly distributive category $\C$ which comes with two monoidal structures $\otimes$ (tensor) and $\oplus$ (par). In this category, objects are concurrent channel types and morphisms are processes between channels. 
+
+At any instance in run-time, the topology of a CaMPL program, consists of a finite set of {\em processes} connected by {\em channels} arranged as an acyclic graph with processes as nodes and channels as edges of the graph. The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. The following table draws analogue between the constructs of sequential and concurrent MPL.
 
 \begin{center}
-\begin{tabular}{ c ||  c | c | c }
+\begin{tabular}{ | c ||  c | c | c | }
+ \hline
  {\bf Sequential} & Functions & Datatypes   & Instances \\ 
    & & (and coDatatypes)   &  \\
  \hline
  {\bf Concurrent} & Processes & Protocols  & Channels \\  
  & & (and coProtocols)    &  \\
+ \hline
 \end{tabular}
 \end{center} 
 
-At any instance in run-time, the topology of a CaMPL program, consists of a finite set of {\em processes} connected by {\em channels} arranged as an acyclic graph. 
 
 \subsection{Processes}
 
-A process comes with an optional list of:
+In CaMPL, a process consists of an optional list of: 
 \begin{itemize}
-	\item data values (sequential input types),
-	\item left polarity channels, and
-	\item right polarity channels.
+	\item sequential input types,
+	\item left polarity or input channels, and
+	\item right polarity or output channels.
 \end{itemize}
-For example, the following code shows a process \texttt{p} with a sequential input of type $A$, a left polarity channel of type $X$, and a right polarity channel of type $Y$ as defined in CAMPL (Process \texttt{p} is connected to the right end of \texttt{x} and to the left end of {\tt y}). 
+For example, the following code shows a process \texttt{p} with a sequential input of type $A$, a left polarity channel of type $X$, and a right polarity channel of type $Y$ as defined in CAMPL. 
 
   \begin{center}
   \begin{varwidth}{\linewidth}
@@ -71,17 +73,19 @@ For example, the following code shows a process \texttt{p} with a sequential inp
   
   \vspace{-1em}
   
-  \[ \xymatrix{  
-  \ar@{<-}[r]^{X~~~~}  & \quad \blackman  \quad \ar[r]^{~~~~Y} &    } \]
+  Note that \texttt{p} is connected to the right end of \texttt{x} and to the left end of {\tt y}.
   
-It can be equivalently expressed in the sequent calculus as:
+  \[ \xymatrix{  
+  \ar@{-}[r]^{X\quad \quad}  & ~~ \blackman  ~~ \ar@{-}[r]^{\quad \quad Y} &    } \]
+  
+Process {\tt p} can be equivalently expressed in the sequent calculus as:
 $  A ~|~ X ~\dashvv~ Y $.  
 
 \subsection{Channels}
 
-In CaMPL, processes communicate (send and receive messages) via channels.
+In CaMPL, processes communicate (send and receive messages) via channels. CaMPL comes with built-in channel types from which one may build custom channel types. For any process {\tt p}, the behavior of the channels depends on the polarity.The polarity of a channel determines the kind of operations that my be performed on the channel, see Section \ref{sec:concurrent-operators}.
 
-\subsection*{Built-in Channel types}
+\subsubsection{Built-in Channel types}
 
 The following information is from \cite[Section 3.3.2]{Prashanth-thesis}.
 
@@ -95,9 +99,9 @@ The following information is from \cite[Section 3.3.2]{Prashanth-thesis}.
 
 \end{tabular}
 
-The polarity of a channel determines the operations that a process may perform on these types, see Section \ref{sec:concurrent-operators}.
 
-\subsection*{Constructing custom channel types}
+
+\subsubsection{Constructing custom channel types}
 
 In CaMPL, a programmer may built channels of custom types from the built-in types using {\tt protocol} keyword. Protocols are concurrent analogue of dataypes from the sequential world, and channels are concurrent analogue of instances of datatypes.
 
@@ -348,17 +352,17 @@ The following program plugs process \texttt{p} with process \texttt{q} via chann
 \end{center}
 
 The sequent calculus version of the above program is as follows:
-\[ \infer[cut]{A, B ~|~ X \dashvv Z}{A ~|~ X \dashvv Y \quad \quad B ~|~ Y \dashvv Z } \]
+\[ \infer[cut]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
 
 
 \subsection{Duplicating channels using {\tt id} and {\tt neg}}
 
 \subsection{Ending communication using {\tt halt} and {\tt close}}
 
-\subsection{Paired constructs: {\sf fork}~/~{\sf split} and  {\sf hput}~/~{\sf hcase} }
+\subsection{Paired constructs }
 \label{subsec:pairs}
 
-\subsection*{Multichannel communication using {\sf Split} and {\sf Fork}}
+\subsubsection{Multichannel communication using {\sf Split} and {\sf Fork}}
 
 \begin{figure}[h]
 \begin{center}
@@ -470,7 +474,7 @@ Figure \ref{Fig: split1} shows a process {\sf q} splitting an left polarity and 
 \end{minipage}
 \end{figure}
 
-\subsection*{Communicating handles using {\tt hcase} and {\tt hput}}
+\subsubsection{Activating channels using {\tt hcase} and {\tt hput}}
 
 The {\tt hput} command sends a handle of a protocol over a right polarity channel which is matched by a {\tt hcase} command on the left polarity. For co-protocols, handles are sent over a left polarity channel and received over the corresponding right polarity channel. Figure \ref{Fig: hput and hcase} shows the syntax for {\tt hput} and {\tt hcase}.
 
@@ -503,6 +507,59 @@ For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}
 \subsection{Non-deterministic communication using {\tt race}}
 
 \subsection{Higher-order message passing using {\tt store} and {\tt use}}
+
+CaMPL supports higher-order processes, that is, allowing {\em process}es to be packaged and passed to other processes, thereby treating processes as ``first-class citizens".  It provides two constructs for this purpose, namely,  
+\begin{itemize}
+	\item {\tt store} converts a concurrent process into sequential data.
+	\item {\tt use} allow the calling of a stored process.
+\end{itemize}
+CaMPL provides a sequential data type {\tt Store}$(\Phi|\Lambda \vvdash \Delta)$ to represent stored processes. The following program demonstrates higher-order message passing using the Store type and the constructs. Process {\tt q} calls the stored process {\tt p}, {\tt counter} number of times.
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc q :: Int, Store( | A => A) | A => A = 
+					   counter, stored_process | a1 => a2 -> 
+					       case counter of 
+						       0 -> x |=| y						                    -- base	case
+						       _ -> plug 					                       -- recursive case
+							         use(p)(| x => z)				               -- using the stored process
+							         q(counter-1, p | z => y)		         -- recurse
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+The mathematics semantics of storing concurrent processes as sequential data is given by the equivalence between a right $\A$-actegory with Hom-objects and a right $\A$-enriched category with copowers, see \cite{Melika25}.
+
+Another method of passing a process {\tt p} of type "{\tt | A => B}" to a process {\tt q} is using the channel type {\tt Neg(A) (+) B}. The channel type {\tt Neg(A) (+) B} encodes a process {\tt p} of type signature "{\tt | A => B}". Then, a process may "apply" the channel type "{\tt Neg(A) (+) B}" to a input channel of type {\tt A} to produce a output channel of type {\tt B}. The following code demonstrates this. 
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc apply :: | A, Neg(A) (+) B => B =
+				 | a, neg_a_b => b ->
+				        fork neg_a_b as
+				               neg_a -> neg_a |=| neg(a)
+				               b' -> b |=| b' 
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+However, this method does not support arbitrary recursive definitions since channels are linear resources, hence cannot be duplicated (thereby disallowing multiple invocations of a received process). For example, consider a process {\tt q} that receives two input channels: one of type {\tt A} and another of type {\tt Neg(A) (+) A} (representing a process with type signature {\tt A => A}). Additionally, the process {\tt q} has a output channel of type {\tt A} and a sequential {\tt counter} of type {\tt Int}. The goal is to apply the input process to the input channel {\tt counter} times  possibly using the below code snippet. However, this code snippet is invalid in CaMPL since process {\tt q} uses the channel {\tt p} more than once , thereby, violating linearity constraint. 
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc q :: Int | A, Neg(A) (+) A => A =
+				 counter | a, p => y -> case counter of
+				          0 -> a |=| y
+				          _ -> plug
+				          	     apply ( a, p => z )
+					               q( counter - 1 | z, p => y )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+
+
+Note that the above method for higher-order message passing behavior is implicit to CaMPL and uses no new instructions. This is due to the fact that the concurrent side of MPL is a $*$-autonomous category. This allows the language to inherently support (non-recursive) higher-order behavior as described by the following sequent rule,
+\[ 
+	\infer{\Lambda \vvdash A^\perp \oplus B := A \lollipop B}{\Lambda, A \vvdash B}
+\]
 	
 \section{Example programs}
 
