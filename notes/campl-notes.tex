@@ -176,8 +176,8 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 	\textsf{id} & equates two channels &  non-blocking  \\ \hline
 	\textsf{neg} & negates a channel & non-blocking \\ \hline
 	\textsf{plug} & connects two processes by a channel & non-blocking \\ \hline
-	\textsf{Get} & send/receive a value on a channel & depends on the polarity \\ \hline
-	\textsf{Put} & send/receive a value on a channel &  depends on the polarity \\ \hline
+	\textsf{get} & send/receive a value on a channel & depends on the polarity \\ \hline
+	\textsf{put} & send/receive a value on a channel &  depends on the polarity \\ \hline
 	\textsf{hput} & puts a handle on a channel & non-blocking \\ \hline
 	\textsf{hcase} & cases on the handles obtained on channel & blocking \\ \hline
 	\textsf{split} & splits a channel into two channels  & blocking\\ \hline
@@ -189,10 +189,76 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 \label{tab:mpl-constructs}
 \end{table} 
 
-\subsection{Sending and receiving messsages using {\tt Put} and {\tt Get}}
+\subsection{Connecting channels using {\tt plug}}
+
+Composition of two processes in the concurrent side of CaMPL is defined by 
+{\em plug} command (which is the {\em cut} rule in linear logic. 
+When two processes that are running in parallel are plugged to each other 
+along a channel, they can communicate and pass
+messages through that channel in both directions. Two processes can only be plugged to
+each other along a channel, if they both have a channel of the same type but opposite
+polarity. One channel can be used to connect exactly two processes. 
+
+The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. For Process \texttt{p}, channel \texttt{y} has right polarity while for process \texttt{q} the same channel has left polarity.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+\begin{verbatim}
+	proc r :: A, B | X => Z = 
+		a, b | x => z -> 
+			plug 
+				p(a | x => y)
+				q(b | y => z)
+\end{verbatim}
+\end{varwidth}
+\end{center}
+
+The sequent calculus version of the above program is as follows:
+\[ \infer[cut]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
+
+\subsection{Equating channels using {\tt id} and {\tt neg}}
+
+The {\tt id} command is used equate to two channels of opposite polarities while {\tt neg} command is used to equate two channel of same polarities. The following code snippet demonstrates the usage of these commands:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc q :: | A, Neg(A) => A = 
+					  | a, neg_a => a' -> 
+					       a |=| a'						                    -- equating
+					       neg_a |=| neg(a)                  -- equating after negating
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+
+\subsection{Ending communication using {\tt halt} and {\tt close}}
+
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			 close <channel_1>
+			 close <channel_2>
+			 ...
+			 halt <channel_n>		 
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+
+\vspace{-1em}
+
+A process may use {\tt close} and the {\tt halt} commands to close its channels. The {\tt halt} command halts a process after closing the last channel (to be closed). The {\tt halt} command is expected to be the last command of a process block. Closing a channel of any (co)protocol type results in built-in channel type {\tt TopBot}.
+
+In Example {\bf EchoServer} in Section ??,  line ??, {\tt EchoClose} handle creates a channel of type {\tt TopBot}. The {\tt client} process, closes the channel {\tt ch} and halts, using {\tt halt} command (line ??), after {\tt hput EchoClose on ch} (line ??). 
+ 
+\subsection{Paired constructs }
+\label{subsec:pairs}
+
+\subsubsection{Sending and receiving messages using {\tt send} and {\tt recv}}
 \label{subsec:put-get}
 
-The semantics of message passing in CaMPL is given by a linear actegory. The operator $\circ$ in linear actegory corresponds to the {\sf Put} and the operator $\bullet$ corresponds to the {\sf Get} in CaMPL.
+The semantics of message passing in CaMPL is given by a linear actegory. The operator $\circ$ 
+in linear actegory corresponds to the {\tt Put(A|Ch)} and the operator $\bullet$ corresponds to 
+the {\sf Get(A|Ch)} channel types. A process may perform {\tt send} and {\tt recv} commands on 
+a channel of type either {\tt Put(A|Ch)} and {\tt Get(A|Ch)}.
 
 \begin{figure}
 \[  
@@ -209,20 +275,19 @@ The semantics of message passing in CaMPL is given by a linear actegory. The ope
  \label{Fig: Put and Get}
 \end{figure}
 
-Given a channel of type $A \circ X$ or \texttt{Put(A | X)}, if it is of:
+Given a channel of type $A \circ X$ or \texttt{Put(A|X)}, a process may:
 \begin{itemize}
-	\item right polarity, then the process may 'send' a message of type {\tt A},
-	\item left polarity, then the process may 'receive' a message of {\tt A} over the channel.
+	\item 'send' a message of type {\tt A} over a right polarity (output) channel, and
+	\item 'receive' a message of {\tt A} over a left polarity (input) channel.
 \end{itemize}
 
-Dually, given a channel of type $B \bullet X$ or \texttt{Get(B | X)}, if it is:
+Dually, given a channel of type $B \bullet X$, a process may:
 \begin{itemize}
-	\item left polarity, then the process may 'send' a message of type {\tt A},
-	\item right polarity, then the process may 'receive' a message of {\tt A} over the channel.
+	\item 'send' a message of type {\tt A} over a left polarity (input) channel, and
+	\item 'receive' a message of {\tt A} over a right polarity (output) channel.
 \end{itemize}
 
-Thus, with channels of {\tt Put} type, messages are sent towards the right using right polarity, and  
- with channels of {\tt Get} type, messages are sent towards the left using left polarity, see Figure \ref{Fig: Put and Get}. Figure \ref{Fig: Put and Get syntax} shows the syntax for {\tt Put} and {\tt Get}. Figure \ref{Fig: sequent rules for Put} shows the sequent rules for \texttt{Put}. 
+This means that over a channel of type {\tt Put(A|Ch)}, data of type {\tt A} flows towards the right.  This means that over a channel of type {\tt Get(A|Ch)}, data of type {\tt A} flows towards the left.  
 
 \begin{figure}[h]
 \begin{center}
@@ -261,10 +326,11 @@ Thus, with channels of {\tt Put} type, messages are sent towards the right using
 \end{minipage}
 \end{figure}
 
-Figure \ref{Fig: Put process} shows a sample communication via the \texttt{Put} type. Process \texttt{p} has a right polarity channel {\tt y} while process \texttt{q} has a left polarity channel \texttt{y}, both of type \texttt{Put([Char]|X)}. 
-Process \texttt{p} sends the string ``Hello" using \texttt{send} on its channel \texttt{y} which is received by process \texttt{q} on its channel {\tt y} using \texttt{recv}. 
-Dually, in Figure \ref{Fig: Get process}, Process \texttt{p} has a left polarity channel {\tt y} while process \texttt{q} has a right polarity channel \texttt{y}, each of type \texttt{Get([Char]|X)}. 
-Process \texttt{p} sends a string {\tt "Hello"} on \texttt{y} using \texttt{send} call and process \texttt{q} receives it on {\tt y} using the \texttt{recv} call. 
+Figure \ref{Fig: Put process} shows a sample communication over a channel of \texttt{Put(A|Ch)} 
+type. Process \texttt{p} sends the string ``Sending on output channel" which is received by 
+process \texttt{q}. 
+Dually, in Figure \ref{Fig: Get process}, Process \texttt{q} sends a string ``Sending on input 
+channel" which is received by \texttt{q}. 
 
 % Side-by-side figures
 \begin{figure}[h]
@@ -273,7 +339,7 @@ Process \texttt{p} sends a string {\tt "Hello"} on \texttt{y} using \texttt{send
 	\begin{verbatim}
 		proc p :: A | => Put( [Char] | Y ) = 
 			a | => y -> do
-				send "Hello" on y
+				send "Sending on output channel" on y
 				halt y
 			
 		proc q ::  | Put( [Char] | Y ) =>  = 
@@ -289,12 +355,12 @@ Process \texttt{p} sends a string {\tt "Hello"} on \texttt{y} using \texttt{send
 \begin{minipage}{.5\textwidth}
   \centering
 	\begin{verbatim}
-		proc p :: A | Get( [Char] | Y ) => = 
+		proc q :: A | Get( [Char] | Y ) => = 
 			a | y => -> do
-				send "Hello" on y
+				send "Sending on input channel" on y
 				halt y
 			
-		proc q ::  | => Get( [Char] | Y )  = 
+		proc p ::  | => Get( [Char] | Y )  = 
 			| => y do
 				recv b on y
 				halt y
@@ -305,6 +371,8 @@ Process \texttt{p} sends a string {\tt "Hello"} on \texttt{y} using \texttt{send
   \label{Fig: Get process}
 \end{minipage}
 \end{figure}
+
+In Example {\bf EchoServer} in Section ??, in line ??, the handle {\tt EchoSend} constructs a channel of {\tt Put-Get} type allowing the {\tt server} to receive and send in sequence (or vice versa for the {\tt Client}).
 
 The above described usage of \texttt{Put} and \texttt{Get} channel types apply for channels which are instances of Protocols. For coProtocols, the role of {\tt Put} and {\tt Get} gets reversed, as shown in the following tables:
 \begin{center}
@@ -327,42 +395,38 @@ The above described usage of \texttt{Put} and \texttt{Get} channel types apply f
 	\end{tabular}
 \end{center}
 
-\subsection{Connecting channels using {\sf plug}}
+\subsubsection{Activating channels using {\tt hcase} and {\tt hput}}
 
-Composition of two processes in the concurrent side of CaMPL is defined by 
-{\em plug} command (which is the {\em cut} rule in linear logic. 
-When two processes that are running in parallel are plugged to each other 
-along a channel, they can communicate and pass
-messages through that channel in both directions. Two processes can only be plugged to
-each other along a channel, if they both have a channel of the same type but opposite
-polarity. One channel can be used to connect exactly two processes. 
+The {\tt hput} command sends a handle of a protocol over a right polarity channel which is matched by a {\tt hcase} command on the left polarity. For co-protocols, handles are sent over a left polarity channel and received over the corresponding right polarity channel. Figure \ref{Fig: hput and hcase} shows the syntax for {\tt hput} and {\tt hcase}.
 
-The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. For Process \texttt{p}, channel \texttt{y} has right polarity while for process \texttt{q} the same channel has left polarity.
-
+\begin{figure}[h]
 \begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}
-	proc r :: A, B | X => Z = 
-		a, b | x => z -> 
-			plug 
-				p(a | x => y)
-				q(b | y => z)
-\end{verbatim}
-\end{varwidth}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			hput <handle_name> on <channel_name>	
+		\end{verbatim}
+	\end{varwidth}
+
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			hcase <channel_name> of
+				<handle1> -> ... 
+				<handle2> -> ... 
+				.
+				.
+				<handlen> -> ... 
+		\end{verbatim}
+	\end{varwidth}
 \end{center}
+\vspace{-2em}
+\caption{Syntax for {\tt hput} and {\tt hcase}}
+\label{Fig: hput and hcase}
+\end{figure}
 
-The sequent calculus version of the above program is as follows:
-\[ \infer[cut]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
+For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}  hputs {\tt EchoClose} on channel {\tt ch} of type {\tt Echo}. This {\tt hput} is matched by {\tt hcase} in line ?? of the {\tt Server}. 
 
 
-\subsection{Duplicating channels using {\tt id} and {\tt neg}}
-
-\subsection{Ending communication using {\tt halt} and {\tt close}}
-
-\subsection{Paired constructs }
-\label{subsec:pairs}
-
-\subsubsection{Multichannel communication using {\sf Split} and {\sf Fork}}
+\subsubsection{Multichannel communication using {\tt split} and {\tt fork}}
 
 \begin{figure}[h]
 \begin{center}
@@ -474,37 +538,27 @@ Figure \ref{Fig: split1} shows a process {\sf q} splitting an left polarity and 
 \end{minipage}
 \end{figure}
 
-\subsubsection{Activating channels using {\tt hcase} and {\tt hput}}
+In Example ??, ... 
 
-The {\tt hput} command sends a handle of a protocol over a right polarity channel which is matched by a {\tt hcase} command on the left polarity. For co-protocols, handles are sent over a left polarity channel and received over the corresponding right polarity channel. Figure \ref{Fig: hput and hcase} shows the syntax for {\tt hput} and {\tt hcase}.
+\subsection{Non-deterministic communication using {\tt race}}
 
-\begin{figure}[h]
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			hput <handle_name> on <channel_name>	
-		\end{verbatim}
-	\end{varwidth}
-
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			hcase <channel_name> of
-				<handle1> -> ... 
-				<handle2> -> ... 
-				.
-				.
-				<handlen> -> ... 
+			race 
+				<ch_1> -> ...
+				<ch_2> -> ...
+				..
+				<ch_n> -> ...
 		\end{verbatim}
 	\end{varwidth}
 \end{center}
-\vspace{-2em}
-\caption{Syntax for {\tt hput} and {\tt hcase}}
-\label{Fig: hput and hcase}
-\end{figure}
 
-For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}  hputs {\tt EchoClose} on channel {\tt ch} of type {\tt Echo}. This {\tt hput} is matched by {\tt hcase} in line ?? of the {\tt Server}. 
+The {\tt race} command initiates a race condition between two or more channels of 
+{\tt  Put(-|-)} type\footnote{ Disederata: We could like to race on handles or any blocking call. Current compiler support is for {\tt Put}.}. 
+The system waits for input on any of the racing channels and triggers the corresponding continuation for the first one to receive data. The continuations for the losing channels are discarded.
 
-\subsection{Non-deterministic communication using {\tt race}}
+In Example ??,
 
 \subsection{Higher-order message passing using {\tt store} and {\tt use}}
 
