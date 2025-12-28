@@ -7,7 +7,7 @@ protocol Passer( | M ) => S =
     Passer :: M (+) Neg(S)  => S
     -- Passer :: M (+) (Neg(M) (*) S) => S
 
-protocol MemCell (A | ) => S =
+protocol MemCh (A | ) => S =
     MemPut :: Put(A|S) => S
     MemGet :: Get(A|S) => S
     MemCls :: TopBot => S
@@ -16,7 +16,7 @@ fun append :: [A], [A] -> [A] =
     [], ts -> ts
     s:ss, ts -> s : append(ss,ts)
 
-proc memCell :: A | MemCell(A | ) => =
+proc memCell :: A | MemCh(A | ) => =
     val | ch => -> hcase ch of
         MemPut -> do
             get nval on ch
@@ -28,7 +28,7 @@ proc memCell :: A | MemCell(A | ) => =
             halt ch
 
 defn
-    proc p1 :: [Char] | Passer( | MemCell([Char] | ) ) => MemCell([Char]| ), StringTerminal =
+    proc memAccess :: [Char] | Passer( | MemCh([Char] | ) ) => MemCh([Char]| ), StringTerminal =
         tag | passer => mem, _strterm -> hcase passer of 
             Passer -> do 
                 hput MemGet on mem
@@ -54,22 +54,22 @@ defn
 
                     negpasser with _strterm -> do
                         plug
-                            p2(tag | => npasser, _strterm)
+                            memWait(tag | => npasser, _strterm)
                             npasser, negpasser => -> negpasser |=| neg npasser
 
 
-    proc p2 :: [Char] |  => Passer( | MemCell([Char] | )), StringTerminal =
+    proc memWait :: [Char] |  => Passer( | MemCh([Char] | )), StringTerminal =
         tag | => passer, _strterm -> do
             hput Passer on passer
             split passer into mem, negpasser
 
             plug
-                p1(tag | npasser => mem, _strterm)
+                memAccess(tag | npasser => mem, _strterm)
                 => negpasser, npasser -> negpasser |=| neg npasser
                     
 proc run =
     | => _strterm0, _strterm1 -> do
         plug 
-            p1("A:" | passer => mem, _strterm0)
-            p2("B:" |        => passer, _strterm1)
+            memAccess("A:" | passer => mem, _strterm0)
+            memWait("B:" |        => passer, _strterm1)
             memCell( "I like dogs" | mem => )

@@ -725,6 +725,130 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 
 \subsection{Mutual Exclusion}
 
+This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt A} and {\tt B}.  
+
+Any point during execution, the program has three processes -- a process {\tt MemAccess} which reads and writes to the memory, a process {\tt MemWait}, and a Memory cell process. Process {\tt MemAccess} is connected to the Memory via an output channel. Process {\tt MemWait} is connected to Memory cell via {\tt MemAccess} on an output channel. 
+
+It helps to view the processes {\tt A} and {\tt B} as alternatively running {\tt MemWait} and {\tt MemAccess}. Process {\tt A} starts with {\tt MemAccess} and process {\tt B} starts with {\tt MemWait}.
+
+The channel of type {\tt Passer} acts similar to a Mutex variable. When the program starts running, {\tt MemWait} passes {\tt Passer} handle to {\tt MemAccess} and blocks (on {\tt split}).
+
+On receiving the handle from {\tt MemWait}, {\tt MemAccess} accesses the memory cell -- by reading the existing value and the write a new value. 
+
+
+Then, it forks on the input channel Passer {\tt Passer} producing two input channels of {\tt MemCell} and {\tt Neg(Passer)} types. It equates the {\tt MemChannel} type channel to the existing channel to the Memory cell. It passes the {\tt Neg(Passer)} channel to the {\tt MemWait} after negation using {\tt plug} command. 
+
+At this point, {\tt MemWait} is unblocked (by the {\tt MemAccess} of Process 1) and invokes {\tt MemAccess} to access the memory cell.
+
+During the program execution, the topology alternates between (a) and (b) depending on Process 1 or Process 2 accessing the memory cell respectively.
+\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \]
+
+The protocol {\tt Passer} is used communication between the {\tt MemWait} and {\tt MemAccess} processes. 
+
+
+The protocol {\tt Passer} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Passer} type constructs from {\tt S} a compound {\tt (+)} channel. The protocol {\tt MemCh} is used communication between Process 1 and Memory cell, and allows reading, writing and closing a memory cell.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	protocol Passer( | M ) => S =
+	    Passer :: M (+) Neg(S)  => S
+	    
+	protocol MemCh (A | ) => S =
+	    MemPut :: Put(A|S) => S
+	    MemGet :: Get(A|S) => S
+	    MemCls :: TopBot => S
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+The process {\tt memCell} takes an input channel, reads and writes to it.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc memCell :: A | MemCh(A | ) => =
+		    val | ch => -> hcase ch of
+		        MemPut -> do
+		            get nval on ch
+		            memCell(nval | ch => )
+		        MemGet -> do
+		            put val on ch
+		            memCell(val | ch => )
+		        MemCls -> do
+		            halt ch
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+Initially, the main process creates three processes {\tt memAccess}, {\tt memWait}, and a memory cell with an initial value. Note that, {\tt memAccess} is connected to the memory cell.
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc run =
+		    | => _strterm0, _strterm1 -> do
+		        plug 
+		            p1("A:" | passer => mem, _strterm0)
+		            p2("B:" |        => passer, _strterm1)
+		            memCell( "I like dogs" | mem => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+Process {\tt memWait} activates the {\tt passer} channel and splits the output channel, hence blocking itself. Once it resumes (due to a {\tt fork}), it {\tt plug}s to process {\tt memAccess} via the memory channel and negated passer obtained from split. The passer needs to be negated to be converted to an input channel to pass to {\tt memAccess}.
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	    proc memWait :: 
+	    [Char] |  => Passer( | MemCh([Char] | )), StringTerminal =
+	        tag | => passer, _strterm -> do
+	            hput Passer on passer
+	            split passer into mem, negpasser
+	
+	            plug
+	                p1(tag | npasser => mem, _strterm)
+	                => negpasser, npasser -> negpasser |=| neg npasser
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+Process {\tt memAccess} on receiving the {\tt Passer} handle on {\tt passer}, does read and write of the memory (lines ?? -- ??). Once memory access is complete, it forks on the input channel {\tt passer}. It equates new memory channel to the existing one {\tt mem}, and passes the negated version of the new passer as an output channel to {\tt memWait} using {\tt plug}.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	    proc memAccess :: 
+	    [Char] | Passer( | MemCh([Char] | ) ) => MemCh([Char]| ), StringTerminal =
+	        tag | passer => mem, _strterm -> hcase passer of 
+	            Passer -> do 
+	                hput MemGet on mem
+	                get inp on mem
+	
+	                hput StringTerminalPut on _strterm
+	                put append(tag, " Receiving: ") on _strterm
+	
+	                hput StringTerminalPut on _strterm
+	                put inp on _strterm
+	
+	                hput StringTerminalPut on _strterm
+	                put append(tag, " Enter a string: ") on _strterm
+	
+	                hput StringTerminalGet on _strterm
+	                get ninp on _strterm
+	
+	                hput MemPut on mem
+	                put ninp on mem
+	
+	                fork passer as
+	                    mmem with mem -> mmem |=| mem
+	
+	                    negpasser with _strterm -> do
+	                        plug
+	                            p2(tag | => npasser, _strterm)
+	                            npasser, negpasser => -> negpasser |=| neg npasser
+	\end{verbatim}
+\end{varwidth}
+\end{center}
 
 \subsection{Non-deterministic communication}
 
