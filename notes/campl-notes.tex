@@ -81,6 +81,8 @@ For example, the following code shows a process \texttt{p} with a sequential inp
 Process {\tt p} can be equivalently expressed in the sequent calculus as:
 $  A ~|~ X ~\dashvv~ Y $.  
 
+
+
 \subsection{Channels}
 
 In CaMPL, processes communicate (send and receive messages) via channels. CaMPL comes with built-in channel types from which one may build custom channel types. For any process {\tt p}, the behavior of the channels depends on the polarity.The polarity of a channel determines the kind of operations that my be performed on the channel, see Section \ref{sec:concurrent-operators}.
@@ -216,7 +218,10 @@ The following program plugs process \texttt{p} with process \texttt{q} via chann
 The sequent calculus version of the above program is as follows:
 \[ \infer[cut]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
 
+Note that, a process is allowed to utilize a channel type only once, neither can it create new channel, unless using the {\tt plug} command. Example ?? describes one such usage of {\tt plug} and {\tt neg} commands for process invocation (See Section \ref{sec:neg} for {\tt neg} command).  
+
 \subsection{Equating channels using {\tt id} and {\tt neg}}
+\label{sec:neg}
 
 The {\tt id} command is used equate to two channels of opposite polarities while {\tt neg} command is used to equate two channel of same polarities. The following code snippet demonstrates the usage of these commands:
 \begin{center}
@@ -271,7 +276,7 @@ a channel of type either {\tt Put(A|Ch)} and {\tt Get(A|Ch)}.
  \ar@{<-}[rr]^{(r) \quad B \bullet X \quad (l)} 
  &  & \quad \blackman   }  
  \]
- \caption{Schematic of {\tt Put} and {\tt Get}}
+ \caption{Schematic of {\tt Put} and {\tt Get} types}
  \label{Fig: Put and Get}
 \end{figure}
 
@@ -394,6 +399,10 @@ The above described usage of \texttt{Put} and \texttt{Get} channel types apply f
 		 {\tt Put}  & {\tt recv}  & {\tt send} 
 	\end{tabular}
 \end{center}
+
+Read this as, if I (process) have an output channel which is a {\tt Put} type on a protocol, then I can {\tt send} (put) data on this channel. Alternatively, if I (process) have an input channel which is a {\tt Put} type on a protocol, then someone will be {\tt send}ing (putting) data on this channel for me.
+
+If I (process) have an input channel which is a {\tt Get} type on a protocol, then I can {\tt recv} (get) data on this channel. Alternatively, if I (process) have an output channel which is a {\tt Get} type on a protocol, then someone will be {\tt recv}ing (getting) data on this channel from me.
 
 \subsubsection{Activating channels using {\tt hcase} and {\tt hput}}
 
@@ -727,7 +736,9 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 
 This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt A} and {\tt B}.  
 
-The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. Hence, new processes are created during program execution. However, the code primarily has three processes -- a process {\tt MemAccess} which reads and writes to the memory, a process {\tt MemWait}, and a Memory cell process. Process {\tt MemAccess} is connected to the Memory via an output channel. A {\tt Mutex} protocol is used communication for between the {\tt MemWait} and {\tt MemAccess} processes. Process {\tt MemWait} is connected to {\tt MemAccess} on an output {\tt Mutex} channel. 
+The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. Hence, new processes are created during program execution. However, the code primarily has three processes -- a process {\tt MemAccess} which reads and writes to the memory, a process {\tt MemWait}, and a Memory cell process. Process {\tt MemAccess} is connected to the Memory via an output channel. A {\tt Mutex} protocol is used communication for between the {\tt MemWait} and {\tt MemAccess} processes. Process {\tt MemWait} is connected to {\tt MemAccess} via {\tt Mutex} channel on output and input ends respectively. 
+
+\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \]
 
 The competing `processes', say {\tt A} and {\tt B}, take turns running {\tt MemWait} and {\tt MemAccess}. To begin with Process {\tt A} starts with {\tt MemAccess} and process {\tt B} starts with {\tt MemWait}. Each process is connected to a string terminal to read user input.
 Process {\tt A} blocks on {\tt hcase} waiting to receive a handle from Process {\tt B} on {\tt Mutex} channel.
@@ -740,7 +751,7 @@ On completing the read and write, Process {\tt A} forks on the input channel typ
 
 Once Process {\tt A} performs {\tt fork}, Process {\tt B} (in {\tt MemWait}) resumes and invokes {\tt MemAccess} to access the memory cell.
 
-The rest of the section explains the code snippets.
+The rest of the section explains the code snippets. Complete code available in Appendix ??.
 
 The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
 
