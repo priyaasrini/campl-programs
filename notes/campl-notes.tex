@@ -60,6 +60,7 @@ In CaMPL, a process consists of an optional list of:
 	\item left polarity or input channels, and
 	\item right polarity or output channels.
 \end{itemize}
+
 For example, the following code shows a process \texttt{p} with a sequential input of type $A$, a left polarity channel of type $X$, and a right polarity channel of type $Y$ as defined in CAMPL. 
 
   \begin{center}
@@ -193,30 +194,42 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 
 \subsection{Connecting channels using {\tt plug}}
 
-Composition of two processes in the concurrent side of CaMPL is defined by 
-{\em plug} command (which is the {\em cut} rule in linear logic. 
-When two processes that are running in parallel are plugged to each other 
-along a channel, they can communicate and pass
-messages through that channel in both directions. Two processes can only be plugged to
-each other along a channel, if they both have a channel of the same type but opposite
-polarity. One channel can be used to connect exactly two processes. 
-
-The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. For Process \texttt{p}, channel \texttt{y} has right polarity while for process \texttt{q} the same channel has left polarity.
-
 \begin{center}
 \begin{varwidth}{\linewidth}
 \begin{verbatim}
-	proc r :: A, B | X => Z = 
-		a, b | x => z -> 
-			plug 
-				p(a | x => y)
-				q(b | y => z)
+	plug 
+		    p1( | ch1 => ch2)
+		    p2( | ch2 => ch3)
+		    p3( | ch3 => ch4)
+		    ...
+		    pn( | chn => last_ch)
 \end{verbatim}
 \end{varwidth}
 \end{center}
 
+Composition of two or more processes in the concurrent side of CaMPL is defined by 
+{\em plug} command (which is the {\em cut} rule in linear logic. Two processes can only be plugged to each other along a channel, if they share a channel of the same type but opposite
+polarity.
+
+The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. Note that, channel \texttt{y} has right polarity for process \texttt{p} while  it has left polarity for process \texttt{q}. Moreover, process {\tt r} duplicated the sequential type using {\tt a} twice, however it uses all concurrent types only once satisfying the linearlity constraint.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+\begin{verbatim}
+	proc r :: A | X => Z = 
+		    a, b | x => z -> 
+			    plug 
+				       p(a | x => y)
+				       q(a | y => z)
+\end{verbatim}
+\end{varwidth}
+\end{center}
+
+The {\tt plug} command can only occur as the last command in a process block, and causes the plugged processes to run. Two processes plugged together can communicate and pass
+messages through the connecting channel in both directions. CaMPL allows utmost one channel to be used connect two processes. 
+
 The sequent calculus version of the above program is as follows:
-\[ \infer[cut]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
+\[ \infer[\text{cut}]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
 
 Note that, a process is allowed to utilize a channel type only once, neither can it create new channel, unless using the {\tt plug} command. Example ?? describes one such usage of {\tt plug} and {\tt neg} commands for process invocation (See Section \ref{sec:neg} for {\tt neg} command).  
 
@@ -282,14 +295,14 @@ a channel of type either {\tt Put(A|Ch)} and {\tt Get(A|Ch)}.
 
 Given a channel of type $A \circ X$ or \texttt{Put(A|X)}, a process may:
 \begin{itemize}
-	\item 'send' a message of type {\tt A} over a right polarity (output) channel, and
-	\item 'receive' a message of {\tt A} over a left polarity (input) channel.
+	\item {\em send} a message of type {\tt A} over a right polarity (output) channel, and
+	\item {\em receive} a message of {\tt A} over a left polarity (input) channel.
 \end{itemize}
 
 Dually, given a channel of type $B \bullet X$, a process may:
 \begin{itemize}
-	\item 'send' a message of type {\tt A} over a left polarity (input) channel, and
-	\item 'receive' a message of {\tt A} over a right polarity (output) channel.
+	\item {\em send} a message of type {\tt A} over a left polarity (input) channel, and
+	\item {\em receive} a message of {\tt A} over a right polarity (output) channel.
 \end{itemize}
 
 This means that over a channel of type {\tt Put(A|Ch)}, data of type {\tt A} flows towards the right.  This means that over a channel of type {\tt Get(A|Ch)}, data of type {\tt A} flows towards the left.  
@@ -564,7 +577,7 @@ In Example ??, ...
 \end{center}
 
 The {\tt race} command initiates a race condition between two or more channels of 
-{\tt  Put(-|-)} type\footnote{ Disederata: We could like to race on handles or any blocking call. Current compiler support is for {\tt Put}.}. 
+{\tt  Put(-|-)} type\footnote{ Desiderata: We could like to race on handles or any blocking call. Current compiler support is for {\tt Put}.}. 
 The system waits for input on any of the racing channels and triggers the corresponding continuation for the first one to receive data. The continuations for the losing channels are discarded.
 
 In Example ??,
