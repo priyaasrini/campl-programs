@@ -639,6 +639,32 @@ Note that the above method for higher-order message passing behavior is implicit
 	
 \section{Example programs}
 
+\subsection*{Hello World}
+
+In this example, a CaMPL process prints ``Hello World" on the console.The console is an input coprotocol channel for the process {\tt helloworld}.
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc helloworld :: | Console => = 
+			    | console => -> do
+			        hput ConsolePut on console               
+			        put "Hello World" on console.              
+			
+			        hput ConsoleClose on console 
+			        halt console
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+The {\tt helloworld} process is invoked as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc run = 
+			    | console => -> helloworld( |console=>)
+		\end{verbatim}
+	\end{varwidth}
+\end{center}			    
+
 \subsection{EchoServer}
 
 \subsection*{Expected program behavior} There are two processes {\em a client} and {\em a server} communicating with one another. The server is connected to the environment via a console, and the client via a \texttt{StringTerminal}. The server reads a string from the terminal, relays it to the server who prints it on the console, and sends the string back to the client. When the user provides an empty string, the processes terminate. 

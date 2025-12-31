@@ -1,35 +1,25 @@
--- protocol Input => Output =
---    InputRead :: Input => Get( [Char] | Output)
+coprotocol S => Console = 
+        ConsoleGet :: S => Put( [Char] | S)
+        ConsolePut :: S => Get( [Char] | S)
+        ConsoleClose :: S => TopBot 
 
-coprotocol
-    S => ReadConsole = 
-    --    ConsolePut :: S => Get( [Char] | S)
-    --    ConsoleGet :: S => Put( [Char] | S)
-        ReadConsoleGet :: S => Put( [Char] | T)
-        ReadConsoleClose :: S => TopBot 
+{- codata S -> InfList(A) = 
+        Head :: S -> A 
+        Tail :: S -> S
 
-    and
+fun nats :: Int -> InfList(Int) = 
+        n -> (Head := -> n, Tail := -> nats(n+1)) -}
 
-    T => WriteConsole =
-        WriteConsolePut :: T => Get( [Char] | S)
-
-proc helloworld :: | ReadConsole => = 
+proc helloworld :: | Console => = 
     | console => -> do
---        hput ConsoleGet on console
---        get x on console
---        -- put "Hello World" on console
-
---        hput ConsolePut on console
---        put x on console
-
-        hput ReadConsoleGet on console
+        hput ConsoleGet on console
         get x on console
 
-        hput WriteConsolePut on console
+        hput ConsolePut on console 
         put x on console
 
-        hput ReadConsoleClose on console
+        hput ConsoleClose on console
         halt console
 
 proc run = 
-    | console => -> helloworld( |console=>)
+    | console => -> helloworld( |console =>)
