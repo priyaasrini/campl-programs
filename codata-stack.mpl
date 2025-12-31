@@ -22,9 +22,6 @@ fun pop :: Stack([Char]) -> [Char] =
             SS((a,_)) -> a 
             _ -> "Fail" 
 
-fun push :: [Char], Stack([Char]) -> Stack([Char]) =
-      str, s -> Push(str, s)
-
 proc run =
       | console =>
        -> do on console do
