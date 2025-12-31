@@ -895,6 +895,93 @@ Process {\tt memAccess} on receiving the {\tt Pass} handle on {\tt Mutex}, does 
 
 \subsection{Non-deterministic communication}
 
+This example demonstrates two clients racing to send a message to an echo server. The server prints the messages in the order it receives, and halts.
+
+<TOPOLOGY>
+
+The {\tt run} process initiates two clients and a server:
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc run :: | Console => StringTerminal, StringTerminal =
+		    | console => term1, term2 -> plug
+		        client("1:"| => ch1, term1 )
+		        client("2:"| => ch2, term2)
+		        server( |ch1, ch2, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
+
+The server races the client processes. When one of the client wins, it calls a helper process to receive message from the winning client.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
+		    | ch1, ch2, console => -> race
+		        ch1 -> do
+		            receive_message_and_continue( | ch1, ch2, console => )
+		        ch2 -> do 
+		            receive_message_and_continue( | ch2, ch1, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
+
+The helper processor invoked by the server, receives message from the winning client, outputs it on the console, and receives message from the losing client, outputs on the console and halts.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc receive_message_and_continue :: 
+			| Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
+		    | winner, loser, console => -> do
+		        get message on winner
+		        hput ConsolePut on console
+		        put message on console
+		        close winner 
+		
+		        get message on loser
+		        hput ConsolePut on console
+		        put message on console
+		        close loser  
+		
+		        on console do
+		            hput ConsolePut 
+		            put "Done. Halting server."   
+		            hput ConsoleClose
+		            halt
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
+
+Each client is connected to its own StringTerminal. When a client receives input from user in its terminal, it sends it to the server.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
+		    tag | => ch, term -> do
+		        on term do
+		            hput StringTerminalPut
+		            put tag ++ "Input a string"
+		            hput StringTerminalGet
+		            get message
+		
+		        on ch do
+		            put tag ++ message
+		            close
+		
+		        on term do 
+		            hput StringTerminalClose
+		            halt 
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
+
+When the program is run, it opens two Alacrity windows (one for each client) waiting for input from user. 
+\[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
+
 \section{Notes on the compiler and interface design}
 
 CaMPL has concurrent and sequential types. Some useful tables and notes.
