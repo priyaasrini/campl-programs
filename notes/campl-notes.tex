@@ -267,7 +267,7 @@ A process may use {\tt close} and the {\tt halt} commands to close its channels.
 
 In Example {\bf EchoServer} in Section ??,  line ??, {\tt EchoClose} handle creates a channel of type {\tt TopBot}. The {\tt client} process, closes the channel {\tt ch} and halts, using {\tt halt} command (line ??), after {\tt hput EchoClose on ch} (line ??). 
  
-\subsection{Paired constructs }
+\subsection{Complementary constructs }
 \label{subsec:pairs}
 
 \subsubsection{Sending and receiving messages using {\tt send} and {\tt recv}}
@@ -598,7 +598,7 @@ CaMPL provides a sequential data type {\tt Store}$(\Phi|\Lambda \vvdash \Delta)$
 					       case counter of 
 						       0 -> x |=| y						                    -- base	case
 						       _ -> plug 					                       -- recursive case
-							         use(p)(| x => z)				               -- using the stored process
+							         use(stored_process)(| x => z)				               -- using the stored process
 							         q(counter-1, p | z => y)		         -- recurse
 		\end{verbatim}
 	\end{varwidth}
@@ -639,7 +639,9 @@ Note that the above method for higher-order message passing behavior is implicit
 	
 \section{Example programs}
 
-\subsection*{Hello World}
+In all the examples, the processes interact with the outside world using (one of the two) special channels: a protocol called {\tt StringTerminal} and a coprotocol {\tt Console}. Console channel enables reading and writing to the terminal from which the campl program is run. Each StringTerminal channel, on the other hand, is connected to an Alacritty terminal, and allows reading and writing to the terminal. These special (co)protocols are available in the Prelude file.
+
+\subsection{Hello World}
 
 In this example, a CaMPL process prints ``Hello World" using an input console channel.The console is a special coprotocol channel hard-coded in the compiler which connects to the  terminal from which the program is run.
 \begin{center}
@@ -663,115 +665,247 @@ The {\tt helloworld} process is invoked as follows:
 			    | console => -> helloworld( |console=>)
 		\end{verbatim}
 	\end{varwidth}
-\end{center}			    
+\end{center}	
 
-\subsection{EchoServer}
+\subsection{GetUntil}		   
+This example extends the "Hello World" example a little more. In this example, the process named {\tt getSomethingUntil} reads an input string from the console recursively and prints it (on the console). When the user enters the string {\tt q}, the process halts.
 
-\subsection*{Expected program behavior} There are two processes {\em a client} and {\em a server} communicating with one another. The server is connected to the environment via a console, and the client via a \texttt{StringTerminal}. The server reads a string from the terminal, relays it to the server who prints it on the console, and sends the string back to the client. When the user provides an empty string, the processes terminate. 
+Reading an input string uses {\tt ConsoleGet} handle while printing the string uses {\tt ConsolePut} handle. The code for the process is as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc getSomethingUntil :: | Console =>  = 
+			    | console => -> do 
+			        on console do
+			            hput ConsolePut 
+			            put "Enter any string (Enter q to exit)" 
+			
+			            hput ConsoleGet 
+			            get input
+			
+			        case isExit(input) of 
+			            True -> do 
+			                on console do 
+			                    hput ConsolePut 
+			                    put "Exiting..." 
+			                    hput ConsoleClose
+			                    halt  
+			            False -> do 
+			                on console do 
+			                    hput ConsolePut 
+			                    put ("I received " ++ input) 
+			                getSomethingUntil( | console => )   --recursive call
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+The following code snippet belongs to the helper function:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			fun isExit :: [Char] -> Bool = 
+			    [] -> False
+			    x:xs -> if x == 'q' then True else False
+		\end{verbatim}
+	\end{varwidth}
+\end{center}	
 
-The topology of the processes and their connection remains the same throughout the program. The topology is shown in the diagram below:
-<DIAGRAM>
 
 
-\subsection*{CaMPL program}
-The main protocol used in this program is \texttt{Echo}. It provides a handle \texttt{EchoSend} of Put-Get type which will be used to send-receive or receive-send a message depending on the polarity of channel ends. The handle \texttt{EchoClosed} is used to close a channel of \texttt{Echo} type. 
+The {\tt getSomethingUntil} process is invoked as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc run = 
+			    | console => -> getSomethingUntil( | console => )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}	
 
-\begin{verbatim}
-protocol Echo => S =
-    EchoSend :: Put( [Char] | Get( [Char] | S)) => S
-    EchoClose :: TopBot => S
-\end{verbatim}
+\subsection{Simple EchoServer}
+In this example, we expand the previous one to have two user-defined processes -- a client and a server. A client reads input string from the terminal, and sends it to the server. The server on listens to the client and on receiving an input string, it prints it to the console. When the user enters {\tt q}, the client and the server halt.
 
-The client process is connected to a channel of \texttt{Echo} type at the output end. It first reads a string (provided by the user) from the terminal. If the user provided a non-empty string, it will place \texttt{EchoSend} handle on the channel followed by a \texttt{put} to send the string. Then, it performs a (blocking) \texttt{get} to receive data from server and loops. If the use provided an empty string, it signals the server by placing the \texttt{EchoClose} handle on the channel. It closes its connection and terminates.
+The processes use \texttt{Echo} protocol for communication. It provides a handle \texttt{EchoSend} of Put-Get type which will be used to send-receive or receive-send a message depending on the polarity of channel ends. The handle \texttt{EchoClosed} is used to close a channel of \texttt{Echo} type. 
 
-\begin{verbatim}
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			protocol Echo => S =
+			    EchoSend :: Put( [Char] | S)) => S
+			    EchoClose :: TopBot => S
+		\end{verbatim}
+	\end{varwidth}
+\end{center}	
 
-proc client :: | => Echo, ClientConsole =
-    | => ch, console -> do
-        hput StringTerminalGet on console
-        get fruit on console
+\textcolor{blue}{[TOPOLOGY PICTURE]}
 
-        case fruit of
-            [] -> do
-                hput EchoClose on ch
-                hput StringTerminalClose on console
-                close console
-                halt ch
+The client process is connected to an output channel of type \texttt{Echo}. It first reads a string (provided by the user) from the terminal. If the input string is not {\tt q}, then the client will place \texttt{EchoSend} handle on the channel followed by a \texttt{put} to send the string. Otherwise, it will place the \texttt{EchoClose} handle on the channel and halts.
 
-            _:_ -> do
-                hput EchoSend on ch
-                -- send data
-                put fruit on ch 
-                -- receive echoed data
-                get echoed on ch  
-                -- print received data
-                hput StringTerminalPut on console
-                put ('>':' ':echoed) on console
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc client :: | => Echo, StringTerminal =
+			    | => ch, term -> do
+			        on term do 
+			            hput StringTerminalPut 
+			            put "Enter any string (Enter q to exit)" 
+			            hput StringTerminalGet 
+			            get input 
+			
+			        case isExit(input) of 
+			            True -> do 
+			                on term do 
+			                    hput StringTerminalClose
+			                    close 
+			                on ch do 
+			                    hput EchoClose
+			                    halt 
+			            False -> do 
+			                on ch do 
+			                    hput EchoSend 
+			                    put input 
+			                client( |  => ch, term ) -- recursion
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
 
-                -- loop
-                client( | => ch, console)
-\end{verbatim}    
+The server process is connected to an input channel of type \texttt{Echo}. It first listens to handles from the client using \texttt{hcase}. If the handle received is \texttt{EchoSend}, then it receives data (sent by the client) using \texttt{get}. If the handle received is \texttt{EchoClose} then it closes it connection with the channel and halts. 
 
-The server process is connected to a channel of \texttt{Echo} type at the input end. It first performs a (blocking) \texttt{hcase}. If the handle received is \texttt{EchoSend}, then it receives data (sent by the client) using a {blocking} \texttt{get}. It sends the received data back as an acknowledgement using a \texttt{put} (since the handle \texttt{EchoSend} does Put-Get), and loops. If the handle received is \texttt{EchoClose} then it closes it connection with the channel and terminates. 
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc server :: | Echo, Console => =
+			    | ch, console => -> do
+			        hcase ch of
+			            EchoSend -> do
+			                get input on ch 
+			                on console do
+			                    hput ConsolePut 
+			                    put ("I received " ++ input) 
+			
+			                server( | ch, console => )                 
+			            EchoClose -> do
+			                on console do 
+			                    hput ConsolePut
+			                    put "Done"
+			                    hput ConsoleClose
+			                    close 
+			                halt ch
+		\end{verbatim}
+	\end{varwidth}
+\end{center}	
 
-\begin{verbatim}
-proc server :: | Echo, LogConsole => =
-    | ch, console => -> do
-        hcase ch of
-            EchoSend -> do
-                -- receive data
-                get fruit on ch
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc run = 
+			    | console => term -> plug 
+			        client( | => ch, term )
+			        server( | ch, console => )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
 
-                -- print data
-                hput ConsolePut on console
-                put fruit on console
+The client and the server processes are invoked as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			proc run = 
+			    | console => term -> plug 
+			        client( | => ch, term )
+			        server( | ch, console => )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
 
-                -- echo (send) data 
-                put fruit on ch
-                server( | ch, console => )
-            EchoClose -> do
-                hput ConsolePut on console
-                put "Done" on console
-                hput ConsoleClose on console
-                close console
-                halt ch
-\end{verbatim}
+\subsection{Echo Server 2.0: Non-deterministic communication}
 
-The following is the code for ClientConsole and the server's LogConsole for reading input and printing output. 
+This example demonstrates two clients racing to send a message to an echo server. The server prints the messages in the order they were sent. The server halts after printing both the messages. The clients halt as soon as they send. 
+\[ \includegraphics[scale=0.1]{figs/non-det.jpeg} \]
 
-\begin{verbatim}
+The {\tt run} process initiates two clients and a server:
 
-protocol ClientConsole => S =
-    StringTerminalGet :: Get( [Char] | S) => S
-    StringTerminalPut :: Put( [Char] | S) => S
-    StringTerminalClose :: TopBot => S
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc run :: | Console => StringTerminal, StringTerminal =
+		    | console => term1, term2 -> plug
+		        client("1:"| => ch1, term1 )
+		        client("2:"| => ch2, term2)
+		        server( |ch1, ch2, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
 
-coprotocol S => LogConsole =
-    ConsolePut :: S => Get( [Char] | S)
-    ConsoleClose :: S => TopBot
-\end{verbatim}
+The server races the client processes. When one of the client wins, it calls a helper process to receive message from the winning client.
 
-The following process  is the first process to be invoked by the program which initiates the topology, and runs the client and the server. 
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
+		    | ch1, ch2, console => -> race
+		        ch1 -> do
+		            receive_message_and_continue( | ch1, ch2, console => )
+		        ch2 -> do 
+		            receive_message_and_continue( | ch2, ch1, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
 
-\begin{verbatim}
-proc run :: | LogConsole => ClientConsole =
-    | console_s => console_c -> plug
-        client( | => ch, console_c )
-        server( | ch, console_s => )
+The helper processor invoked by the server, receives message from the winning client, outputs it on the console, and receives message from the losing client, outputs on the console and halts.
 
-\end{verbatim}
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc receive_message_and_continue :: 
+			| Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
+		    | winner, loser, console => -> do
+		        get message on winner
+		        hput ConsolePut on console
+		        put message on console
+		        close winner 
+		
+		        get message on loser
+		        hput ConsolePut on console
+		        put message on console
+		        close loser  
+		
+		        on console do
+		            hput ConsolePut 
+		            put "Done. Halting server."   
+		            hput ConsoleClose
+		            halt
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
 
-The following items were suggested by Hashimoto as improvements to CaMPL syntax:
+Each client is connected to its own StringTerminal. When a client receives input from user in its terminal, it sends it to the server.
 
-\begin{itemize}
-	\item While we have \texttt{Get} and \texttt{Put} for protocols (which means get and put on the output polarity), it will be user-friendly \texttt{coGet} and \texttt{coPut} for coprotocols (to mean \texttt{put} and \texttt{get} respectively on the output terminal.
-	\item Racing on handles instead of \texttt{put}. So be able to race on \texttt{hput}, and \texttt{fork} handles.
-	\item Merge the \texttt{hput} followed by the get or put. 
-	\item \texttt{on <channel> hput <handle>} instead of \texttt{hput <handle> on <channel>}. 
-	\item Currently, to halt a process, the channels are first closed and the final \texttt{halt <channel>} command takes in the name of the last channel to be closed. Instead, close all the channels followed by \texttt{halt} command.
-\end{itemize}
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
+		    tag | => ch, term -> do
+		        on term do
+		            hput StringTerminalPut
+		            put tag ++ "Input a string"
+		            hput StringTerminalGet
+		            get message
+		
+		        on ch do
+		            put tag ++ message
+		            close
+		
+		        on term do 
+		            hput StringTerminalClose
+		            halt 
+	\end{verbatim}
+\end{varwidth}
+\end{center}	
 
-\subsection{Mutual Exclusion}
+When the program is run, it opens two Alacrity windows (one for each client) waiting for input from user. 
+\[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
+
+\subsection{Mutual Exclusive access of shared memory}
 
 This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt A} and {\tt B}.  
 
@@ -893,95 +1027,6 @@ Process {\tt memAccess} on receiving the {\tt Pass} handle on {\tt Mutex}, does 
 \end{varwidth}
 \end{center}
 
-\subsection{Non-deterministic communication}
-
-This example demonstrates two clients racing to send a message to an echo server. The server prints the messages in the order it receives, and halts.
-
-<TOPOLOGY>
-
-The {\tt run} process initiates two clients and a server:
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		proc run :: | Console => StringTerminal, StringTerminal =
-		    | console => term1, term2 -> plug
-		        client("1:"| => ch1, term1 )
-		        client("2:"| => ch2, term2)
-		        server( |ch1, ch2, console => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-The server races the client processes. When one of the client wins, it calls a helper process to receive message from the winning client.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
-		    | ch1, ch2, console => -> race
-		        ch1 -> do
-		            receive_message_and_continue( | ch1, ch2, console => )
-		        ch2 -> do 
-		            receive_message_and_continue( | ch2, ch1, console => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-The helper processor invoked by the server, receives message from the winning client, outputs it on the console, and receives message from the losing client, outputs on the console and halts.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		proc receive_message_and_continue :: 
-			| Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
-		    | winner, loser, console => -> do
-		        get message on winner
-		        hput ConsolePut on console
-		        put message on console
-		        close winner 
-		
-		        get message on loser
-		        hput ConsolePut on console
-		        put message on console
-		        close loser  
-		
-		        on console do
-		            hput ConsolePut 
-		            put "Done. Halting server."   
-		            hput ConsoleClose
-		            halt
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-Each client is connected to its own StringTerminal. When a client receives input from user in its terminal, it sends it to the server.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
-		    tag | => ch, term -> do
-		        on term do
-		            hput StringTerminalPut
-		            put tag ++ "Input a string"
-		            hput StringTerminalGet
-		            get message
-		
-		        on ch do
-		            put tag ++ message
-		            close
-		
-		        on term do 
-		            hput StringTerminalClose
-		            halt 
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-When the program is run, it opens two Alacrity windows (one for each client) waiting for input from user. 
-\[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
-
 \section{Notes on the compiler and interface design}
 
 CaMPL has concurrent and sequential types. Some useful tables and notes.
@@ -1041,6 +1086,17 @@ Here are a few practical programming notes:
  
 \end{itemize}
 
+The following items were suggested by Hashimoto as improvements to CaMPL syntax:
+
+\begin{itemize}
+	\item While we have \texttt{Get} and \texttt{Put} for protocols (which means get and put on the output polarity), it will be user-friendly \texttt{coGet} and \texttt{coPut} for coprotocols (to mean \texttt{put} and \texttt{get} respectively on the output terminal.
+	\item Racing on handles instead of \texttt{put}. So be able to race on \texttt{hput}, and \texttt{fork} handles.
+	\item Merge the \texttt{hput} followed by the get or put. 
+	\item \texttt{on <channel> hput <handle>} instead of \texttt{hput <handle> on <channel>}. 
+	\item Currently, to halt a process, the channels are first closed and the final \texttt{halt <channel>} command takes in the name of the last channel to be closed. Instead, close all the channels followed by \texttt{halt} command.
+\end{itemize}
+
+
 \section{Mathematical Underpinning}
 
 \subsection{Category Theory}
@@ -1092,8 +1148,104 @@ Thus, the message passing logic provides a clean separation of computation and c
 	\label{Fig:programming-syntax}
 \end{figure}
 
-
-
-
-
 \end{document}
+
+DEPRECATED:
+
+\subsection{EchoServer 2.0}
+
+\subsection*{Expected program behavior} There are two processes {\em a client} and {\em a server} communicating with one another. The server is connected to the environment via a console, and the client via a \texttt{StringTerminal}. The server reads a string from the terminal, relays it to the server who prints it on the console, and sends the string back to the client. When the user provides an empty string, the processes terminate. 
+
+The topology of the processes and their connection remains the same throughout the program. The topology is shown in the diagram below:
+<DIAGRAM>
+
+
+\subsection*{CaMPL program}
+The main protocol used in this program is \texttt{Echo}. It provides a handle \texttt{EchoSend} of Put-Get type which will be used to send-receive or receive-send a message depending on the polarity of channel ends. The handle \texttt{EchoClosed} is used to close a channel of \texttt{Echo} type. 
+
+\begin{verbatim}
+protocol Echo => S =
+    EchoSend :: Put( [Char] | Get( [Char] | S)) => S
+    EchoClose :: TopBot => S
+\end{verbatim}
+
+The client process is connected to a channel of \texttt{Echo} type at the output end. It first reads a string (provided by the user) from the terminal. If the user provided a non-empty string, it will place \texttt{EchoSend} handle on the channel followed by a \texttt{put} to send the string. Then, it performs a (blocking) \texttt{get} to receive data from server and loops. If the use provided an empty string, it signals the server by placing the \texttt{EchoClose} handle on the channel. It closes its connection and terminates.
+
+\begin{verbatim}
+
+proc client :: | => Echo, ClientConsole =
+    | => ch, console -> do
+        hput StringTerminalGet on console
+        get fruit on console
+
+        case fruit of
+            [] -> do
+                hput EchoClose on ch
+                hput StringTerminalClose on console
+                close console
+                halt ch
+
+            _:_ -> do
+                hput EchoSend on ch
+                -- send data
+                put fruit on ch 
+                -- receive echoed data
+                get echoed on ch  
+                -- print received data
+                hput StringTerminalPut on console
+                put ('>':' ':echoed) on console
+
+                -- loop
+                client( | => ch, console)
+\end{verbatim}    
+
+The server process is connected to a channel of \texttt{Echo} type at the input end. It first performs a (blocking) \texttt{hcase}. If the handle received is \texttt{EchoSend}, then it receives data (sent by the client) using a {blocking} \texttt{get}. It sends the received data back as an acknowledgement using a \texttt{put} (since the handle \texttt{EchoSend} does Put-Get), and loops. If the handle received is \texttt{EchoClose} then it closes it connection with the channel and terminates. 
+
+\begin{verbatim}
+proc server :: | Echo, LogConsole => =
+    | ch, console => -> do
+        hcase ch of
+            EchoSend -> do
+                -- receive data
+                get fruit on ch
+
+                -- print data
+                hput ConsolePut on console
+                put fruit on console
+
+                -- echo (send) data 
+                put fruit on ch
+                server( | ch, console => )
+            EchoClose -> do
+                hput ConsolePut on console
+                put "Done" on console
+                hput ConsoleClose on console
+                close console
+                halt ch
+\end{verbatim}
+
+The following is the code for ClientConsole and the server's LogConsole for reading input and printing output. 
+
+\begin{verbatim}
+
+protocol ClientConsole => S =
+    StringTerminalGet :: Get( [Char] | S) => S
+    StringTerminalPut :: Put( [Char] | S) => S
+    StringTerminalClose :: TopBot => S
+
+coprotocol S => LogConsole =
+    ConsolePut :: S => Get( [Char] | S)
+    ConsoleClose :: S => TopBot
+\end{verbatim}
+
+The following process  is the first process to be invoked by the program which initiates the topology, and runs the client and the server. 
+
+\begin{verbatim}
+proc run :: | LogConsole => ClientConsole =
+    | console_s => console_c -> plug
+        client( | => ch, console_c )
+        server( | ch, console_s => )
+
+\end{verbatim}
+
+
