@@ -12,6 +12,8 @@ coprotocol S => Console =
     ConsolePut :: S => Get([Char]| S)
     ConsoleGet :: S => Put([Char]| S)
     ConsoleClose :: S => TopBot
+    IntConsolePut :: S => Get(Int| S)
+    IntConsoleGet :: S => Put(Int| S)
     ConsoleStringTerminal :: S => S (*) Neg(StringTerminal)
 
 -- This is a timer which waits a given number of microseconds

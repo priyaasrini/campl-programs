@@ -6,7 +6,7 @@
 
 \title{Categorical Message Passing Language (CaMPL)}
 \author{
-    Robin Cockett\thanks{University of Calgary} \and Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Melika Norouzbeygi* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
+    Robin Cockett\thanks{University of Calgary} \and Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little* \and Melika Norouzbeygi* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
 %\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
 \date{\today}
 
@@ -267,16 +267,18 @@ A process may use {\tt close} and the {\tt halt} commands to close its channels.
 
 In Example {\bf EchoServer} in Section ??,  line ??, {\tt EchoClose} handle creates a channel of type {\tt TopBot}. The {\tt client} process, closes the channel {\tt ch} and halts, using {\tt halt} command (line ??), after {\tt hput EchoClose on ch} (line ??). 
  
-\subsection{Complementary constructs }
+\subsection{Complementary operators }
 \label{subsec:pairs}
 
-\subsubsection{Sending and receiving messages using {\tt send} and {\tt recv}}
+Complementary operator occur in pairs where one of the operators blocks the calling process until another process executes its complementary operator. For example, when a receiving process performs a {\tt get} on a input channel, it blocks until the sending process performs a {\tt put} on the opposite (output) end of the channel.
+
+\subsubsection{Sending and receiving messages using {\tt put} and {\tt get}}
 \label{subsec:put-get}
 
 The semantics of message passing in CaMPL is given by a linear actegory. The operator $\circ$ 
 in linear actegory corresponds to the {\tt Put(A|Ch)} and the operator $\bullet$ corresponds to 
-the {\sf Get(A|Ch)} channel types. A process may perform {\tt send} and {\tt recv} commands on 
-a channel of type either {\tt Put(A|Ch)} and {\tt Get(A|Ch)}.
+the {\sf Get(A|Ch)} channel types. A process may perform {\tt put} and {\tt get} commands on 
+channels of type either {\tt Put(A|Ch)} or {\tt Get(A|Ch)}.
 
 \begin{figure}
 \[  
@@ -293,16 +295,16 @@ a channel of type either {\tt Put(A|Ch)} and {\tt Get(A|Ch)}.
  \label{Fig: Put and Get}
 \end{figure}
 
-Given a channel of type $A \circ X$ or \texttt{Put(A|X)}, a process may:
+Given a channel of type \texttt{Put(A|X)}, a process may:
 \begin{itemize}
-	\item {\em send} a message of type {\tt A} over a right polarity (output) channel, and
-	\item {\em receive} a message of {\tt A} over a left polarity (input) channel.
+	\item {\tt put} (send) a message of type {\tt A} over an output channel (left process sends), and
+	\item {\tt get} (receive) a message of {\tt A} over an input channel (right process receives).
 \end{itemize}
 
-Dually, given a channel of type $B \bullet X$, a process may:
+Dually, given a channel of type \texttt{Get(A|X)}, a process may:
 \begin{itemize}
-	\item {\em send} a message of type {\tt A} over a left polarity (input) channel, and
-	\item {\em receive} a message of {\tt A} over a right polarity (output) channel.
+	\item {\tt get} (receive) a message of type {\tt A} over an output channel (left process receives), and
+	\item {\tt put} (send) a message of {\tt A} over an input channel (right process sends) .
 \end{itemize}
 
 This means that over a channel of type {\tt Put(A|Ch)}, data of type {\tt A} flows towards the right.  This means that over a channel of type {\tt Get(A|Ch)}, data of type {\tt A} flows towards the left.  
@@ -642,6 +644,7 @@ Note that the above method for higher-order message passing behavior is implicit
 In all the examples, the processes interact with the outside world using (one of the two) special channels: a protocol called {\tt StringTerminal} and a coprotocol {\tt Console}. Console channel enables reading and writing to the terminal from which the campl program is run. Each StringTerminal channel, on the other hand, is connected to an Alacritty terminal, and allows reading and writing to the terminal. These special (co)protocols are available in the Prelude file.
 
 \subsection{Hello World}
+\label{sec:Hello World}
 
 In this example, a CaMPL process prints ``Hello World" using an input console channel.The console is a special coprotocol channel hard-coded in the compiler which connects to the  terminal from which the program is run.
 \begin{center}
@@ -668,7 +671,7 @@ The {\tt helloworld} process is invoked as follows:
 \end{center}	
 
 \subsection{GetUntil}		   
-This example extends the "Hello World" example a little more. In this example, the process named {\tt getSomethingUntil} reads an input string from the console recursively and prints it (on the console). When the user enters the string {\tt q}, the process halts.
+This example extends the "Hello World" example by reading input from the console and printing it to the console. In this example, the process named {\tt getSomethingUntil} reads an input string from the console recursively and prints it (on the console). When the user enters the string {\tt q}, the process halts.
 
 Reading an input string uses {\tt ConsoleGet} handle while printing the string uses {\tt ConsolePut} handle. The code for the process is as follows:
 \begin{center}
@@ -793,18 +796,6 @@ The server process is connected to an input channel of type \texttt{Echo}. It fi
 		\end{verbatim}
 	\end{varwidth}
 \end{center}	
-
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			proc run = 
-			    | console => term -> plug 
-			        client( | => ch, term )
-			        server( | ch, console => )
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-
 The client and the server processes are invoked as follows:
 \begin{center}
 	\begin{varwidth}{\linewidth}
@@ -1027,6 +1018,70 @@ Process {\tt memAccess} on receiving the {\tt Pass} handle on {\tt Mutex}, does 
 \end{varwidth}
 \end{center}
 
+\subsection{Echo Server 3.0: Higher-order message passing}
+
+In this extended example, we demonstrate how a process can be encoded as a message and sent to another process, which can then decodes the message and runs the process it has received.
+
+In this example, we will encode {\tt proc helloworld} from Section \ref{sec:Hello World} into a sequential message. The client process sends this message to the server, which then runs the {\tt Hello World}.
+
+The main process creates a {\tt client} and a {\tt server} process. 
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc run = 
+		    | console =>  -> plug 
+		        client( | => ch )
+		        server( | ch, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+The {\tt client} process has an output channel of type {\tt Put( Store(|Console=>) | TopBot}, that the client can send a sequential type {\tt Store(|Console=>)} over this channel using {\tt put} command after which the channel assumes the type {\tt TopBot}. Recall that only channels of {\tt TopBot} type can be {\tt close}d or {\tt halt}ed. The sequential type {\tt Store(|Console=>)} refers to the encoding of a process with type signature {\tt ( |Console=> )}, that is the process has a single output channel of type {\tt Console}.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc client :: | => Put( Store( | Console => ) | TopBot  ) =
+		    | => ch -> do
+		        on ch do 
+		            put store(hello_world) 
+		            halt
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+The {\tt server} process has two input channels of type {\tt Put(Store(|Console =>)| TopBot)} and {\tt Console}. The server and the client are plugged via the {\tt Put} type channel. The server receives the stored process, in this case, {\tt helloworld}, over channel {\tt ch} and closes {\tt ch}. In its last line of 4, it invokes the {\tt stored\_process} with required arguments using the {\tt use} command.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		proc server :: | Put( Store( | Console => ) | TopBot  ), Console => =
+		    | ch, console => -> do
+		        on ch do
+		            get stored_process 
+		            close 
+		
+		        on console do 
+		            hput ConsolePut 
+		            put ("Server says: Running the stored process")
+		        
+		        use(stored_process)( | console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+On running the program, the {\tt server} and the {\tt helloworld} prints the following message on the console:
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		> campl echoServer-higher-order.mpl 
+		  Server says: Running the stored process
+		  Stored process says: Hello World
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+	
+Full version of the program is available in Appendix \ref{appendix: stored process example}.
+
 \section{Notes on the compiler and interface design}
 
 CaMPL has concurrent and sequential types. Some useful tables and notes.
@@ -1147,6 +1202,58 @@ Thus, the message passing logic provides a clean separation of computation and c
 	\caption{Programming syntax for {\bf PMsg}}
 	\label{Fig:programming-syntax}
 \end{figure}
+
+
+\begin{appendix}
+\section{Examples: Complete programs}
+
+\subsection{Prelude}
+
+\textcolor{red}{Todo: Add Prelude file.}
+
+\subsection{EchoServer 3.0}
+\label{appendix: stored process example}
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		include Prelude
+		
+		proc hello_world :: | Console =>  =
+		     | console =>  ->  do 
+		        on console do 
+		            hput ConsolePut
+		            put "Stored process says: Hello World "
+		            hput ConsoleClose 
+		            halt
+		
+		proc client :: | => Put( Store( | Console => ) | TopBot  ) =
+		    | => ch -> do
+		        on ch do 
+		            put store(hello_world) 
+		            halt
+		
+		proc server :: | Put( Store( | Console => ) | TopBot  ), Console => =
+		    | ch, console => -> do
+		        on ch do
+		            get stored_process 
+		            close 
+		
+		        on console do 
+		            hput ConsolePut 
+		            put ("Server says: Running the stored process")
+		        
+		        use(stored_process)( | console => )
+		
+		proc run = 
+		    | console =>  -> plug 
+		        client( | => ch )
+		        server( | ch, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+\end{appendix}
 
 \end{document}
 
