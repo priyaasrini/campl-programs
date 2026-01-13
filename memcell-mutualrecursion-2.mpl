@@ -1,3 +1,5 @@
+include Prelude
+
 protocol StringTerminal => S =
     StringTerminalGet :: Get( [Char] | S) => S 
     StringTerminalPut :: Put( [Char] | S) => S
@@ -33,17 +35,18 @@ defn
                 hput MemGet on mem
                 get inp on mem
 
-                hput StringTerminalPut on _strterm
-                put append(tag, " Receiving: ") on _strterm
+                on _strterm do 
+                    hput StringTerminalPut
+                    put (tag++ " Receiving: ")
 
-                hput StringTerminalPut on _strterm
-                put inp on _strterm
+                    hput StringTerminalPut
+                    put inp
 
-                hput StringTerminalPut on _strterm
-                put append(tag, " Enter a string: ") on _strterm
+                    hput StringTerminalPut
+                    put append(tag, " Enter a string: ")
 
-                hput StringTerminalGet on _strterm
-                get ninp on _strterm
+                    hput StringTerminalGet
+                    get ninp
 
                 hput MemPut on mem
                 put ninp on mem

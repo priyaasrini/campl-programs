@@ -896,142 +896,20 @@ Each client is connected to its own StringTerminal. When a client receives input
 When the program is run, it opens two Alacrity windows (one for each client) waiting for input from user. 
 \[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
 
-\subsection{Mutual Exclusive access of shared memory}
-
-This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt A} and {\tt B}.  
-
-The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. Hence, new processes are created during program execution. However, the code primarily has three processes -- a process {\tt MemAccess} which reads and writes to the memory, a process {\tt MemWait}, and a Memory cell process. Process {\tt MemAccess} is connected to the Memory via an output channel. A {\tt Mutex} protocol is used communication for between the {\tt MemWait} and {\tt MemAccess} processes. Process {\tt MemWait} is connected to {\tt MemAccess} via {\tt Mutex} channel on output and input ends respectively. 
-
-\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \]
-
-The competing `processes', say {\tt A} and {\tt B}, take turns running {\tt MemWait} and {\tt MemAccess}. To begin with Process {\tt A} starts with {\tt MemAccess} and process {\tt B} starts with {\tt MemWait}. Each process is connected to a string terminal to read user input.
-Process {\tt A} blocks on {\tt hcase} waiting to receive a handle from Process {\tt B} on {\tt Mutex} channel.
-
-Process {\tt B} (in {\tt MemWait}) sends {\tt Pass} handle to Process {\tt A} and blocks (on {\tt split}).  
-
-On receiving the handle from Process {\tt B}, Process {\tt A} running {\tt MemAccess} accesses the memory cell -- by reading the existing value and the write a new value. 
-
-On completing the read and write, Process {\tt A} forks on the input channel type {\tt Mutex} producing two input channels, {\tt MemCh} and {\tt Neg(Mutex)}. It equates the new {\tt MemCh} channel to the existing channel. Then it invokes {\tt MemWait} for which it negates the {\tt Neg(Mutex)} channel. Negating a channel of {\tt Neg(Mutex)} type results in a {\tt Mutex} type --- this is to convert the {\tt Mutex} channel from input to output polarity (Recall that {\tt Mutex} is of input channel type for {\tt MemAccess} and output channel type for {\tt MemWait}).
-
-Once Process {\tt A} performs {\tt fork}, Process {\tt B} (in {\tt MemWait}) resumes and invokes {\tt MemAccess} to access the memory cell.
-
-The rest of the section explains the code snippets. Complete code available in Appendix ??.
-
-The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		protocol Mutex( | M ) => S =
-		    Pass :: M (+) Neg(S)  => S
-		
-		protocol MemCh (A | ) => S =
-		    MemPut :: Put(A|S) => S
-		    MemGet :: Get(A|S) => S
-		    MemCls :: TopBot => S
-			\end{verbatim}
-\end{varwidth}
-\end{center}
-The process {\tt memCell} takes an input {\tt MemCh} channel, reads and writes to it.
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		proc memCell :: A | MemCh(A | ) => =
-		    val | ch => -> hcase ch of
-		        MemPut -> do
-		            get nval on ch
-		            memCell(nval | ch => )
-		        MemGet -> do
-		            put val on ch
-		            memCell(val | ch => )
-		        MemCls -> do
-		            halt ch
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-Initially, the main process creates three processes {\tt memAccess} (with tag Process {\tt A:}), {\tt memWait} (with tag Process {\tt B:}), and a memory cell with an initial value. Note that, {\tt memAccess} is connected to the memory cell. 
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		proc run =
-		    | => _strterm0, _strterm1 -> do
-		        plug 
-		            memAccess("A:" | mutex => mem, _strterm0)
-		            memWait("B:" |        => mutex, _strterm1)
-		            memCell( "I like dogs" | mem => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-Process {\tt memWait} activates the {\tt Mutex} channel and splits it, hence blocking itself. Once it resumes (due to a {\tt fork}), it invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-	    proc memWait :: [Char] |  => Mutex( | MemCh([Char] | )), StringTerminal =
-	        tag | => mutex, _strterm -> do
-	            hput Pass on mutex
-	            split mutex into mem, negmutex
-	
-	            plug
-	                memAccess(tag | nmutex => mem, _strterm)
-	                => negmutex, nmutex -> negmutex |=| neg nmutex
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-Process {\tt memAccess} on receiving the {\tt Pass} handle on {\tt Mutex}, does read and write of the memory (lines ?? -- ??). Once memory access is complete, it forks on input channel {\tt Mutex} and invokes {\tt memWait} using {\tt plug}.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-    proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) 
-    	=> MemCh([Char]| ), StringTerminal =
-        tag | mutex => mem, _strterm -> hcase mutex of 
-            Pass -> do 
-                hput MemGet on mem
-                get inp on mem
-
-                hput StringTerminalPut on _strterm
-                put append(tag, " Receiving: ") on _strterm
-
-                hput StringTerminalPut on _strterm
-                put inp on _strterm
-
-                hput StringTerminalPut on _strterm
-                put append(tag, " Enter a string: ") on _strterm
-
-                hput StringTerminalGet on _strterm
-                get ninp on _strterm
-
-                hput MemPut on mem
-                put ninp on mem
-
-                fork mutex as
-                    mmem with mem -> mmem |=| mem
-
-                    negmutex with _strterm -> do
-                        plug
-                            memWait(tag | => nmutex, _strterm)
-                            nmutex, negmutex => -> negmutex |=| neg nmutex
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
 \subsection{Echo Server 3.0: Higher-order message passing}
 
-In this extended example, we demonstrate how a process can be encoded as a message and sent to another process, which can then decodes the message and runs the process it has received.
+In this extended example, we demonstrate higher-order message passing, that is, how a process can be encoded as a message and sent to another process, which can then decodes the message and runs the process it has received.
 
-In this example, we will encode {\tt proc helloworld} from Section \ref{sec:Hello World} into a sequential message. The client process sends this message to the server, which then runs the {\tt Hello World}.
+In this example, we will encode {\tt proc helloworld} from Section \ref{sec:Hello World} into a sequential message. A client process sends this message to its server, which then runs the {\tt Hello World}.
 
 The main process creates a {\tt client} and a {\tt server} process. 
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc run = 
-		    | console =>  -> plug 
-		        client( | => ch )
-		        server( | ch, console => )
+		1. proc run = 
+		2.    | console =>  -> plug 
+		3.        client( | => ch )
+		4.        server( | ch, console => )
 	\end{verbatim}
 \end{varwidth}
 \end{center}
@@ -1040,11 +918,11 @@ The {\tt client} process has an output channel of type {\tt Put( Store(|Console=
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc client :: | => Put( Store( | Console => ) | TopBot  ) =
-		    | => ch -> do
-		        on ch do 
-		            put store(hello_world) 
-		            halt
+		1. proc client :: | => Put( Store( | Console => ) | TopBot  ) =
+		2.    | => ch -> do
+		3.        on ch do 
+		4.            put store(hello_world) 
+		5.            halt
 	\end{verbatim}
 \end{varwidth}
 \end{center}
@@ -1054,17 +932,17 @@ The {\tt server} process has two input channels of type {\tt Put(Store(|Console 
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc server :: | Put( Store( | Console => ) | TopBot  ), Console => =
-		    | ch, console => -> do
-		        on ch do
-		            get stored_process 
-		            close 
+		1. proc server :: | Put( Store( | Console => ) | TopBot  ), Console => =
+		2.    | ch, console => -> do
+		3.        on ch do
+		4.            get stored_process 
+		5.            close 
 		
-		        on console do 
-		            hput ConsolePut 
-		            put ("Server says: Running the stored process")
+		6.        on console do 
+		7.            hput ConsolePut 
+		8.            put ("Server says: Running the stored process")
 		        
-		        use(stored_process)( | console => )
+		9.        use(stored_process)( | console => )
 	\end{verbatim}
 \end{varwidth}
 \end{center}
@@ -1081,6 +959,140 @@ On running the program, the {\tt server} and the {\tt helloworld} prints the fol
 \end{center}
 	
 Full version of the program is available in Appendix \ref{appendix: stored process example}.
+
+\subsection{Mutual Exclusive access of shared memory}
+
+This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt "A"} and {\tt "B"}. The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. The {\tt fork} creates new processes are created during program execution.
+
+\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \] 
+
+The code primarily has three processes:- 
+\begin{enumerate}
+	\item a process {\tt memAccess} which reads and writes to the memory, 
+	\item a process {\tt memWait}, and a Memory cell process, and 
+	\item a process {\tt memCell}, which is the memory cell.
+\end{enumerate}
+
+Process {\tt memAccess} is connected to {\tt memCell} via an output channel using {\tt MemCh} protocol, defined as follows. The protocol provides to read, write and close a memory cell.
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		1. protocol MemCh (A | ) => S =
+		2.     MemPut :: Put(A|S) => S
+		3.     MemGet :: Get(A|S) => S
+		4.     MemCls :: TopBot => S
+			\end{verbatim}
+\end{varwidth}
+\end{center}
+
+{\tt Mutex} protocol is used communication for between the {\tt MemWait} (at output end) and {\tt MemAccess} processes (at input end). 
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		1. protocol Mutex( | M ) => S =
+		2.    Pass :: M (+) Neg(S)  => S
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+{\tt memAccess} uses the {\tt Neg} type to convert an input {\tt Mutex} channel into an output {\tt Mutex} channel, and invoke {\tt memWait}. {\tt memWait} uses the {\tt Neg} type to convert an output {\tt Mutex} channel into an intput {\tt Mutex} channel and invoke {\tt memAccess}.
+
+The program begins execution with the main process defined as follows:-
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		1. proc run =
+		2.    | => _strterm0, _strterm1 -> do
+		3.        plug 
+		4.            memAccess("A:" | mutex => mem, _strterm0)
+		5.            memWait("B:" |        => mutex, _strterm1)
+		6.            memCell( "I like dogs" | mem => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+We have two processes named {\tt "A"} and {\tt "B"} competing to access the memory cell. Each of these processes access a string terminal to read user input which is stored in memory. To begin with Process {\tt A} starts by running {\tt memAccess} and process {\tt B} starts by running {\tt memWait}.
+
+{\tt memWait} and {\tt memAccess} are mutually recursive processes. The process running {\tt memAccess} calls {\tt memWait} (once the read/write is complete), and vice versa.
+
+{\tt memWait} sends {\tt Pass} handle over {\tt mutex} to {\tt memAccess}. On receiving the handle, {\tt memAccess} reads and writes to the memory over the {\tt mem} channel. Once it completes, it forks over the {\tt mutex} channel and invokes {\tt memWait} using {\tt plug}. The input {\tt Neg(Mutex)} needs to be negated to get an output {\tt Mutex} channel type, which is then used in the invocation of {\tt memWait}.
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+    1. proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) 
+    2.	=> MemCh([Char]| ), StringTerminal =
+    3.    tag | mutex => mem, _strterm -> hcase mutex of 
+    4.        Pass -> do 
+    5.            hput MemGet on mem
+    6.            get inp on mem
+
+    7.            hput StringTerminalPut on _strterm
+    8.            put append(tag, " Receiving: ") on _strterm
+
+    9.            hput StringTerminalPut on _strterm
+    10.            put inp on _strterm
+
+    11.            hput StringTerminalPut on _strterm
+    12.            put append(tag, " Enter a string: ") on _strterm
+
+    13.            hput StringTerminalGet on _strterm
+    14.            get ninp on _strterm
+
+    15.            hput MemPut on mem
+    16.            put ninp on mem
+
+    17.            fork mutex as
+    18.                mmem with mem -> mmem |=| mem
+
+    19.                negmutex with _strterm -> do
+    20.                    plug
+    21.                        memWait(tag | => nmutex, _strterm)
+    22.                        nmutex, negmutex => -> negmutex |=| neg nmutex
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+
+
+
+
+%The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} type channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
+
+Process {\tt memWait} activates the {\tt mutex} channel by sending {\tt Pass} handle over it. Then it blocks itself using {\tt split} command. When {\tt memAccess} executes {\tt fork} command, the {\tt memWait} is unblocked and invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
+\begin{center}
+\begin{varwidth}{\linewidth}
+	 \begin{verbatim}
+	1.    proc memWait :: [Char] |  => Mutex( | MemCh([Char] | )), StringTerminal =
+	2.        tag | => mutex, _strterm -> do
+	3.            hput Pass on mutex
+	4.            split mutex into mem, negmutex
+	
+	5.            plug
+	6.                memAccess(tag | nmutex => mem, _strterm)
+	7.                => negmutex, nmutex -> negmutex |=| neg nmutex
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+The process {\tt memCell} takes an input {\tt MemCh} channel, reads and writes to it.
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	1.	proc memCell :: A | MemCh(A | ) => =
+	2.	    val | ch => -> hcase ch of
+	3.	        MemPut -> do
+	4.	            get nval on ch
+	5.	            memCell(nval | ch => )
+	6. 	        MemGet -> do
+	7.	            put val on ch
+	8.	            memCell(val | ch => )
+	9.	        MemCls -> do
+	10.	            halt ch
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+The full version of the code is available in Appendix \ref{prog:mem-cell}. A screenshot of the output is given below. To begin with process {\tt A} reads ``I like dogs" from the memory cell and writes ``Apple" to the memory cell. Process  {\tt B} reads ``Apple" from memory cell and writes ``Orange" to it. Process then {\tt A} reads ``Orange" from the memory cell.
+\[ \includegraphics[scale=0.35]{figs/memcell-output.png} \]
 
 \section{Notes on the compiler and interface design}
 
@@ -1253,6 +1265,93 @@ Thus, the message passing logic provides a clean separation of computation and c
 \end{varwidth}
 \end{center}
 
+\subsection{Memory Cell}
+\label{prog:mem-cell}
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		include Prelude
+		
+		protocol StringTerminal => S =
+		    StringTerminalGet :: Get( [Char] | S) => S 
+		    StringTerminalPut :: Put( [Char] | S) => S
+		    StringTerminalClose :: TopBot => S
+		
+		protocol Mutex( | M ) => S =
+		    Pass :: M (+) Neg(S)  => S
+		
+		protocol MemCh (A | ) => S =
+		    MemPut :: Put(A|S) => S
+		    MemGet :: Get(A|S) => S
+		    MemCls :: TopBot => S
+		
+		fun append :: [A], [A] -> [A] =
+		    [], ts -> ts
+		    s:ss, ts -> s : append(ss,ts)
+		
+		proc memCell :: A | MemCh(A | ) => =
+		    val | ch => -> hcase ch of
+		        MemPut -> do
+		            get nval on ch
+		            memCell(nval | ch => )
+		        MemGet -> do
+		            put val on ch
+		            memCell(val | ch => )
+		        MemCls -> do
+		            halt ch
+		
+		defn
+		    proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) => MemCh([Char]| ), StringTerminal =
+		        tag | mutex => mem, _strterm -> hcase mutex of 
+		            Pass -> do 
+		                hput MemGet on mem
+		                get inp on mem
+		
+		                on _strterm do 
+		                    hput StringTerminalPut
+		                    put (tag++ " Receiving: ")
+		
+		                    hput StringTerminalPut
+		                    put inp
+		
+		                    hput StringTerminalPut
+		                    put append(tag, " Enter a string: ")
+		
+		                    hput StringTerminalGet
+		                    get ninp
+		
+		                hput MemPut on mem
+		                put ninp on mem
+		
+		                fork mutex as
+		                    mmem with mem -> mmem |=| mem
+		
+		                    negmutex with _strterm -> do
+		                        plug
+		                            memWait(tag | => nmutex, _strterm)
+		                            nmutex, negmutex => -> negmutex |=| neg nmutex
+		
+		
+		    proc memWait :: [Char] |  => Mutex( | MemCh([Char] | )), StringTerminal =
+		        tag | => mutex, _strterm -> do
+		            hput Pass on mutex
+		            split mutex into mem, negmutex
+		
+		            plug
+		                memAccess(tag | nmutex => mem, _strterm)
+		                => negmutex, nmutex -> negmutex |=| neg nmutex
+		                    
+		proc run =
+		    | => _strterm0, _strterm1 -> do
+		        plug 
+		            memAccess("A:" | mutex => mem, _strterm0)
+		            memWait("B:" |        => mutex, _strterm1)
+		            memCell( "I like dogs" | mem => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
 \end{appendix}
 
 \end{document}
@@ -1354,5 +1453,9 @@ proc run :: | LogConsole => ClientConsole =
         server( | ch, console_s => )
 
 \end{verbatim}
+
+\section{Memory Cell}
+
+
 
 
