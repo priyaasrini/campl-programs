@@ -725,88 +725,100 @@ The {\tt getSomethingUntil} process is invoked as follows:
 \end{center}	
 
 \subsection{Simple EchoServer}
-In this example, we expand the previous one to have two user-defined processes -- a client and a server. A client reads input string from the terminal, and sends it to the server. The server on listens to the client and on receiving an input string, it prints it to the console. When the user enters {\tt q}, the client and the server halt.
+The examples so far demonstrated communication between a process and the outside world via the console. In this example, we have two user-defined processes -- a client and a server. A client reads input string from the terminal, and sends it to the server. The server on listens to the client and on receiving an input string, it prints it to the console. When the user enters {\tt q}, the client and the server halt.
+\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
-The processes use \texttt{Echo} protocol for communication. It provides a handle \texttt{EchoSend} of Put-Get type which will be used to send-receive or receive-send a message depending on the polarity of channel ends. The handle \texttt{EchoClosed} is used to close a channel of \texttt{Echo} type. 
+The processes use \texttt{Echo} protocol for communication. It provides a handle \texttt{EchoSend} which constructs a channel of {\tt Put( [Char] | S} type. A channel of {\tt Put( [Char] | S)} type means that a process may send/receive a message of type {\tt [Char]} over this channel after which the channel becomes of type {\tt S}. The handle \texttt{EchoClosed} is used to close a channel of \texttt{Echo} type. 
 
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			protocol Echo => S =
-			    EchoSend :: Put( [Char] | S)) => S
-			    EchoClose :: TopBot => S
+			1. protocol Echo => S =
+			2.    EchoSend :: Put( [Char] | S)) => S
+			3.    EchoClose :: TopBot => S
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+
+The main process creates a client and a server process as follows which are plugged together by a channel:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc run = 
+			2.    | console => term -> plug 
+			3.        client( | => ch, term )
+			4.        server( | ch, console => )
 		\end{verbatim}
 	\end{varwidth}
 \end{center}	
 
-\textcolor{blue}{[TOPOLOGY PICTURE]}
-
-The client process is connected to an output channel of type \texttt{Echo}. It first reads a string (provided by the user) from the terminal. If the input string is not {\tt q}, then the client will place \texttt{EchoSend} handle on the channel followed by a \texttt{put} to send the string. Otherwise, it will place the \texttt{EchoClose} handle on the channel and halts.
+The client process is connected to an output channel of type \texttt{Echo}. It first reads a string (provided by the user) from the terminal. If the input string is not {\tt q}, then the client will place the \texttt{EchoSend} handle on the channel and \texttt{put} the string. Otherwise, it will place the \texttt{EchoClose} handle on the channel and halt.
 
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc client :: | => Echo, StringTerminal =
-			    | => ch, term -> do
-			        on term do 
-			            hput StringTerminalPut 
-			            put "Enter any string (Enter q to exit)" 
-			            hput StringTerminalGet 
-			            get input 
+			1. proc client :: | => Echo, StringTerminal =
+			2.    | => ch, term -> do
+			3.        on term do 
+			4.            hput StringTerminalPut 
+			5.            put "Enter any string (Enter q to exit)" 
+			6.            hput StringTerminalGet 
+			7.            get input 
 			
-			        case isExit(input) of 
-			            True -> do 
-			                on term do 
-			                    hput StringTerminalClose
-			                    close 
-			                on ch do 
-			                    hput EchoClose
-			                    halt 
-			            False -> do 
-			                on ch do 
-			                    hput EchoSend 
-			                    put input 
-			                client( |  => ch, term ) -- recursion
+			8.        case isExit(input) of 
+			9.            True -> do                               
+			10.                on term do 
+			11.                    hput StringTerminalClose
+			12.                    close 
+			13.                on ch do 
+			14.                    hput EchoClose
+			15.                    halt 
+			16.            False -> do                             
+			17.                on ch do 
+			18.                    hput EchoSend 
+			19.                    put input 
+			20.                client( |  => ch, term )            -- recursion
 		\end{verbatim}
 	\end{varwidth}
 \end{center}
 
 The server process is connected to an input channel of type \texttt{Echo}. It first listens to handles from the client using \texttt{hcase}. If the handle received is \texttt{EchoSend}, then it receives data (sent by the client) using \texttt{get}. If the handle received is \texttt{EchoClose} then it closes it connection with the channel and halts. 
-
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc server :: | Echo, Console => =
-			    | ch, console => -> do
-			        hcase ch of
-			            EchoSend -> do
-			                get input on ch 
-			                on console do
-			                    hput ConsolePut 
-			                    put ("I received " ++ input) 
+			1. proc server :: | Echo, Console => =
+			2.    | ch, console => -> do
+			3.        hcase ch of
+			4.            EchoSend -> do
+			5.                get input on ch 
+			6.                on console do
+			7.                    hput ConsolePut 
+			8.                    put ("I received " ++ input) 
 			
-			                server( | ch, console => )                 
-			            EchoClose -> do
-			                on console do 
-			                    hput ConsolePut
-			                    put "Done"
-			                    hput ConsoleClose
-			                    close 
-			                halt ch
+			9.                server( | ch, console => )                 
+			10.            EchoClose -> do
+			11.                on console do 
+			12.                    hput ConsolePut
+			13.                    put "Done"
+			14.                    hput ConsoleClose
+			15.                    close 
+			16.                halt ch
 		\end{verbatim}
 	\end{varwidth}
 \end{center}	
-The client and the server processes are invoked as follows:
+
+A full version of the program is available in Appendix \ref{prog:echo}. A sample output is shown below. The screenshot shows the client terminal. The server output on the console is as follows:-
 \begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			proc run = 
-			    | console => term -> plug 
-			        client( | => ch, term )
-			        server( | ch, console => )
-		\end{verbatim}
-	\end{varwidth}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		> campl echoServer.mpl 
+		  I received Apple
+		  I received Orange
+		  Done
+	\end{verbatim}
+\end{varwidth}
 \end{center}
+\[ \includegraphics[scale=0.5]{figs/echo-server.png} \]
 
 \subsection{Echo Server 2.0: Non-deterministic communication}
 
@@ -893,7 +905,7 @@ Each client is connected to its own StringTerminal. When a client receives an in
 \end{varwidth}
 \end{center}	
 
-When the program is run, it opens two Alacrity windows (one for each client tagged by client number) waiting for input from user. 
+A full version of the program is available in Appendix \ref{prog:EchoServer-2.0}. When the program is run, it opens two Alacrity windows (one for each client tagged by client number) waiting for input from user. 
 \[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
 
 \subsection{Echo Server 3.0: Higher-order message passing}
@@ -1222,6 +1234,132 @@ Thus, the message passing logic provides a clean separation of computation and c
 \subsection{Prelude}
 
 \textcolor{red}{Todo: Add Prelude file.}
+
+\subsection{Simple Echo Server}
+\label{prog:echo}
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	include Prelude 
+	
+	fun isExit :: [Char] -> Bool = 
+	    [] -> False
+	    x:xs -> if x == 'q' then True else False
+	
+	protocol Echo => S =
+	    EchoSend :: Put( [Char] | S) => S
+	    EchoClose :: TopBot => S
+	
+	proc client :: | => Echo, StringTerminal =
+	    | => ch, term -> do
+	        on term do 
+	            hput StringTerminalPut 
+	            put "Enter any string (Enter q to exit)" 
+	            hput StringTerminalGet 
+	            get input 
+	
+	        case isExit(input) of 
+	            True -> do 
+	                on term do 
+	                    hput StringTerminalClose
+	                    close 
+	                on ch do 
+	                    hput EchoClose
+	                    halt 
+	            False -> do 
+	                on ch do 
+	                    hput EchoSend 
+	                    put input 
+	                client( |  => ch, term )
+	\end{verbatim}
+\end{varwidth}
+
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	proc server :: | Echo, Console => =
+	    | ch, console => -> do
+	        hcase ch of
+	            EchoSend -> do
+	                get input on ch 
+	                on console do
+	                    hput ConsolePut 
+	                    put ("I received " ++ input) 
+	
+	                server( | ch, console => )                 
+	            EchoClose -> do
+	                on console do 
+	                    hput ConsolePut
+	                    put "Done"
+	                    hput ConsoleClose
+	                    close 
+	                halt ch
+	
+	proc run = 
+	    | console => term -> plug 
+	        client( | => ch, term )
+	        server( | ch, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
+\subsection{EchoServer 2.0}
+\label{prog:EchoServer-2.0}
+
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		include Prelude
+		
+		proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
+		    tag | => ch, term -> do
+		        on term do
+		            hput StringTerminalPut
+		            put tag ++ "Input a string"
+		            hput StringTerminalGet
+		            get message
+		
+		        on ch do
+		            put tag ++ message
+		            close
+		
+		        on term do 
+		            hput StringTerminalClose
+		            halt 
+		
+		proc receive_message_and_continue :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
+		    | winner, loser, console => -> do
+		        get message on winner
+		        hput ConsolePut on console
+		        put message on console
+		        close winner 
+		
+		        get message on loser
+		        hput ConsolePut on console
+		        put message on console
+		        close loser  
+		
+		        on console do
+		            hput ConsolePut 
+		            put "Done. Halting server."   
+		            hput ConsoleClose
+		            halt
+		                       
+		proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
+		    | ch1, ch2, console => -> race
+		        ch1 -> do
+		            receive_message_and_continue( | ch1, ch2, console => )
+		        ch2 -> do 
+		            receive_message_and_continue( | ch2, ch1, console => )
+		
+		proc run :: | Console => StringTerminal, StringTerminal =
+		    | console => term1, term2 -> plug
+		        client("1:"| => ch1, term1 )
+		        client("2:"| => ch2, term2)
+		        server( |ch1, ch2, console => )
+	\end{verbatim}
+\end{varwidth}
+\end{center}
 
 \subsection{EchoServer 3.0}
 \label{appendix: stored process example}
