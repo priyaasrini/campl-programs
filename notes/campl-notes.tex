@@ -810,90 +810,90 @@ The client and the server processes are invoked as follows:
 
 \subsection{Echo Server 2.0: Non-deterministic communication}
 
-This example demonstrates two clients racing to send a message to an echo server. The server prints the messages in the order they were sent. The server halts after printing both the messages. The clients halt as soon as they send. 
+This example demonstrates two clients racing to send a message to an echo server. The server prints the messages in the order it receives those messages. The server halts after printing both the messages. The clients halt as soon as they send. 
 \[ \includegraphics[scale=0.1]{figs/non-det.jpeg} \]
 
-The {\tt run} process initiates two clients and a server:
+The {\tt run} process initiates two clients tagged by {\tt"1"} and {\tt"2"} and a server:
 
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc run :: | Console => StringTerminal, StringTerminal =
-		    | console => term1, term2 -> plug
-		        client("1:"| => ch1, term1 )
-		        client("2:"| => ch2, term2)
-		        server( |ch1, ch2, console => )
+		1. proc run :: | Console => StringTerminal, StringTerminal =
+		2.    | console => term1, term2 -> plug
+		3.        client("1:"| => ch1, term1 )
+		4.        client("2:"| => ch2, term2)
+		5.        server( |ch1, ch2, console => )
 	\end{verbatim}
 \end{varwidth}
 \end{center}	
 
-The server races the client processes. When one of the client wins, it calls a helper process to receive message from the winning client.
+The server sets up a race between the client processes using {\tt race} command. When one of the client wins, it calls a helper process to receive message from the winning client. The server has two input channels of type {\tt Put([Char] | TopBot)} --- this means that the server may {\tt get} a message of {\tt [Char]} type over this channel after which the channel becomes of the type {\tt TopBot}.
 
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
-		    | ch1, ch2, console => -> race
-		        ch1 -> do
-		            receive_message_and_continue( | ch1, ch2, console => )
-		        ch2 -> do 
-		            receive_message_and_continue( | ch2, ch1, console => )
+		1. proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
+		2.    | ch1, ch2, console => -> race
+		3.        ch1 -> do
+		4.            receive_message_and_continue( | ch1, ch2, console => )
+		5.        ch2 -> do 
+		6.            receive_message_and_continue( | ch2, ch1, console => )
 	\end{verbatim}
 \end{varwidth}
 \end{center}	
 
-The helper processor invoked by the server, receives message from the winning client, outputs it on the console, and receives message from the losing client, outputs on the console and halts.
+When one of the clients win the race, the server invokes a helper process to get message from the winning client, to outputs the message on the console, and to then get message from the losing client, and output the message on the console.
 
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc receive_message_and_continue :: 
-			| Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
-		    | winner, loser, console => -> do
-		        get message on winner
-		        hput ConsolePut on console
-		        put message on console
-		        close winner 
+		1. proc receive_message_and_continue :: 
+		2.	| Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
+		3.    | winner, loser, console => -> do
+		4.        get message on winner
+		5.        hput ConsolePut on console
+		6.        put message on console
+		7.        close winner 
 		
-		        get message on loser
-		        hput ConsolePut on console
-		        put message on console
-		        close loser  
+		8.        get message on loser
+		9.        hput ConsolePut on console
+		10.        put message on console
+		11.        close loser  
 		
-		        on console do
-		            hput ConsolePut 
-		            put "Done. Halting server."   
-		            hput ConsoleClose
-		            halt
+		12.        on console do
+		13.            hput ConsolePut 
+		14.            put "Done. Halting server."   
+		15.            hput ConsoleClose
+		16.            halt
 	\end{verbatim}
 \end{varwidth}
 \end{center}	
 
-Each client is connected to its own StringTerminal. When a client receives input from user in its terminal, it sends it to the server.
+Each client is connected to its own StringTerminal. When a client receives an input from user in its terminal, it sends it to the server.
 
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
-		    tag | => ch, term -> do
-		        on term do
-		            hput StringTerminalPut
-		            put tag ++ "Input a string"
-		            hput StringTerminalGet
-		            get message
+		1. proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
+		2.    tag | => ch, term -> do
+		3.        on term do
+		4.            hput StringTerminalPut
+		5.            put tag ++ "Input a string"
+		6.            hput StringTerminalGet
+		7.            get message
 		
-		        on ch do
-		            put tag ++ message
-		            close
+		8.        on ch do
+		9.            put tag ++ message
+		10.            close
 		
-		        on term do 
-		            hput StringTerminalClose
-		            halt 
+		11.        on term do 
+		12.            hput StringTerminalClose
+		13.            halt 
 	\end{verbatim}
 \end{varwidth}
 \end{center}	
 
-When the program is run, it opens two Alacrity windows (one for each client) waiting for input from user. 
+When the program is run, it opens two Alacrity windows (one for each client tagged by client number) waiting for input from user. 
 \[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
 
 \subsection{Echo Server 3.0: Higher-order message passing}
@@ -960,7 +960,7 @@ On running the program, the {\tt server} and the {\tt helloworld} prints the fol
 	
 Full version of the program is available in Appendix \ref{appendix: stored process example}.
 
-\subsection{Mutual Exclusive access of shared memory}
+\subsection{Memory Cell: Mutual Exclusive access of shared memory}
 
 This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt "A"} and {\tt "B"}. The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. The {\tt fork} creates new processes are created during program execution.
 
@@ -994,7 +994,7 @@ Process {\tt memAccess} is connected to {\tt memCell} via an output channel usin
 	\end{verbatim}
 \end{varwidth}
 \end{center}
-{\tt memAccess} uses the {\tt Neg} type to convert an input {\tt Mutex} channel into an output {\tt Mutex} channel, and invoke {\tt memWait}. {\tt memWait} uses the {\tt Neg} type to convert an output {\tt Mutex} channel into an intput {\tt Mutex} channel and invoke {\tt memAccess}.
+The {\tt Neg} type is used to convert an input {\tt Mutex} channel into an output {\tt Mutex} channel, and vice versa. For example, {\tt memAccess} uses the {\tt Neg} type to convert an input {\tt Mutex} channel into an output {\tt Mutex} channel, and invoke {\tt memWait} using the converted type. 
 
 The program begins execution with the main process defined as follows:-
 \begin{center}
