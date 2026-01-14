@@ -641,7 +641,7 @@ Note that the above method for higher-order message passing behavior is implicit
 	
 \section{Example programs}
 
-In all the examples, the processes interact with the outside world using (one of the two) special channels: a protocol called {\tt StringTerminal} and a coprotocol {\tt Console}. Console channel enables reading and writing to the terminal from which the campl program is run. Each StringTerminal channel, on the other hand, is connected to an Alacritty terminal, and allows reading and writing to the terminal. These special (co)protocols are available in the Prelude file.
+In all the examples, the processes interact with the outside world using (one of the two) special channels: a protocol called {\tt StringTerminal} and a coprotocol {\tt Console}. Console channel refers to the console from which the campl program is run, and enables reading and writing to the console. Each StringTerminal channel, on the other hand, is connected to an Alacritty terminal, and allows reading and writing to the terminal. These special (co)protocols are available in the Prelude file, and are hard-coded in the compiler.
 
 \subsection{Hello World}
 \label{sec:Hello World}
@@ -650,13 +650,13 @@ In this example, a CaMPL process prints ``Hello World" using an input console ch
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc helloworld :: | Console => = 
-			    | console => -> do
-			        hput ConsolePut on console               
-			        put "Hello World" on console.              
+			1. proc helloworld :: | Console => = 
+			2.    | console => -> do
+			3.        hput ConsolePut on console               
+			4.        put "Hello World" on console.              
 			
-			        hput ConsoleClose on console 
-			        halt console
+			5.        hput ConsoleClose on console 
+			6.        halt console
 		\end{verbatim}
 	\end{varwidth}
 \end{center}
@@ -664,65 +664,84 @@ The {\tt helloworld} process is invoked as follows:
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc run = 
-			    | console => -> helloworld( |console=>)
+			1. proc run = 
+			2.    | console => -> helloworld( |console=>)
 		\end{verbatim}
 	\end{varwidth}
-\end{center}	
+\end{center}
+
+A sample output from the console is as follows:
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		> campl helloWorld.mpl 
+			 Hello World
+	 >
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+	
 
 \subsection{GetUntil}		   
-This example extends the "Hello World" example by reading input from the console and printing it to the console. In this example, the process named {\tt getSomethingUntil} reads an input string from the console recursively and prints it (on the console). When the user enters the string {\tt q}, the process halts.
+This example extends the "Hello World" example by reading input from the console and printing it to the console. In this example, a process named {\tt getSomethingUntil} reads an input string from the console recursively and prints it (on the console). When the user enters the string {\tt q}, the process halts.
 
 Reading an input string uses {\tt ConsoleGet} handle while printing the string uses {\tt ConsolePut} handle. The code for the process is as follows:
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc getSomethingUntil :: | Console =>  = 
-			    | console => -> do 
-			        on console do
-			            hput ConsolePut 
-			            put "Enter any string (Enter q to exit)" 
+			1. proc getSomethingUntil :: | Console =>  = 
+			2.    | console => -> do 
+			3.        on console do
+			4.            hput ConsolePut 
+			5.            put "Enter any string (Enter q to exit)" 
 			
-			            hput ConsoleGet 
-			            get input
+			6.            hput ConsoleGet 
+			7.            get input
 			
-			        case isExit(input) of 
-			            True -> do 
-			                on console do 
-			                    hput ConsolePut 
-			                    put "Exiting..." 
-			                    hput ConsoleClose
-			                    halt  
-			            False -> do 
-			                on console do 
-			                    hput ConsolePut 
-			                    put ("I received " ++ input) 
-			                getSomethingUntil( | console => )   --recursive call
+			8.        case isExit(input) of 
+			9.            True -> do 
+			10.                on console do 
+			11.                    hput ConsolePut 
+			12.                    put "Exiting..." 
+			13.                    hput ConsoleClose
+			14.                    halt  
+			15.            False -> do 
+			16.                on console do 
+			17.                    hput ConsolePut 
+			18.                    put ("I received " ++ input) 
+			19.                getSomethingUntil( | console => )   --recursive call
 		\end{verbatim}
 	\end{varwidth}
 \end{center}
-The following code snippet belongs to the helper function:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			fun isExit :: [Char] -> Bool = 
-			    [] -> False
-			    x:xs -> if x == 'q' then True else False
-		\end{verbatim}
-	\end{varwidth}
-\end{center}	
-
-
 
 The {\tt getSomethingUntil} process is invoked as follows:
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc run = 
-			    | console => -> getSomethingUntil( | console => )
+			1. proc run = 
+			2.    | console => -> getSomethingUntil( | console => )
 		\end{verbatim}
 	\end{varwidth}
 \end{center}	
+
+Full version of the program is available in Appendix \ref{prog:getUntil}. A sample output from the console is as follows:
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+		> campl getUntil.mpl 
+			 Enter any string (Enter q to exit)
+			 Apple
+			 I received Apple
+			 Enter any string (Enter q to exit)
+			 Orange
+			 I received Orange
+			 Enter any string (Enter q to exit)
+			 q
+			 Exiting...
+		>
+	\end{verbatim}
+\end{varwidth}
+\end{center}
 
 \subsection{Simple EchoServer}
 The examples so far demonstrated communication between a process and the outside world via the console. In this example, we have two user-defined processes -- a client and a server. A client reads input string from the terminal, and sends it to the server. The server on listens to the client and on receiving an input string, it prints it to the console. When the user enters {\tt q}, the client and the server halt.
@@ -1235,6 +1254,46 @@ Thus, the message passing logic provides a clean separation of computation and c
 
 \textcolor{red}{Todo: Add Prelude file.}
 
+\subsection{Get Until}
+\label{prog:getUntil}
+\begin{center}
+\begin{varwidth}{\linewidth}
+	\begin{verbatim}
+	include Prelude 
+	
+	fun isExit :: [Char] -> Bool = 
+	    [] -> False
+	    x:xs -> if x == 'q' then True else False
+	
+	proc getSomethingUntil :: | Console =>  = 
+	    | console => -> do 
+	        on console do
+	            hput ConsolePut 
+	            put "Enter any string (Enter q to exit)" 
+	
+	            hput ConsoleGet 
+	            get input
+	
+	        case isExit(input) of 
+	            True -> do 
+	                on console do 
+	                    hput ConsolePut 
+	                    put "Exiting..." 
+	                    hput ConsoleClose
+	                    halt  
+	            False -> do 
+	                on console do 
+	                    hput ConsolePut 
+	                    put ("I received " ++ input) 
+	                getSomethingUntil( | console => )
+	
+	proc run = 
+	    | console =>  -> getSomethingUntil( | console => )	
+	
+	\end{verbatim}
+\end{varwidth}
+\end{center}
+
 \subsection{Simple Echo Server}
 \label{prog:echo}
 
@@ -1327,7 +1386,8 @@ Thus, the message passing logic provides a clean separation of computation and c
 		            hput StringTerminalClose
 		            halt 
 		
-		proc receive_message_and_continue :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
+		proc receive_message_and_continue :: | Put([Char] | TopBot), 
+		Put([Char] | TopBot), Console => = 
 		    | winner, loser, console => -> do
 		        get message on winner
 		        hput ConsolePut on console
@@ -1405,7 +1465,6 @@ Thus, the message passing logic provides a clean separation of computation and c
 
 \subsection{Memory Cell}
 \label{prog:mem-cell}
-
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
@@ -1438,9 +1497,10 @@ Thus, the message passing logic provides a clean separation of computation and c
 		            memCell(val | ch => )
 		        MemCls -> do
 		            halt ch
-		
+
 		defn
-		    proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) => MemCh([Char]| ), StringTerminal =
+		    proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) 
+		    => MemCh([Char]| ), StringTerminal =
 		        tag | mutex => mem, _strterm -> hcase mutex of 
 		            Pass -> do 
 		                hput MemGet on mem
