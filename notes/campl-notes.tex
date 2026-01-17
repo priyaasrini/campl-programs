@@ -32,7 +32,6 @@ of a programming language built from the mathematics of linear actegories.
 
 Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek-like correspondence), and its history.
 
-\section{Sequential types}
 
 \section{Concurrent types}
 
@@ -198,40 +197,49 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 \begin{varwidth}{\linewidth}
 \begin{verbatim}
 	plug 
-		    p1( | ch1 => ch2)
-		    p2( | ch2 => ch3)
-		    p3( | ch3 => ch4)
+		    process1( .. | ch1 => ch2)
+		    process2( .. | ch2 => ch3)
+		    process3( .. | ch3 => ch4)
 		    ...
-		    pn( | chn => last_ch)
+		    processn( .. | chn => last_ch)
 \end{verbatim}
 \end{varwidth}
 \end{center}
 
 Composition of two or more processes in the concurrent side of CaMPL is defined by 
-{\em plug} command (which is the {\em cut} rule in linear logic. Two processes can only be plugged to each other along a channel, if they share a channel of the same type but opposite
-polarity.
+{\em plug} command. Two processes can only be plugged to each other along a channel, if 
+\begin{itemize}
+	\item they share a channel of the same type but opposite polarity and 
+	\item they do not have an existing connection.
+\end{itemize}
 
-The following program plugs process \texttt{p} with process \texttt{q} via channel \texttt{y}. Note that, channel \texttt{y} has right polarity for process \texttt{p} while  it has left polarity for process \texttt{q}. Moreover, process {\tt r} duplicated the sequential type using {\tt a} twice, however it uses all concurrent types only once satisfying the linearlity constraint.
+The processes which are plugged together run in parallel, and may communicate via the channels connecting them. The following code demonstrates a usage of the {\tt plug} command. 
 
 \begin{center}
 \begin{varwidth}{\linewidth}
 \begin{verbatim}
-	proc r :: A | X => Z = 
-		    a, b | x => z -> 
-			    plug 
-				       p(a | x => y)
-				       q(a | y => z)
+	1. proc pulgDemo :: A | X => Z = 
+	2.	    a | x => z -> 
+	3.		    plug 
+	4.			       processA(a | x => y)
+	5.			       processB(a | y => z)
 \end{verbatim}
 \end{varwidth}
 \end{center}
 
-The {\tt plug} command can only occur as the last command in a process block, and causes the plugged processes to run. Two processes plugged together can communicate and pass
-messages through the connecting channel in both directions. CaMPL allows utmost one channel to be used connect two processes. 
+A detailed explanation of the code is as follows:
 
-The sequent calculus version of the above program is as follows:
-\[ \infer[\text{cut}]{A, B ~|~ X \vvdash Z}{A ~|~ X \vvdash Y \quad \quad B ~|~ Y \vvdash Z } \]
+\begin{itemize}
+\item Line {\tt 1.} provides the type signature of the process {\tt plugDemo}. The process has a sequential argument of type {\tt A}, an input polarity channel of type {\tt X}, and an output polarity channel of type {\tt Z}.
 
-Note that, a process is allowed to utilize a channel type only once, neither can it create new channel, unless using the {\tt plug} command. Example ?? describes one such usage of {\tt plug} and {\tt neg} commands for process invocation (See Section \ref{sec:neg} for {\tt neg} command).  
+\item Line {\tt 2.} provides variable names to the sequential and concurrent types.
+
+\item Lines {\tt 3-5.} cause {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channels (since channels are linear resources).
+\end{itemize}
+
+A process is not allowed to create new channel except in the {\tt plug} command, for example channel {\tt y}. The {\tt plug} command can only occur as the last command in a process block. 
+
+\textcolor{red}{Question to Robin: Are the processes which are plugged created new?}
 
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
@@ -240,13 +248,26 @@ The {\tt id} command is used equate to two channels of opposite polarities while
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			proc q :: | A, Neg(A) => A = 
-					  | a, neg_a => a' -> 
-					       a |=| a'						                    -- equating
-					       neg_a |=| neg(a)                  -- equating after negating
+			1. proc equateChannels :: | A, Neg(A) => A = 
+			2.		  | a, neg_a => a' -> 
+			3.		       a |=| a'						                    -- equating
+			4.		       neg_a |=| neg(a)                  -- equating after negating
 		\end{verbatim}
 	\end{varwidth}
 \end{center} 
+
+A detailed explanation of the code is as follows:
+
+\begin{itemize}
+\item Line {\tt 1.} provides the type signature of the process {\tt equateChannels}. The process has no sequential arguments, two input polarity channel of type {\tt A} and {\tt Neg(A)}, and an output polarity channel of type {\tt A}.
+
+\item Line {\tt 2.} provides variable names to the concurrent types.
+
+\item Line {\tt 3.} equates the input channel {\tt a} to output channel {\tt a'}, both of type {\tt A}.
+
+\item Line {\tt 4.} first negates channel  {\tt a} --- since {\tt a} is an input channel of type {\tt A}, {\tt neg(a)} is an output channel of type {\tt Neg(A)}. Then, it equates input channel {\tt neg\_a} of type {\tt Neg(A)} with {\tt neg(a)}.
+
+\end{itemize}
 
 \subsection{Ending communication using {\tt halt} and {\tt close}}
 
@@ -263,14 +284,36 @@ The {\tt id} command is used equate to two channels of opposite polarities while
 
 \vspace{-1em}
 
-A process may use {\tt close} and the {\tt halt} commands to close its channels. The {\tt halt} command halts a process after closing the last channel (to be closed). The {\tt halt} command is expected to be the last command of a process block. Closing a channel of any (co)protocol type results in built-in channel type {\tt TopBot}.
+A process may use {\tt close} and the {\tt halt} commands to close its channels, that is, terminate any interaction along those channels, and remove those channels out of scope. The {\tt halt} command halts a process after closing the last channel (to be closed). The {\tt halt} command is expected to be the last command of a process block. Closing a channel of any (co)protocol type results in built-in channel type {\tt TopBot}.
 
-In Example {\bf EchoServer} in Section ??,  line ??, {\tt EchoClose} handle creates a channel of type {\tt TopBot}. The {\tt client} process, closes the channel {\tt ch} and halts, using {\tt halt} command (line ??), after {\tt hput EchoClose on ch} (line ??). 
+The following is a simple process demonstrating the usage of {\tt close} and {\tt halt}.
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc noInteraction :: | TopBot => TopBot = 
+			2. 	| chA => chB -> do
+			3.		close chA
+			4.		halt chB	 
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+A detailed explanation of the code is as follows:
+
+\begin{itemize}
+\item Line {\tt 1.} provides the type signature of the process {\tt noInteraction}. The process has no sequential arguments, an input polarity channel of type {\tt TopBot}, and an output polarity channel of type {\tt TopBot}.
+
+\item Line {\tt 2.} provides variable names to the concurrent types. Since {\tt chA} and {\tt chB} are channels of type {\tt TopBot}, all interactions on these channels can be stopped.
+
+\item Line {\tt 3.} closes {\tt chA} which mean it will be out of scope in the rest of the process code.
+
+\item Line {\tt 4.} closes {\tt chB} and terminates the process.
+
+\end{itemize}
  
 \subsection{Complementary operators }
 \label{subsec:pairs}
 
-Complementary operator occur in pairs where one of the operators blocks the calling process until another process executes its complementary operator. For example, when a receiving process performs a {\tt get} on a input channel, it blocks until the sending process performs a {\tt put} on the opposite (output) end of the channel.
+A complementary pair in CAMPL is a pair of commands and is used for communication between two processes. For a complementary pair, one of the commands causes the calling process to wait until the other command is invoked (by the communicating process). For example, a  {\tt get}  command causes the calling process to wait to receive a value until the communicating process performs a {\tt put} command.
 
 \subsubsection{Sending and receiving messages using {\tt put} and {\tt get}}
 \label{subsec:put-get}
@@ -579,7 +622,7 @@ In Example ??, ...
 \end{center}
 
 The {\tt race} command initiates a race condition between two or more channels of 
-{\tt  Put(-|-)} type\footnote{ Desiderata: We could like to race on handles or any blocking call. Current compiler support is for {\tt Put}.}. 
+{\tt  Put(-|-)} or {\tt Get(-|-)} types \footnote{ Desiderata: We could like to race on handles or any blocking call. Current compiler support is for {\tt Put}.}. 
 The system waits for input on any of the racing channels and triggers the corresponding continuation for the first one to receive data. The continuations for the losing channels are discarded.
 
 In Example ??,
@@ -638,6 +681,9 @@ Note that the above method for higher-order message passing behavior is implicit
 \[ 
 	\infer{\Lambda \vvdash A^\perp \oplus B := A \lollipop B}{\Lambda, A \vvdash B}
 \]
+	
+\section{Sequential types}
+	
 	
 \section{Example programs}
 
