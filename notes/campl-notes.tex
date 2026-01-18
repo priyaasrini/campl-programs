@@ -124,6 +124,8 @@ The process body {\em procBody} may be a single process command written as as {\
 
 Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. A {\em procBody}$_i$ may be an invokation of another process. The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
 
+A CaMPL program has at least one process. A CaMPL program begins execution in the main process named {\tt run}.
+
 \subsection{Channels}
 
 In CaMPL, processes talk to each other, that is, send and receive messages, via channels. CaMPL comes with built-in channel types from which one may build custom channel types. For any process {\tt p}, the behavior of the channels depends on the polarity.The polarity of a channel determines the kind of operations that my be performed on the channel, see Section \ref{sec:concurrent-operators}.
