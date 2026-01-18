@@ -32,20 +32,22 @@ of a programming language built from the mathematics of linear actegories.
 
 Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek-like correspondence), and its history.
 
+\section{A brief overview of CaMPL}
+
 
 \section{Concurrent types}
 
 
-At any instance in run-time, the topology of a CaMPL program, consists of a finite set of {\em processes} connected by {\em channels} arranged as an acyclic graph with processes as nodes and channels as edges of the graph. The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. The following table draws analogue between the constructs of sequential and concurrent MPL.
+At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of {\em processes} which are nodes of the graph and {\em channels} which are the edges of the graph. The following table draws analogue between the constructs of sequential and concurrent MPL.
 
 \begin{center}
 \begin{tabular}{ | c ||  c | c | c | }
  \hline
- {\bf Sequential} & Functions & Datatypes   & Instances \\ 
-   & & (and coDatatypes)   &  \\
+ {\bf Sequential} & Functions & Data type   & Instance \\ 
+   & & (and coData type)   &  \\
  \hline
- {\bf Concurrent} & Processes & Protocols  & Channels \\  
- & & (and coProtocols)    &  \\
+ {\bf Concurrent} & Processes & Protocol  & Channel \\  
+ & & (and coProtocol)    &  \\
  \hline
 \end{tabular}
 \end{center} 
@@ -53,39 +55,78 @@ At any instance in run-time, the topology of a CaMPL program, consists of a fini
 
 \subsection{Processes}
 
-In CaMPL, a process consists of an optional list of: 
+Processes are the main actors of a CaMPL program. In CaMPL, a {\em process} is specified by a process name and an optional type signature. The type signature of a process consists of: 
 \begin{itemize}
-	\item sequential input types,
-	\item left polarity or input channels, and
-	\item right polarity or output channels.
+	\item an optional comma-seperated list of sequential types, say {\em A1, ..., Ak},
+    \item an optional comma-seperated list of input concurrent types, say {\em I1, ..., In}, and
+	\item an optional comma-seperated list of output concurrent types, say {\em O1, ..., Om}.
 \end{itemize}
+The instances of concurrent types are called {\em channels}.
 
-For example, the following code shows a process \texttt{p} with a sequential input of type $A$, a left polarity channel of type $X$, and a right polarity channel of type $Y$ as defined in CAMPL. 
+A CaMPL process is given by the following syntax (the CaMPL tokens are specified by {\tt typewriter} font and in red color) :-
 
   \begin{center}
-  \begin{varwidth}{\linewidth}
-  \begin{verbatim}
-  	proc p :: A | X => Y =
-					a | x => y -> ...
-  \end{verbatim}
-  \end{varwidth}
+    \textcolor{red}{\tt proc} {\em procName} \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$ \textcolor{red}{ \tt = }
+    
+    \quad \quad \quad \quad \quad \quad   $~a_{11}, \ldots, a_{1k}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_1$} \\
+    ... \\ 
+    ... \\ 
+    \quad \quad \quad \quad \quad \quad   $~a_{p1}, ..., a_{pk}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_p$}
   \end{center}
-  
-  \vspace{-1em}
-  
-  Note that \texttt{p} is connected to the right end of \texttt{x} and to the left end of {\tt y}.
-  
-  \[ \xymatrix{  
-  \ar@{-}[r]^{X\quad \quad}  & ~~ \blackman  ~~ \ar@{-}[r]^{\quad \quad Y} &    } \]
-  
-Process {\tt p} can be equivalently expressed in the sequent calculus as:
-$  A ~|~ X ~\dashvv~ Y $.  
+The type signature is optional and may be omitted. The process definition may pattern-match on sequential types. We call the list of channels $i_1, \ldots, i_n$ occurring to the left of {\tt =>} as {\em input polarity} or {\em left polarity} channels. We call the list of channels $o_1, \ldots, o_m$ occurring to the right of {\tt =>} as {\em output polarity} or {\em right polarity} channels. We also say that the channels $i_1, \ldots, i_n$ and $o_1, \ldots, o_m$ are in the scope of the process body --- operationally, this means that these channels can be accessed inside the {\em procBody$_p$}. 
 
+The polarity of the channels encode the bidirectional flow of information. When a process sends message over an output/right polarity channel (to another process), then the information flows  towards right. If a process receives message over an output/right polarity channel (from another process), then the information flows towards the left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
 
+  \[ \xymatrix{ \ar@{-}[r]^{I_1,~\ldots,~ I_n \quad \quad}  & ~~ \blackman  ~~ \ar@{-}[r]^{\quad \quad O_1,~\ldots,~ O_m} &    } \]
+  
+The process body {\em procBody} may be a single process command written as as {\em procCmd} or a {\tt do} block of process commands taking one of the following forms:-
+\begin{center}
+\begin{minipage}[t]{0.2\textwidth}
+{\tt do } 
+
+\quad \quad {\em procCmd}$_1$ 
+ 
+\quad \quad {\em procCmd}$_2$ 
+
+\quad \quad $\cdots$ 
+
+\quad \quad {\em procCmd}$_n$  
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+{\tt do } 
+
+\quad \quad {\em procCmd}
+
+\quad \quad $\cdots$ 
+
+\quad \quad {\tt if } {\em expr}
+
+\quad \quad \quad \quad {\tt then } {\em procBody}$_1$  
+
+\quad \quad \quad \quad {\tt else } {\em procBody}$_2$  
+\end{minipage}
+\begin{minipage}[t]{0.45\textwidth}
+{\tt do } 
+
+\quad \quad {\em procCmd}
+
+\quad \quad $\cdots$ 
+
+\quad \quad {\tt case } {\em expr} {\tt of}
+
+\quad \quad \quad \quad $C_1(a_{11, \ldots,a_{1n}})$ {\tt ->} {\em procBody}$_1$
+
+\quad \quad \quad \quad $\cdots$ 
+
+\quad \quad \quad \quad $C_1(a_{p1, \ldots,a_{pn}})$ {\tt ->} {\em procBody}$_p$  
+\end{minipage}
+\end{center}
+
+Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. A {\em procBody}$_i$ may be an invokation of another process. The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
 
 \subsection{Channels}
 
-In CaMPL, processes communicate (send and receive messages) via channels. CaMPL comes with built-in channel types from which one may build custom channel types. For any process {\tt p}, the behavior of the channels depends on the polarity.The polarity of a channel determines the kind of operations that my be performed on the channel, see Section \ref{sec:concurrent-operators}.
+In CaMPL, processes talk to each other, that is, send and receive messages, via channels. CaMPL comes with built-in channel types from which one may build custom channel types. For any process {\tt p}, the behavior of the channels depends on the polarity.The polarity of a channel determines the kind of operations that my be performed on the channel, see Section \ref{sec:concurrent-operators}.
 
 \subsubsection{Built-in Channel types}
 
@@ -168,6 +209,7 @@ A coprotocol is an added functionality rather than being a unique feature. All o
 
 \section{Concurrent operators}
 \label{sec:concurrent-operators}
+\label{Sec:concurrent-commands}
 
 Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types.
 
@@ -175,23 +217,23 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 \centering
 	\begin{tabular}{|l|l|l|}
 	\hline
-	\textsf{id} & equates two channels &  non-blocking  \\ \hline
-	\textsf{neg} & negates a channel & non-blocking \\ \hline
-	\textsf{plug} & connects two processes by a channel & non-blocking \\ \hline
-	\textsf{get} & send/receive a value on a channel & depends on the polarity \\ \hline
-	\textsf{put} & send/receive a value on a channel &  depends on the polarity \\ \hline
-	\textsf{hput} & puts a handle on a channel & non-blocking \\ \hline
-	\textsf{hcase} & cases on the handles obtained on channel & blocking \\ \hline
-	\textsf{split} & splits a channel into two channels  & blocking\\ \hline
-	\textsf{fork} & forks two new processes & non-blocking \\ \hline
-	\textsf{close} & closes a channel & non-blocking \\ \hline
-	\textsf{halt} & closes a channel. Usually the last channel is halted. & non-blocking \\ \hline
+	{\tt id} & equates two channels &  non-blocking  \\ \hline
+	{\tt neg} & negates a channel & non-blocking \\ \hline
+	{\tt plug} & connects two processes by a channel & non-blocking \\ \hline
+	{\tt get} & send/receive a value on a channel & blocking \\ \hline
+	{\tt put} & send/receive a value on a channel &  non-blocking \\ \hline
+	{\tt hput} & puts a handle on a channel & non-blocking \\ \hline
+	{\tt hcase} & cases on the handles obtained on channel & blocking \\ \hline
+	{\tt split} & splits a channel into two channels  & blocking\\ \hline
+	{\tt fork} & forks two new processes & non-blocking \\ \hline
+	{\tt close} & closes a channel & non-blocking \\ \hline
+	{\tt halt} & closes a channel. Usually the last channel is halted. & non-blocking \\ \hline
 	\end{tabular}
 \caption{Concurrent MPL Constructs}
 \label{tab:mpl-constructs}
 \end{table} 
 
-\subsection{Connecting channels using {\tt plug}}
+\subsection{Connecting processes using {\tt plug}}
 
 \begin{center}
 \begin{varwidth}{\linewidth}
@@ -681,6 +723,8 @@ Note that the above method for higher-order message passing behavior is implicit
 \[ 
 	\infer{\Lambda \vvdash A^\perp \oplus B := A \lollipop B}{\Lambda, A \vvdash B}
 \]
+
+\section{Interacting with the outside world via service channels}
 	
 \section{Sequential types}
 	
@@ -1249,6 +1293,8 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 
 
 \section{Mathematical Underpinning}
+
+The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. 
 
 \subsection{Category Theory}
 
