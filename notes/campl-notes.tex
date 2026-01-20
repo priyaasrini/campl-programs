@@ -199,21 +199,21 @@ Using CaMPL, a programmer may design communication over a channel using {\em pro
  
 In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
   \begin{center}
-    \textcolor{red}{\tt protocol} {\em <protocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
+    \textcolor{red}{\tt protocol} {\em <ProtocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
     
-    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition>} \textcolor{red}{  \tt => } $P$ \\
+    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$ \\
     ... \\ 
     ... \\ 
-    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition>} \textcolor{red}{  \tt => } $P$
+    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$
    \end{center}
-The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types.
+The protocol, the handle and the (sequential and concurrent) type names MUST begin with an uppercase alphabet. The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types. 
    
 Let us consider the following example of a protocol:  
 \begin{center}
 \begin{varwidth}{\linewidth}
 \begin{verbatim}
 protocol EchoSimple (A | ) => S =
-    EchoSend :: Put( [Char] | S)) => S
+    EchoSend :: Put(A | S) => S
     EchoClose :: TopBot => S
 \end{verbatim}
 \end{varwidth}
@@ -229,8 +229,8 @@ Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent dual
 \begin{center}
 \begin{varwidth}{\linewidth}
 \begin{verbatim}    
-coprotocol S => coEchoSimple =
-    coEchoSend ::  S  => Put( [Char] | S))
+coprotocol S => coEchoSimple (A | ) =
+    coEchoSend ::  S => Put(A | S)
     coEchoClose :: S => TopBot
 \end{verbatim}
 \end{varwidth}
