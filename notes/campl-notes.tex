@@ -175,83 +175,68 @@ A CaMPL program has at least one process. A CaMPL program begins execution in th
 
 \subsection{Channels}
 
-In CaMPL, processes talk to each other, that is, send and receive messages, via channels. CaMPL comes with built-in channel types from which one may build custom channel types. For any process {\tt p}, the behavior of the channels depends on the polarity.The polarity of a channel determines the kind of operations that my be performed on the channel, see Section \ref{sec:concurrent-operators}.
+In CaMPL, processes talk to each other, that is, send and receive messages, via channels. CaMPL provides built-in channel types from which one may build custom channel types. Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
 
 \subsubsection{Built-in Channel types}
 
-The following information is from \cite[Section 3.3.2]{Prashanth-thesis}.
+The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 
 \begin{tabular}{r l}
-{\tt Get (A|Ch)} & channel type  takes a sequential type {\tt A} and a channel of type {\tt Ch}. \\
-{\tt Put (A|Ch)} & channel type takes a sequential type {\tt A} and a channel of type {\tt Ch}. \\ 
-{\tt Neg (Ch)} & channel type takes a channel of type {\tt P}. \\ 
-{\tt TopBot} & which is acronym for {\tt Top} and {\tt Bottom} does not take arguments. \\
+{\tt Get (A|Ch)} & channel type  takes as arguments a sequential type {\tt A} and a channel of type {\tt Ch}. \\
+{\tt Put (A|Ch)} & channel type takes as arguments a sequential type {\tt A} and a channel of type {\tt Ch}. \\ 
+{\tt Neg (Ch)} & channel type takes as arguments a channel of type {\tt P}. \\ 
+{\tt TopBot} & which is acronym for as arguments {\tt Top} and {\tt Bottom} does not take arguments. \\
 {\tt Ch1 (+) Ch2} & takes in two channels of types {\tt Ch1} and {\tt Ch2} \\
 {\tt Ch1 (*) Ch2} & takes in two channels of types {\tt Ch1} and {\tt Ch2}
 
 \end{tabular}
 
-
+The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
 
 \subsubsection{Constructing custom channel types}
 
-In CaMPL, a programmer may built channels of custom types from the built-in types using {\tt protocol} keyword. Protocols are concurrent analogue of dataypes from the sequential world, and channels are concurrent analogue of instances of datatypes.
-
-Let us consider the following example of a protocol (from Example ??):
-
+Using CaMPL, a programmer may design communication over a channel using {\em protocols} and {\em coprotocols}. Protocols and coprotocols are concurrent analogue of inductive and co-inductive data types in functional programming languages. Instances of protocols and coprotocols are called channels.
+ 
+In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
+  \begin{center}
+    \textcolor{red}{\tt protocol} {\em <protocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
+    
+    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition>} \textcolor{red}{  \tt => } $P$ \\
+    ... \\ 
+    ... \\ 
+    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition>} \textcolor{red}{  \tt => } $P$
+   \end{center}
+The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types.
+   
+Let us consider the following example of a protocol:  
 \begin{center}
 \begin{varwidth}{\linewidth}
 \begin{verbatim}
-protocol Echo => S =
-    EchoSend :: Put( [Char] | Get( [Char] | S)) => S
+protocol EchoSimple (A | ) => S =
+    EchoSend :: Put( [Char] | S)) => S
     EchoClose :: TopBot => S
 \end{verbatim}
 \end{varwidth}
 \end{center}
 
-In the above code, {\tt Echo} is a type constructor that takes in an right conncurrent type {\tt S}. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles}. A channel of type Echo is {\em activated} when a process puts a handle on the on it using {\sf hput} (See Section \ref{subsec:pairs}). Once a channel activated, the channel may be used for communication by the processes it is connected to according to the rules of the handle. For example, {\tt EchoSend} enables sending and receiving over {\tt S} using {\tt Put} and {\tt Get} (see Section \ref{subsec:put-get}), and {\tt EchoClose} takes in {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
+In the above code, {\tt EchoSimple} is a protocol that takes in an output conncurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} and are analogous to session types. 
 
-Let us consider the following example of a protocols (from Example ??):
+\[ \xymatrix{ A~\blackman \ar@{-}@<-5pt>[rrr]^{(+) ~~ {\tt ch: EchoSimple} ~~ (-)} & & & \blackman~B } \]
 
+Consider two processes $A$ and $B$ connected by a channel {\tt ch} of type {\tt EchoSimple} protocols. $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
+
+Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. The following code snippet shows {\tt EchoSimple} as a coprotocol. 
 \begin{center}
 \begin{varwidth}{\linewidth}
-\begin{verbatim}
-protocol Passer( | M ) => S =
-    Passer :: M (+) (Neg(M) (*) S)  => S
-\end{verbatim}
-\end{varwidth}
-\end{center}
-
-In the above code, {\tt Passer} is a type constructor takes in a left concurrent type {\tt M} and a right concurrent type {\tt S}. The handle {\tt Passer} takes in a {\tt S} type and produces a compound type {\tt M (+) (Neg(M) (*) S)}.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}
-protocol MemCell (A | ) => S =
-    MemPut :: Put(A|S) => S
-    MemGet :: Get(A|S) => S
-    MemCls :: TopBot => S
-\end{verbatim}
-\end{varwidth}
-\end{center}
-
-In the above code, {\tt MemCell} is a type constructor takes in an input sequential type {\tt A} and a right concurrent type {\tt S}. The handle {\tt MemPut} and {\tt MemGet} takes in a {\tt S} type and enables send-receive of type {\tt A} over {\tt S}. The handle {\tt MemCls} takes in a {\tt S} type and produces a {\tt TopBot} which ends all communication.
-
-Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. For example, consider the following protocol and coprotocols.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}
-protocol EchoSimple => S =
-    EchoSend :: Put( [Char] | S)) => S
-    
-coprotocol coEchoSimple => S =
+\begin{verbatim}    
+coprotocol S => coEchoSimple =
     coEchoSend ::  S  => Put( [Char] | S))
+    coEchoClose :: S => TopBot
 \end{verbatim}
 \end{varwidth}
 \end{center}
 
-Suppose {\tt ch} is a channel with the handle {\tt EchoSend}, the message is sent from right polarity to left polarity, as shown in (1) and (2) in the following figure. One can use a coprotocol to avoid bending wires as shown in (3).
+Suppose {\tt ch} is a channel with the handle {\tt EchoSend} connecting process $A$ on the left and process $B$ on the right. Then, a message is sent from output polarity to input polarity, as shown in (1) and (2) in the following figure. One can use a coprotocol to avoid bending wires as shown in (3).
 \[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
 A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
@@ -361,6 +346,7 @@ A detailed explanation of the code is as follows:
 \end{itemize}
 
 \subsection{Ending communication using {\tt halt} and {\tt close}}
+\label{sec:close}
 
 \begin{center}
 	\begin{varwidth}{\linewidth}
@@ -585,6 +571,7 @@ For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}
 
 
 \subsubsection{Multichannel communication using {\tt split} and {\tt fork}}
+\label{sec:split-fork}
 
 \begin{figure}[h]
 \begin{center}
