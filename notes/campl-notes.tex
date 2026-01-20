@@ -75,9 +75,56 @@ A CaMPL process is given by the following syntax (the CaMPL tokens are specified
   \end{center}
 The type signature is optional and may be omitted. The process definition may pattern-match on sequential types. We call the list of channels $i_1, \ldots, i_n$ occurring to the left of {\tt =>} as {\em input polarity} or {\em left polarity} channels. We call the list of channels $o_1, \ldots, o_m$ occurring to the right of {\tt =>} as {\em output polarity} or {\em right polarity} channels. We also say that the channels $i_1, \ldots, i_n$ and $o_1, \ldots, o_m$ are in the scope of the process body --- operationally, this means that these channels can be accessed inside the {\em procBody$_p$}. 
 
-The polarity of the channels encode the bidirectional flow of information. When a process sends message over an output/right polarity channel (to another process), then the information flows  towards right. If a process receives message over an output/right polarity channel (from another process), then the information flows towards the left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
+  \[ \begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [thick, circle, scale=2] (0) at (-3, 5) {};
+		\node [style=none] (1) at (-3, 4) {};
+		\node [style=none] (2) at (-3.25, 3.75) {};
+		\node [style=none] (3) at (-2.75, 3.75) {};
+		\node [style=none] (4) at (-3.25, 4.45) {};
+		\node [style=none] (5) at (-2.75, 4.45) {};
+		\node [style=none] (6) at (-2.5, 4.75) {};
+		\node [style=none] (7) at (-2.5, 4.25) {};
+		\node [style=none] (8) at (-2.5, 3.5) {};
+		\node [style=none] (9) at (-3.5, 4.75) {};
+		\node [style=none] (10) at (-3.5, 4.25) {};
+		\node [style=none] (11) at (-3.5, 3.5) {};
+		\node [style=none] (12) at (-1, 5.5) {};
+		\node [style=none] (13) at (-1, 4.75) {};
+		\node [style=none] (14) at (-1.5, 4.25) {$.$};
+		\node [style=none] (15) at (-1.5, 4) {$.$};
+		\node [style=none] (15) at (-1.5, 3.5) {$.$};
+		\node [style=none] (15) at (-1.5, 3.75) {$.$};
+		\node [style=none] (16) at (-1, 3) {};
+		\node [style=none] (17) at (-5, 5.5) {};
+		\node [style=none] (18) at (-5, 4.75) {};
+		\node [style=none] (19) at (-4.5, 4.25) {$.$};
+		\node [style=none] (15) at (-4.5, 4) {$.$};
+		\node [style=none] (15) at (-4.5, 3.5) {$.$};
+		\node [style=none] (20) at (-4.5, 3.75) {$.$};
+		\node [style=none] (21) at (-5, 3) {};
+		\node [style=none] (22) at (-0.75, 5.5) {$o_1$};
+		\node [style=none] (23) at (-0.75, 4.75) {$o_2$};
+		\node [style=none] (24) at (-0.75, 3) {$o_m$};
+		\node [style=none] (25) at (-5.25, 5.5) {$i_1$};
+		\node [style=none] (26) at (-5.25, 4.75) {$i_2$};
+		\node [style=none] (27) at (-5.25, 3) {$i_n$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [bend left=15] (6.center) to (12.center);
+		\draw [bend left=15] (7.center) to (13.center);
+		\draw [bend right=15] (8.center) to (16.center);
+		\draw [bend right=15, looseness=0.75] (9.center) to (17.center);
+		\draw [bend right=15] (10.center) to (18.center);
+		\draw [bend left=15] (11.center) to (21.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \]
 
-  \[ \xymatrix{ \ar@{-}[r]^{I_1,~\ldots,~ I_n \quad \quad}  & ~~ \blackman  ~~ \ar@{-}[r]^{\quad \quad O_1,~\ldots,~ O_m} &    } \]
+The polarity of the channels encode the bidirectional flow of information. When a process sends message over an output/right polarity channel (to another process), then the information flows  towards right. If a process receives message over an output/right polarity channel (from another process), then the information flows towards the left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
   
 The process body {\em procBody} may be a single process command written as as {\em procCmd} or a {\tt do} block of process commands taking one of the following forms:-
 \begin{center}
