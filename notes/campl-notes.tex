@@ -297,8 +297,8 @@ The processes which are plugged together run in parallel, and may communicate vi
 	1. proc pulgDemo :: A | X => Z = 
 	2.	    a | x => z -> 
 	3.		    plug 
-	4.			       processA(a | x => y)
-	5.			       processB(a | y => z)
+				       processA(a | x => y)
+				       processB(a | y => z)
 \end{verbatim}
 \end{varwidth}
 \end{center}
@@ -310,12 +310,10 @@ A detailed explanation of the code is as follows:
 
 \item Line {\tt 2.} provides variable names to the sequential and concurrent types.
 
-\item Lines {\tt 3-5.} cause {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channels (since channels are linear resources).
+\item Lines {\tt 3.} cause {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channels (since channels are linear resources).
 \end{itemize}
 
-A process is not allowed to create new channel except in the {\tt plug} command, for example channel {\tt y}. The {\tt plug} command can only occur as the last command in a process block. 
-
-\textcolor{red}{Question to Robin: Are the processes which are plugged created new?}
+A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. The {\tt plug} command can only occur as the last command in a process block. 
 
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
@@ -576,114 +574,284 @@ For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}
 \begin{figure}[h]
 \begin{center}
 	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			fork <bundled_channel> as 
-				<new_ch1> [with <channels>] -> <process1>
-				<new_ch2> [with <channels>] -> <process2>
-		\end{verbatim}
+			{\tt fork } <{\em bundled\_ch}> {\tt as} 
+			
+				\qquad \qquad  
+			 				{\em <new\_ch1>} [{\tt with} {\em <channels>}] {\tt -> } {\em procBody}$_1$
+				
+				\qquad \qquad  
+				{\em <new\_ch2>} [{\tt with} {\em <channels>}] {\tt -> } {\em procBody}$_2$
+				
+				\vspace{1em}
+			
+			{\tt split } {\em <bundled\_ch>} {\tt into} {\em <new\_ch1>, <new\_ch2>}
+			
 	\end{varwidth}
-
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			split <bundled_ch> into <new_ch1>, <new_ch2>
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
+	\end{center}
 \vspace{-2em}
 \caption{Syntax for fork and split}
 \label{Fig: fork and split}
 \end{figure}
 
-The underlying mathematics of CaMPL allows plugging two processes along utmost one channel to avoid cycles. However, if one wishes to plug processes along more than one channel, one may do so safely (with no deadlocking) using {\sf split} and {\sf fork}. The tensor $(*)$ and the par $(+)$ functors (operators) bundles two or more channels together, and produces a new channel for communication (in linear actegories, $(*)$ and $(+)$ are written as $\otimes$ and $\oplus$ respectively).
+The underlying mathematics of CaMPL allows plugging two processes along utmost one channel to avoid cycles. However, if one wishes to plug processes along more than one channel, one may do so safely (with no deadlocking) using {\sf split} and {\sf fork}. The tensor $(*)$ and the par $(+)$ operators bundle two channels together, and produces a new channel for communication.
 
-If a process has a right polarity channel of type $A (*) B$, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of right polarity. Dually, if a process is has a left polarity channel of type $A (+) B$, then it can {\sf fork} into two processes with two distinct channels $A$ and $B$ of left polarity. {\sf fork} is a non-blocking call. Accordingly, sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}:
+The {\tt split} command allows a channel to be discarded and replaced by two new distinct channels. The {\tt split} command is applied on an input channel of type {\tt P(*)Q} or an output channel of type {
+\tt P(+)Q}. Given an input channel ${\tt ch}$, the process command {\tt split ch into ch1, ch2} removes the channel {\tt ch} from being in scope, and produces two new input channels {\tt ch1} and {\tt ch2} in scope for further interaction. If ${\tt ch1}$ is of type {\tt P} and {\tt ch2} of type {\tt Q}, then the input channel {\tt ch} must be of type {\tt P(*)Q} (pronounced ``P {\em tensor} Q'').
+
+Similarly, given an output channel ${\tt ch}$, the process command {\tt split ch into ch1, ch2} removes the channel {\tt ch} from being in scope, and produces two new output channels {\tt ch1} and {\tt ch2} in scope for further interaction. If ${\tt ch1}$ is of type {\tt P} and {\tt ch2} of type {\tt Q}, then the input channel {\tt ch} must be of type {\tt P(+)Q} (pronounced ``P {\em par} Q''). 
+
+Note the role of polarities in determining the type of the compound channel --- either {\tt P(*)Q} or {\tt P(+)Q} --- however, both the types have the same operational semantics. Also note that, the {\tt split} process command cannot be last command since it would leave channels open and unused.
+
+ 
+The complementary process command of {\tt split} is the {\tt fork} command. The {\tt split} command on a channel blocks the calling process unless a {\tt fork} command is executed at the other end of the same channel. 
+
+Consider the following process command on a channel {\tt ch}: 
+	\begin{center}
+			{\tt fork} {\em ch} {\tt as} 
+			
+				\quad \quad \quad \quad{\em ch1} {\tt ->} {\em procBody}$_1$
+				
+				\quad \quad \quad \quad{\em ch2} {\tt ->} {\em procBody}$_2$
+	\end{center}
+	
+Assume that {\tt ch} is an input channel. The {\tt fork} process command removes channel {\tt ch} from being in scope and puts an input channel {\tt ch1} in scope exclusively for {\em procBody}$_1$. It similarly puts an input channel  {\tt ch2} in scope exclusively for {\em procBody}$_2$. The {\em procBody}$_1$ and {\em procBody}$_2$ will be run in parallel. Moreover, {\em procBody}$_1$ and {\em procBody}$_2$ must use all the channels in scope and may not share any channels, that is the set of channels used in {\em procBody}$_1$ and {\em procBody}$_2$ are disjoint. Suppose {\tt ch1} is of type P an {\tt ch2} is of type Q, then {\tt ch} being an input channel must be of type {\tt P(+)Q}. The following diagram is a schematic of the {\tt split} and the {\tt fork} process commands over a channel of type {\tt P(+)Q}.
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {{\tt ch:P(+)Q}};
+		\node [style=none] (15) at (1.75, 4.25) {(+)};
+		\node [style=none] (16) at (4.25, 4.25) {(-)};
+		\node [style=none] (17) at (0.5, 4.5) {$A$};
+		\node [style=none] (18) at (5.5, 4.5) {$B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \ar[r]^{\text{$A$ {\tt split}s and $B$ {\tt fork}s on {\tt ch}}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (1.5, 5.25) {};
+		\node [style=none] (16) at (1.5, 4.25) {};
+		\node [style=none] (17) at (1.25, 4) {};
+		\node [style=none] (18) at (1.75, 4) {};
+		\node [style=none] (19) at (1.25, 4.7) {};
+		\node [style=none] (20) at (1.75, 4.7) {};
+		\node [style=head, thick] (21) at (5.5, 6.25) {};
+		\node [style=none] (22) at (5.5, 5.25) {};
+		\node [style=none] (23) at (5.25, 5) {};
+		\node [style=none] (24) at (5.75, 5) {};
+		\node [style=none] (25) at (5.25, 5.7) {};
+		\node [style=none] (26) at (5.75, 5.7) {};
+		\node [style=none] (27) at (2.25, 4.75) {};
+		\node [style=none] (28) at (4.75, 5.5) {};
+		\node [style=head, thick] (29) at (5.5, 4.5) {};
+		\node [style=none] (30) at (5.5, 3.5) {};
+		\node [style=none] (31) at (5.25, 3.25) {};
+		\node [style=none] (32) at (5.75, 3.25) {};
+		\node [style=none] (33) at (5.25, 3.95) {};
+		\node [style=none] (34) at (5.75, 3.95) {};
+		\node [style=none] (35) at (4.75, 4) {};
+		\node [style=none] (36) at (2.25, 4.5) {};
+		\node [style=none] (38) at (3.5, 5.5) {{\tt ch:P}};
+		\node [style=none] (39) at (3.5, 3.75) {{\tt ch:Q}};
+		\node [style=none] (44) at (1, 4.5) {$A$};
+		\node [style=none] (45) at (6, 5.5) {$B1$};
+		\node [style=none] (46) at (6, 3.75) {$B2$};
+		\node [style=none] (47) at (2.25, 5) {(+)};
+		\node [style=none] (48) at (2.25, 4.25) {(+)};
+		\node [style=none] (49) at (4.75, 5.75) {(-)};
+		\node [style=none] (50) at (4.75, 3.75) {(-)};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=-180, out=0] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=180, out=0] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+
+Similarly, if {\tt ch} is an output channel, then {\tt ch1} and {\tt ch2} are also output channels. Suppose {\tt ch1} is of type P an {\tt ch2} is of type Q, then {\tt ch} being an output channel must be of type {\tt P(*)Q}. The following diagram is a schematic of the {\tt split} and the {\tt fork} process commands over a channel of type {\tt P(*)Q}.
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {{\tt ch:P(*)Q}};
+		\node [style=none] (15) at (1.75, 4.25) {(+)};
+		\node [style=none] (16) at (4.25, 4.25) {(-)};
+		\node [style=none] (17) at (0.5, 4.5) {$A$};
+		\node [style=none] (18) at (5.5, 4.5) {$B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \ar[r]^{\text{$A$ {\tt fork}s and $B$ {\tt fork}s on {\tt split}}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (5.5, 5.25) {};
+		\node [style=none] (16) at (5.5, 4.25) {};
+		\node [style=none] (17) at (5.75, 4) {};
+		\node [style=none] (18) at (5.25, 4) {};
+		\node [style=none] (19) at (5.75, 4.7) {};
+		\node [style=none] (20) at (5.25, 4.7) {};
+		\node [style=head, thick] (21) at (1.5, 6.25) {};
+		\node [style=none] (22) at (1.5, 5.25) {};
+		\node [style=none] (23) at (1.75, 5) {};
+		\node [style=none] (24) at (1.25, 5) {};
+		\node [style=none] (25) at (1.75, 5.7) {};
+		\node [style=none] (26) at (1.25, 5.7) {};
+		\node [style=none] (27) at (4.75, 4.75) {};
+		\node [style=none] (28) at (2.25, 5.5) {};
+		\node [style=head, thick] (29) at (1.5, 4.5) {};
+		\node [style=none] (30) at (1.5, 3.5) {};
+		\node [style=none] (31) at (1.75, 3.25) {};
+		\node [style=none] (32) at (1.25, 3.25) {};
+		\node [style=none] (33) at (1.75, 3.95) {};
+		\node [style=none] (34) at (1.25, 3.95) {};
+		\node [style=none] (35) at (2.25, 4) {};
+		\node [style=none] (36) at (4.75, 4.5) {};
+		\node [style=none] (38) at (3.5, 5.5) {{\tt ch:P}};
+		\node [style=none] (39) at (3.5, 3.75) {{\tt ch:Q}};
+		\node [style=none] (44) at (6, 4.5) {$B$};
+		\node [style=none] (45) at (1, 5.5) {$A1$};
+		\node [style=none] (46) at (1, 3.75) {$A2$};
+		\node [style=none] (47) at (2.25, 5.75) {(+)};
+		\node [style=none] (48) at (2.25, 3.75) {(+)};
+		\node [style=none] (49) at (4.75, 5) {(-)};
+		\node [style=none] (50) at (4.75, 4.25) {(-)};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=0, out=180] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=0, out=180] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+
+The following table summarizes the usage of {\tt split} and {\tt fork} process commands for different channel polarities:
+\begin{center}
+	\begin{tabular}{ c || c | c }
+		     Channel type       & (+) & (-) \\
+		 \hline
+		 \hline      
+		 {\tt P(*)Q}  & {\tt fork}  & {\tt split} \\
+		 \hline
+		 {\tt P(+)Q}  & {\tt split}  & {\tt fork} 
+	\end{tabular}
+\end{center}
+
+Let us look at an example usage of the {\tt split} and {\tt fork} commands where a client process forks into two processes and a server process splits its channel to the client to connect to the two new clients. 
+
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc client :: | => P (*) P =
+			2.    | => _2_ch 
+			3.		-> fork _2_ch as
+			        	ch1 -> client_helper("Client 1: " | => ch1)
+			        	ch2 -> client_helper("Client 2: " | => ch2)
+			
+			4. proc server :: | P (*) P => =
+			5.    | _2_ch => -> do
+			6.        split _2_ch into ch1, ch2
+			7.        server_helper( | ch1, ch2 => )
+			         
+			8. proc run :: | => =
+			9.    | => -> 
+			10.		plug
+			 	       client( | => _2_ch )
+			         server( | _2_ch => )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+
+\begin{itemize}
+	\item In line 10, the {\tt run} process creates a {\tt server} and a {\tt client} process and plugs them via channel. The {\tt client} and the {\tt server} processes run in parallel. From the type signature of server and the client process, we know that this channel is of type {\tt P(*)P}.
+	\item In line 3, the client process forks on the output channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. The fork command creates two new {\tt client\_helper} processes and run them in parallel.
+	\item In line 6, the {\tt server} process splits the input channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. At this point the {\tt server} process will be blocked, until the client runs the {\tt fork} command.
+	\item The {\tt server} resumes execution in line 7, and invokes a {\tt server\_helper} process with the two new channels given by the {\tt split} process command.
+\end{itemize}
+
+{\bf Note on logic:} The {\tt split} and the {\tt fork} process commands arise directly from the two-sidedness of the rules of the linear logic. The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. The rule $\otimes_R$ is same as {\tt fork}ing over an input channel, and the rule $\oplus_L$ is same as {\tt fork}ing over an output channel.
 \begin{figure}[h]
 	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2}  \quad \quad \quad \quad \quad \quad \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
 \vspace{-2em}
 \caption{Sequent rules for {\tt fork}}
 \label{Fig: sequent rules fork}
 \end{figure}
-
-Figures \ref{Fig: fork1} show a process {\sf p} with a right polarity channel of type $Y1 (*) Y2$. Using the compound channel, the process forks into a process {\sf p} and a process {\sf q}. Similarly, Figure \ref{Fig: fork2} is an example of process forking.
-
-% Side-by-side figures
+The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules for split}. The rule $\otimes_L$ is same as {\tt split}ting over an input channel, and The rule $\oplus_R$ is same as {\tt split}ting over an output channel.
 \begin{figure}[h]
-\centering
-\begin{minipage}{.5\textwidth}
-	\begin{verbatim}
-		proc p :: A, B | X1, X2 => Y1 (*) Y2 = 
-			a, b | x1, x2 => y -> 
-				fork y as 
-					y1 -> p(a | x1 => y1)
-					y2 -> q(b | x2 => y2)
-	\end{verbatim}
-  	\vspace{-2em}
-  \captionof{figure}{Process forking using {\tt (*)}}
-  \label{Fig: fork1}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
-  \centering
-	\begin{verbatim}
-		proc p :: A, B | X1 (+) X2 => Y1 ,Y2 = 
-			a, b | x => y1, y2 -> 
-				fork x as 
-					x1 -> p(a | x1 => y1)
-					x2 -> q(b | x2 => y2)
-	\end{verbatim}  
-	\vspace{-2em}
-  \captionof{figure}{Process forking using {\tt (+)}}
-  \label{Fig: fork2}
-\end{minipage}
-\end{figure}
-
-If a process is connected to a left polarity channel of type {\tt A (*) B}, then it can {\sf split} the bundle into two distinct channels {\tt A} and {\tt B} of left polarity to be used by the process for further computations. Dually, if a process is connected to a right polarity channel of type {\tt A (+) B}, then it can {\sf split} the bundle into two two distinct channels {\tt A} and {\tt B} of right polarity. {\sf split} is a blocking call --- that is a process calling split will be blocked unless a {\sf fork} occurs at the other end of the same channel.
-
-The sequent rules for {\sf split call} are shown in Figure \ref{Fig: sequent rules for split}.
-
-\begin{figure}[h]
-	\[ \infer[\otimes_R]{A ~|~ X1 \dashvv Y1 \oplus Y2}{A ~|~ X1 \dashvv Y1, Y2} \quad \quad \quad \quad \quad \quad \infer[\oplus_L]{A ~|~ X1, X2 \dashvv Y1}{A ~|~ X1 \otimes X2 \dashvv Y1} \]
+	\[ \infer[\oplus_R]{A ~|~ X1 \dashvv Y1 \oplus Y2}{A ~|~ X1 \dashvv Y1, Y2} \quad \quad \quad \quad \quad \quad \infer[\otimes_L]{A ~|~ X1, X2 \dashvv Y1}{A ~|~ X1 \otimes X2 \dashvv Y1} \]
 \vspace{-2em}
 \caption{Sequent rules for {\tt split}}
 \label{Fig: sequent rules for split}
 \end{figure}
-
-Figure \ref{Fig: split1} shows a process {\sf q} splitting an left polarity and calling a process $p$. Dually, Figure \ref{Fig: split2} shows a process splitting on the right polarity.
-
-% Side-by-side figures
-\begin{figure}[h]
-\centering
-\begin{minipage}{.5\textwidth}
-	\begin{verbatim}
-		proc p :: A | X => Y1, Y2 = 
-			a | x => y1, y2 -> ... 
-			
-		proc q :: A | X => Y1 (+) Y2 = 
-			a, b | x => y -> do
-					split y into y1, y2
-					p( a | x => y1,y2)
-	\end{verbatim}
-  	\vspace{-2em}
-  \captionof{figure}{Process splitting at the right polarity}
-  \label{Fig: split1}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
-  \centering
-	\begin{verbatim}
-		proc p :: A | X => Y1, Y2 = 
-			a | x => y1, y2 -> ... 
-		
-		proc q :: A | X1 (*) X2 => Y = 
-			a, b | x => y -> do
-					split x into x1, x2
-					p( a | x1,x2 => y)
-	\end{verbatim}
-	\vspace{-2em}
-  \captionof{figure}{Process splitting at the left polarity}
-  \label{Fig: split2}
-\end{minipage}
-\end{figure}
-
-In Example ??, ... 
 
 \subsection{Non-deterministic communication using {\tt race}}
 
@@ -1125,6 +1293,7 @@ On running the program, the {\tt server} and the {\tt helloworld} prints the fol
 Full version of the program is available in Appendix \ref{appendix: stored process example}.
 
 \subsection{Memory Cell: Mutual Exclusive access of shared memory}
+\label{sec:memcell}
 
 This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt "A"} and {\tt "B"}. The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. The {\tt fork} creates new processes are created during program execution.
 
