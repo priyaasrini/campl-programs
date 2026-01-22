@@ -15,10 +15,10 @@ input       | Put([Char] | Get([Char] | TopBot)) | get message     | Get([Char] 
 input       | Get([Char] | TopBot)               | put message     | TopBot                 | 
 ------------| -----------------------------------| ----------------| -----------------------| --}
 
-proc subclient :: [Char] | => Put([Char] | Get([Char] | TopBot)), StringTerminal =
-    tag | => ch, term -> do
+proc client ::  | => Put([Char] | Get([Char] | TopBot)), StringTerminal =
+     | => ch, term -> do
         hput StringTerminalPut on term
-        put tag on term
+        put "Client terminal" on term
         hput StringTerminalGet on term
         get fruit on term                        -- Reading input from the user
 
@@ -32,35 +32,23 @@ proc subclient :: [Char] | => Put([Char] | Get([Char] | TopBot)), StringTerminal
         hput StringTerminalGet on term
         get _ on term 
 
-        hput StringTerminalClose on term        -- close terminal  
+        hput StringTerminalClose on term         -- close terminal  
         close term
         halt ch
 
-proc client :: | => Put([Char] | Get([Char] | TopBot)) (*) Put([Char] | Get([Char] | TopBot)), StringTerminal, StringTerminal =
-    | => _2_ch, term1, term2 -> fork _2_ch as
-        ch1 -> subclient("Client 1: " | => ch1, term1)
-        ch2 -> subclient("Client 2: " | => ch2, term2)
+proc server :: | Put([Char] | Get([Char] | TopBot)), Console => =
+    | ch, console => -> do
 
-proc server :: | Put([Char] | Get([Char] | TopBot)) (*) Put([Char] | Get([Char] | TopBot)), Console => =
-    | _2_ch, console => -> do
-        split _2_ch into ch1, ch2
-        
-        get fruit on ch1
+        get fruit on ch
         hput ConsolePut on console
-        put "Client 1: " ++ fruit  on console
-        put fruit on ch1 
-        close ch1
-
-        get fruit on ch2
-        hput ConsolePut on console
-        put "Client 2: " ++ fruit on console
-        put fruit on ch2 
-        close ch2 
+        put "Client: " ++ fruit  on console
+        put fruit on ch 
+        close ch
 
         hput ConsoleClose on console
         halt console
         
-proc run :: | Console => StringTerminal, StringTerminal =
-    | console => term1, term2 -> plug
-        client( | => _2_ch, term1, term2 )
+proc run :: | Console => StringTerminal =
+    | console => term -> plug
+        client( | => _2_ch, term )
         server( | _2_ch, console => )

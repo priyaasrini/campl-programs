@@ -675,8 +675,8 @@ Assume that {\tt ch} is an input channel. The {\tt fork} process command removes
 		\node [style=none] (34) at (5.75, 3.95) {};
 		\node [style=none] (35) at (4.75, 4) {};
 		\node [style=none] (36) at (2.25, 4.5) {};
-		\node [style=none] (38) at (3.5, 5.5) {{\tt ch:P}};
-		\node [style=none] (39) at (3.5, 3.75) {{\tt ch:Q}};
+		\node [style=none] (38) at (3.5, 5.5) {{\tt ch1:P}};
+		\node [style=none] (39) at (3.5, 3.75) {{\tt ch2:Q}};
 		\node [style=none] (44) at (1, 4.5) {$A$};
 		\node [style=none] (45) at (6, 5.5) {$B1$};
 		\node [style=none] (46) at (6, 3.75) {$B2$};
@@ -739,7 +739,7 @@ Similarly, if {\tt ch} is an output channel, then {\tt ch1} and {\tt ch2} are al
 		\draw [thick] (10.center) to (11.center);
 		\draw (12.center) to (13.center);
 	\end{pgfonlayer}
-\end{tikzpicture} \ar[r]^{\text{$A$ {\tt fork}s and $B$ {\tt fork}s on {\tt split}}~~~~~~}
+\end{tikzpicture} \ar[r]^{\text{$A$ {\tt fork}s and $B$ {\tt split}s on {\tt ch}}~~~~~~}
 & 
 \begin{tikzpicture}[scale=1.5]
 	\begin{pgfonlayer}{nodelayer}
@@ -765,8 +765,8 @@ Similarly, if {\tt ch} is an output channel, then {\tt ch1} and {\tt ch2} are al
 		\node [style=none] (34) at (1.25, 3.95) {};
 		\node [style=none] (35) at (2.25, 4) {};
 		\node [style=none] (36) at (4.75, 4.5) {};
-		\node [style=none] (38) at (3.5, 5.5) {{\tt ch:P}};
-		\node [style=none] (39) at (3.5, 3.75) {{\tt ch:Q}};
+		\node [style=none] (38) at (3.5, 5.5) {{\tt ch1:P}};
+		\node [style=none] (39) at (3.5, 3.75) {{\tt ch2:Q}};
 		\node [style=none] (44) at (6, 4.5) {$B$};
 		\node [style=none] (45) at (1, 5.5) {$A1$};
 		\node [style=none] (46) at (1, 3.75) {$A2$};
@@ -792,6 +792,97 @@ Similarly, if {\tt ch} is an output channel, then {\tt ch1} and {\tt ch2} are al
 		\draw [in=0, out=180] (36.center) to (35.center);
 	\end{pgfonlayer}
 \end{tikzpicture} }
+\]
+
+\[ \xymatrixcolsep{50mm}
+\xymatrix{ \begin{tikzpicture}[scale=1.25]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {{\tt ch:P(*)P}};
+		\node [style=none] (15) at (1.75, 4.25) {(+)};
+		\node [style=none] (16) at (4.25, 4.25) {(-)};
+		\node [style=none] (17) at (1, 3.5) {client};
+		\node [style=none] (19) at (5, 3.5) {server};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+\ar[r]^{\textit{client {\tt fork}s and server {\tt split}s on {\tt ch}~~~~~~}}
+& 
+\begin{tikzpicture}[scale=1.25]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (0, 3) {};
+		\node [style=none] (16) at (0, 2) {};
+		\node [style=none] (17) at (0.25, 1.75) {};
+		\node [style=none] (18) at (-0.25, 1.75) {};
+		\node [style=none] (19) at (0.25, 2.45) {};
+		\node [style=none] (20) at (-0.25, 2.45) {};
+		\node [style=head, thick] (21) at (-4, 4) {};
+		\node [style=none] (22) at (-4, 3) {};
+		\node [style=none] (23) at (-3.75, 2.75) {};
+		\node [style=none] (24) at (-4.25, 2.75) {};
+		\node [style=none] (25) at (-3.75, 3.45) {};
+		\node [style=none] (26) at (-4.25, 3.45) {};
+		\node [style=none] (27) at (-0.75, 2.5) {};
+		\node [style=none] (28) at (-3.25, 3.25) {};
+		\node [style=head, thick] (29) at (-4, 2.25) {};
+		\node [style=none] (30) at (-4, 1.25) {};
+		\node [style=none] (31) at (-3.75, 1) {};
+		\node [style=none] (32) at (-4.25, 1) {};
+		\node [style=none] (33) at (-3.75, 1.7) {};
+		\node [style=none] (34) at (-4.25, 1.7) {};
+		\node [style=none] (35) at (-3.25, 1.75) {};
+		\node [style=none] (36) at (-0.75, 2.25) {};
+		\node [style=none] (38) at (-2, 3.25) {{\tt ch1:P}};
+		\node [style=none] (39) at (-2, 1.5) {{\tt ch2:P}};
+		\node [style=none] (44) at (0, 1.5) {server};
+		\node [style=none] (45) at (-4, 4.75) {subclient};
+		\node [style=none] (46) at (-4, 0.75) {subclient};
+		\node [style=none] (47) at (-3.25, 3.5) {(+)};
+		\node [style=none] (48) at (-3.25, 1.5) {(+)};
+		\node [style=none] (49) at (-0.75, 2.75) {(-)};
+		\node [style=none] (50) at (-0.75, 2) {(-)};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=0, out=180] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=0, out=180] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+}
 \]
 
 The following table summarizes the usage of {\tt split} and {\tt fork} process commands for different channel polarities:
