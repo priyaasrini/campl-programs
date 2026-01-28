@@ -13,6 +13,10 @@ proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
             close
 
         on term do 
+            hput StringTerminalPut           
+            put "Press Enter to close"
+            hput StringTerminalGet
+            get _ 
             hput StringTerminalClose
             halt 
 

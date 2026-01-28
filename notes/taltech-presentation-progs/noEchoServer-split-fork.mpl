@@ -30,9 +30,10 @@ proc client :: | => Put([Char] | Get([Char] | TopBot)) (*) Put([Char] | Get([Cha
 proc receive_message_and_continue :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
     | winner, loser, console => -> do
         get message on winner
+        close winner 
+
         hput ConsolePut on console
         put message on console
-        close winner 
 
         get message on loser
         hput ConsolePut on console
@@ -45,8 +46,8 @@ proc receive_message_and_continue :: | Put([Char] | TopBot), Put([Char] | TopBot
             hput ConsoleClose
             halt
                        
-proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
-    | ch1, ch2, console => -> do 
+proc server :: | Put([Char] | TopBot) * Put([Char] | TopBot), Console => =
+    | _2_ch, console => -> do 
         split _2_ch into ch1, ch2
         race
             ch1 -> do
