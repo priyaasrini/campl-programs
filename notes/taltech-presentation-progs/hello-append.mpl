@@ -2,7 +2,6 @@ include Prelude
 
 -- The 'append' function
 fun append :: [A],[A] -> [A] =
-    a,[]      -> a
     [],a      -> a
     (b:bs),cs -> b : append(bs, cs)
 
