@@ -1,10 +1,12 @@
 
 -- This opens a terminal for which one may
 -- output strings and get strings on.
+
 protocol StringTerminal => S =
     StringTerminalGet :: Get([Char]| S) => S
     StringTerminalPut :: Put([Char]| S) => S
     StringTerminalClose :: TopBot => S
+    StringTerminalDup :: S (+) S => S
 
 -- This allows the console to input and output strings, and to
 -- open new string terminals.
