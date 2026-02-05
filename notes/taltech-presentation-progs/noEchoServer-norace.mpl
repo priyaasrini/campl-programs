@@ -39,11 +39,7 @@ proc receive_message_and_halt :: | Put([Char] | TopBot), Put([Char] | TopBot), C
             halt
                        
 proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
-    | ch1, ch2, console => -> race
-        ch1 -> do
-            receive_message_and_halt( | ch1, ch2, console => )
-        ch2 -> do 
-            receive_message_and_halt( | ch2, ch1, console => )
+    | ch1, ch2, console => -> receive_message_and_halt( | ch1, ch2, console => )
 
 proc run :: | Console => StringTerminal, StringTerminal =
     | console => term1, term2 -> plug
