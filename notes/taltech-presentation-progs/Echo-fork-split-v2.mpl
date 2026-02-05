@@ -27,13 +27,19 @@ proc client ::  |  => Echo, StringTerminal =
                 put "Message to server :- "
                 hput StringTerminalGet
                 get message
-                hput StringTerminalClose 
-                close 
 
             on ch do 
                 hput EchoSend 
                 put message 
-                halt  
+                close  
+
+            on term do
+                hput StringTerminalPut
+                put "Press any key to close "
+                hput StringTerminalGet
+                get _
+                hput StringTerminalClose 
+                halt 
 
 proc client_spawner :: | Console => Clients( | Echo) =
     | console => clients -> do
