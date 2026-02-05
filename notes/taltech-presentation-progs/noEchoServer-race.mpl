@@ -47,6 +47,6 @@ proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
 
 proc run :: | Console => StringTerminal, StringTerminal =
     | console => term1, term2 -> plug
-        client("1:"| => ch1, term1 )
-        client("2:"| => ch2, term2)
+        client("Client 1:"| => ch1, term1 )
+        client("Client 2:"| => ch2, term2)
         server( |ch1, ch2, console => )
