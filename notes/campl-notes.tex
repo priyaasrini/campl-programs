@@ -34,6 +34,7 @@ Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek
 
 \section{A brief overview of CaMPL}
 
+To be written... 
 
 \section{Concurrent types}
 
@@ -55,7 +56,7 @@ At any instance in run-time, the topology of a CaMPL program is a finite acyclic
 
 \subsection{Processes}
 
-Processes are the main actors of a CaMPL program. In CaMPL, a {\em process} is specified by a process name and an optional type signature. The type signature of a process consists of: 
+Processes are the main actors of a CaMPL program. In CaMPL, a {\em process} is specified by a process name and an optional type signature\footnote{\textcolor{purple}{CaMPL does type-inferencing. To write a few more sentences about this.}}. The type signature of a process consists of: 
 \begin{itemize}
 	\item an optional comma-seperated list of sequential types, say {\em A1, ..., Ak},
     \item an optional comma-seperated list of input concurrent types, say {\em I1, ..., In}, and
@@ -124,7 +125,11 @@ The type signature is optional and may be omitted. The process definition may pa
 	\end{pgfonlayer}
 \end{tikzpicture} \]
 
-The polarity of the channels encode the bidirectional flow of information. When a process sends message over an output/right polarity channel (to another process), then the information flows  towards right. If a process receives message over an output/right polarity channel (from another process), then the information flows towards the left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
+The above picture is a schematic of a process with input channels $i_1,i_2,\ldots,i_n$ and output channels $o_1,o_2,\ldots,o_m$. The input sequential types are not shown in the schematic.
+
+The polarity of the channels encode the bidirectional flow of information. Two processes are connected by a channel of same {\em type} but of opposite polarities. We explain channel types and polarities in Section \ref{Sec:Channels}. 
+
+When a process sends message over an output channel (to another process which then receives the message over an input polarity channels), the information flows from left to right. When a process receives message over an output channel (from another process which then send the message over an input channel), the information flows from right to left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
   
 The process body {\em procBody} may be a single process command written as as {\em procCmd} or a {\tt do} block of process commands taking one of the following forms:-
 \begin{center}
@@ -174,10 +179,15 @@ Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or
 A CaMPL program has at least one process. A CaMPL program begins execution in the main process named {\tt run}.
 
 \subsection{Channels}
+\label{Sec:Channels}
 
-In CaMPL, processes talk to each other, that is, send and receive messages, via channels. CaMPL provides built-in channel types from which one may build custom channel types. Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
+\subsubsection{On Channel polarities}
+
+\textcolor{purple}{Content to be written. Xanna has a nice explanation as to why polarities matter. Should this section to be moved later?}
 
 \subsubsection{Built-in Channel types}
+
+In CaMPL, processes send and receive messages from one another via channels. CaMPL provides built-in channel types from which one may build custom channel types. Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
 
 The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 
@@ -195,7 +205,7 @@ The {\tt Get} and {\tt Put} types are used by a process to send and receive mess
 
 \subsubsection{Constructing custom channel types}
 
-Using CaMPL, a programmer may design communication over a channel using {\em protocols} and {\em coprotocols}. Protocols and coprotocols are concurrent analogue of inductive and co-inductive data types in functional programming languages. Instances of protocols and coprotocols are called channels.
+Using CaMPL, a programmer may design communication over a channel using {\em protocols} and {\em coprotocols}. Protocols and coprotocols are concurrent analogue of inductive and co-inductive data types in functional programming languages. In a CaMPL program, Instances of protocols and coprotocols are called channels.
  
 In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
   \begin{center}
@@ -219,11 +229,11 @@ protocol EchoSimple (A | ) => S =
 \end{varwidth}
 \end{center}
 
-In the above code, {\tt EchoSimple} is a protocol that takes in an output conncurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} and are analogous to session types. 
+In the above code, {\tt EchoSimple} is a protocol that has an output concurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} which are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel by a process connected to it.
 
 \[ \xymatrix{ A~\blackman \ar@{-}@<-5pt>[rrr]^{(+) ~~ {\tt ch: EchoSimple} ~~ (-)} & & & \blackman~B } \]
 
-Consider two processes $A$ and $B$ connected by a channel {\tt ch} of type {\tt EchoSimple} protocols. $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
+Consider two processes $A$ and $B$ connected by a channel {\tt ch} of protocol type {\tt EchoSimple}. In the above picture, $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
 
 Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. The following code snippet shows {\tt EchoSimple} as a coprotocol. 
 \begin{center}
@@ -241,18 +251,18 @@ Suppose {\tt ch} is a channel with the handle {\tt EchoSend} connecting process 
 A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
 
-\section{Concurrent operators}
+\section{Process Commands}
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
 
-Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types.
+Table \ref{tab:mpl-constructs} summarizes the operations / commands that may be performed by a process on the concurrent types. In this section, we explain each of these commands and their usage. 
 
  \begin{table}[!h]
 \centering
 	\begin{tabular}{|l|l|l|}
 	\hline
 	{\tt id} & equates two channels &  non-blocking  \\ \hline
-	{\tt neg} & negates a channel & non-blocking \\ \hline
+	{\tt neg} & inverts channel polarity & non-blocking \\ \hline
 	{\tt plug} & connects two processes by a channel & non-blocking \\ \hline
 	{\tt get} & send/receive a value on a channel & blocking \\ \hline
 	{\tt put} & send/receive a value on a channel &  non-blocking \\ \hline
@@ -283,11 +293,11 @@ Table \ref{tab:mpl-constructs} summarizes the operations on the concurrent types
 \end{center}
 
 Composition of two or more processes in the concurrent side of CaMPL is defined by 
-{\em plug} command. Two processes can only be plugged to each other along a channel, if 
-\begin{itemize}
-	\item they share a channel of the same type but opposite polarity and 
-	\item they do not have an existing connection.
-\end{itemize}
+{\em plug} command. Two processes can only be plugged to each other along a channel if and only if they satisfy the following conditions:
+\begin{enumerate}[(1)]
+	\item they share a channel of the same type but opposite polarity, and 
+	\item there exists no connection between them.
+\end{enumerate}
 
 The processes which are plugged together run in parallel, and may communicate via the channels connecting them. The following code demonstrates a usage of the {\tt plug} command. 
 
@@ -310,15 +320,17 @@ A detailed explanation of the code is as follows:
 
 \item Line {\tt 2.} provides variable names to the sequential and concurrent types.
 
-\item Lines {\tt 3.} cause {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channels (since channels are linear resources).
+\item Line {\tt 3.} causes {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channel types (since channels are linear resources).
 \end{itemize}
 
-A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. The {\tt plug} command can only occur as the last command in a process block. 
+A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. The {\tt plug} command can only occur as the last command in a process block.
 
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
 
-The {\tt id} command is used equate to two channels of opposite polarities while {\tt neg} command is used to equate two channel of same polarities. The following code snippet demonstrates the usage of these commands:
+The {\tt id} command is used identify two channels of opposite polarities as the same, that is, to equate one to the other. The {\tt neg} command is used to equate two channel of same polarities --- this is because because the {\tt neg} command flips the polarity of channel. 
+
+The following code snippet demonstrates the usage of these commands. The {\tt id} command is written as {\tt |=|}.
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
@@ -337,11 +349,13 @@ A detailed explanation of the code is as follows:
 
 \item Line {\tt 2.} provides variable names to the concurrent types.
 
-\item Line {\tt 3.} equates the input channel {\tt a} to output channel {\tt a'}, both of type {\tt A}.
+\item Line {\tt 3.} equates the input channel {\tt a} to the output channel {\tt a'}, both of type {\tt A}.
 
 \item Line {\tt 4.} first negates channel  {\tt a} --- since {\tt a} is an input channel of type {\tt A}, {\tt neg(a)} is an output channel of type {\tt Neg(A)}. Then, it equates input channel {\tt neg\_a} of type {\tt Neg(A)} with {\tt neg(a)}.
 
 \end{itemize}
+
+The {\tt neg} process command is particularly useful when channels are passed as resources between multiple processes. \textcolor{purple}{See example ... for a case study.} 
 
 \subsection{Ending communication using {\tt halt} and {\tt close}}
 \label{sec:close}
@@ -359,7 +373,7 @@ A detailed explanation of the code is as follows:
 
 \vspace{-1em}
 
-A process may use {\tt close} and the {\tt halt} commands to close its channels, that is, terminate any interaction along those channels, and remove those channels out of scope. The {\tt halt} command halts a process after closing the last channel (to be closed). The {\tt halt} command is expected to be the last command of a process block. Closing a channel of any (co)protocol type results in built-in channel type {\tt TopBot}.
+The {\tt close} or the {\tt halt} command on a channel terminates any interaction along that channel, and removes the channel out of scope. The {\tt halt} command is expected to be the last command of a process block. Such terminal of communication is allowed only on a channel type {\tt TopBot}. The {\tt halt} command halts a process after closing the last channel (to be closed). 
 
 The following is a simple process demonstrating the usage of {\tt close} and {\tt halt}.
 \begin{center}
@@ -385,12 +399,12 @@ A detailed explanation of the code is as follows:
 
 \end{itemize}
  
-\subsection{Complementary operators }
+\subsection{Complementary pairs }
 \label{subsec:pairs}
 
-A complementary pair in CAMPL is a pair of commands and is used for communication between two processes. For a complementary pair, one of the commands causes the calling process to wait until the other command is invoked (by the communicating process). For example, a  {\tt get}  command causes the calling process to wait to receive a value until the communicating process performs a {\tt put} command.
+A complementary pair in CAMPL is a pair of process commands which in-unison is used by two connected processes for communication. In a complementary pair, one of the commands is of blocking nature until the other command is unblocking. For example, the  {\tt get}  command is used to receive a message, hence it blocks, until another process performs a corresponding {\tt put} command which is used to send a message.
 
-\subsubsection{Sending and receiving messages using {\tt put} and {\tt get}}
+\subsubsection{{\tt put} and {\tt get}: Send and receive messages}
 \label{subsec:put-get}
 
 The semantics of message passing in CaMPL is given by a linear actegory. The operator $\circ$ 
@@ -402,12 +416,12 @@ channels of type either {\tt Put(A|Ch)} or {\tt Get(A|Ch)}.
 \[  
  [{\tt Put}]: \quad \xymatrix{   
  \blackman  \quad
- \ar[rr]^{(r) \quad A \circ X \quad (l)}  
- &  & \quad \blackman   } \quad \quad \quad 
+ \ar[rrr]^{(+) \quad  {\tt Put(}A|X{\tt)} \quad   (-)}  
+ &  & & \quad \blackman   } \quad \quad \quad 
  [{\tt Get}]: \quad\xymatrix{  
  \blackman  \quad
- \ar@{<-}[rr]^{(r) \quad B \bullet X \quad (l)} 
- &  & \quad \blackman   }  
+ \ar@{<-}[rrr]^{(+) \quad \quad {\tt Get(}B|Y{\tt)} \quad \quad (-)} 
+ &  & & \quad \blackman   }  
  \]
  \caption{Schematic of {\tt Put} and {\tt Get} types}
  \label{Fig: Put and Get}
@@ -537,7 +551,7 @@ Read this as, if I (process) have an output channel which is a {\tt Put} type on
 
 If I (process) have an input channel which is a {\tt Get} type on a protocol, then I can {\tt recv} (get) data on this channel. Alternatively, if I (process) have an output channel which is a {\tt Get} type on a protocol, then someone will be {\tt recv}ing (getting) data on this channel from me.
 
-\subsubsection{Activating channels using {\tt hcase} and {\tt hput}}
+\subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
 The {\tt hput} command sends a handle of a protocol over a right polarity channel which is matched by a {\tt hcase} command on the left polarity. For co-protocols, handles are sent over a left polarity channel and received over the corresponding right polarity channel. Figure \ref{Fig: hput and hcase} shows the syntax for {\tt hput} and {\tt hcase}.
 
@@ -568,7 +582,7 @@ The {\tt hput} command sends a handle of a protocol over a right polarity channe
 For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}  hputs {\tt EchoClose} on channel {\tt ch} of type {\tt Echo}. This {\tt hput} is matched by {\tt hcase} in line ?? of the {\tt Server}. 
 
 
-\subsubsection{Multichannel communication using {\tt split} and {\tt fork}}
+\subsubsection{{\tt split} and {\tt fork}: Multi-processes communication}
 \label{sec:split-fork}
 
 \begin{figure}[h]
