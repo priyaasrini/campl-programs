@@ -42,7 +42,6 @@ fun append :: List(A), List(A) -> List(A) =
     ListEmpty, list2 -> list2
     ListCons(head1, list1), list2 -> ListCons(head1, append(list1, list2))
 
-
 fun interleave :: List(A), List(A) -> List(A) =
     ListEmpty, list2 -> list2
     ListCons(head1, list1), list2 -> ListCons(head1, interleave(list2, list1))
@@ -209,14 +208,13 @@ proc test = -- test plug
             ch1, ch3 => -> do 
                 close ch1 
                 halt ch3 
--}
+
 
 proc main =
     | console => -> do 
-         case ["list1", "asdf"] of
-            left -> case ["list2"] of
-                right -> case (App := _ -> "app") of
-                    f -> print_list(append(map(f, from_list(["list1", "asdf"])), from_list(["list2"])) | console =>)
+        case (App := _ -> "app") of
+            f -> print_list(append(map(f, from_list(["list1", "asdf"])), from_list(["list2"])) | console =>)
 
 proc run :: | Console => =
     | console => -> main(| console => )
+
