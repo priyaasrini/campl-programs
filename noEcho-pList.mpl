@@ -4,6 +4,11 @@ protocol PList( | M) => S =
     PListEmpty :: TopBot => S
     PListCons :: M (*) S => S
 
+proc plist_nil :: | => PList( | M) =
+    | => nil -> do 
+        hput PListEmpty on nil
+        halt nil
+
 proc plist_cons :: | M, PList( | M) => PList( | M) =
     | ch, chs => ret_chs -> do
         on ret_chs do hput PListCons
@@ -24,11 +29,9 @@ proc equate_2 :: | M, P => M, P =
  proc p_listrace :: | Put(A | P), PList( | Put(A | P)) => Put(A | P), PList( | Put(A | P)) =
     | ch1, chs => ret_winner, ret_losers -> hcase chs of
         PListEmpty -> do
-            on chs do close
-            on ret_losers do
-                hput PListEmpty
-                close
-            ret_winner |=| ch1
+            -- this didn't change anything but it makes it fewer lines.
+            hput PListEmpty on ret_losers           
+            equate_2( | ch1, chs => ret_winner, ret_losers ) 
 
         PListCons -> do
             on chs do split into ch2,new_chs
@@ -104,7 +107,5 @@ proc run :: | Console => StringTerminal, StringTerminal, StringTerminal =
         client( | => ch2, term2 )
         client( | => ch3, term3 )
         client_wrapper( | ch1, ch2, ch3, nil => out_plist  )
-        => nil -> do 
-                hput PListEmpty on nil
-                halt nil
+        plist_nil( | => nil)
         server( | out_plist, console => )
