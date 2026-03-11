@@ -258,10 +258,10 @@ Channel types that take another channel type as an argument are recursive cases.
 The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
 
 \begin{tabular}{r l}
+{\tt TopBot} & end communication on the channel (this is the base case). \\
+{\tt Neg (Ch)} & swap the polarity of the given channel. \\ 
 {\tt Get (A|Ch)} & a message of type {\tt A} travels from input to output polarity (right to left). \\
 {\tt Put (A|Ch)} & a message of type {\tt A} travels from output to input polarity (left to right). \\ 
-{\tt Neg (Ch)} & swap the polarity of the given channel. \\ 
-{\tt TopBot} & end communication on the channel (this is the base case). \\
 {\tt Ch1 (+) Ch2} & the process with input polarity (on the right end) becomes two processes. \\
 {\tt Ch1 (*) Ch2} & the process with output polarity (on the left end) becomes two processes. \\
 ~ & ~
@@ -269,12 +269,10 @@ The outer most layer is the first interaction that will take place, and after th
 
 \noindent 
 %The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
-The {\tt Get} and {\tt Put} types are used to send and receive messages.
-The operations that are performed on each polarity of these types are explained in Section \ref{subsec:put-get}. 
-The {\tt Neg} type swaps the polarity of a channel so that two channels of same polarity can be identified as the same channel. See Section \ref{sec:neg} for more information. 
-The {\tt TopBot} type is used to end communication over a channel, see Section \ref{sec:close}. 
-The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels. 
-The operations that are performed on each polarity of these types are explained in Section \ref{sec:split-fork}. 
+The {\tt TopBot} type is used to end communication on a channel, and its corresponding operations are given in Section \ref{sec:close}. 
+The {\tt Neg} type swaps the polarity of a channel so two channels of the same polarity can be identified as the same channel, and the corresponding operations are given in Section \ref{sec:neg}. 
+The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
+The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
 \subsubsection{Constructing custom channel types}
 
