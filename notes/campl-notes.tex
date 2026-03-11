@@ -146,11 +146,20 @@ We call the list of channels $i_1, \ldots, i_n$ occurring to the left of {\tt =>
 	\end{pgfonlayer}
 \end{tikzpicture} \]
 
-The above picture is a schematic of a process with input channels $i_1,i_2,\ldots,i_n$ and output channels $o_1,o_2,\ldots,o_m$. The input sequential types are not shown in the schematic.
+The above picture is a schematic of a process with input channels $i_1,i_2,\ldots,i_n$ and output channels $o_1,o_2,\ldots,o_m$. The sequential types are not shown in the schematic.
 
-The polarity of the channels encode the bidirectional flow of information. Two processes are connected by a channel of same {\em type} but of opposite polarities. We explain channel types and polarities in Section \ref{Sec:Channels}. 
+Two processes can be connected by a channel if their process definitions both have a channel with the same type but opposite polarities. 
+We explain channel types and polarities in Section \ref{Sec:Channels}. 
+The operations that a process performs on a channel are governed by both the type and polarity of the channel.
+We explain the operations, called process commands, that are facilitated by CaMPL in Section~\ref{Sec:concurrent-commands}.
+We specifically discuss the complementary operations that are performed on each polarity of a channel, e.g. sending and receiving a message, in Section~\ref{subsec:pairs}.
 
-When a process sends message over an output channel (to another process which then receives the message over an input polarity channels), the information flows from left to right. When a process receives message over an output channel (from another process which then send the message over an input channel), the information flows from right to left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
+%% i think the polarity of channels is more than just information flow.
+%The polarity of the channels encode the bidirectional flow of information. Two processes are connected by a channel of same {\em type} but of opposite polarities. We explain channel types and polarities in Section \ref{Sec:Channels}. 
+
+%% i think that we don't need this amount of detail yet and instead we should be forward referencing the process commands section and the complementary pairs section.
+%When a process sends message over an output channel (to another process which then receives the message over an input polarity channels), the information flows from left to right. When a process receives message over an output channel (from another process which then send the message over an input channel), the information flows from right to left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
+
   
 The process body {\em procBody} may be a single process command written as as {\em procCmd} or a {\tt do} block of process commands taking one of the following forms:-
 \begin{center}
@@ -195,7 +204,8 @@ The process body {\em procBody} may be a single process command written as as {\
 \end{minipage}
 \end{center}
 
-Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. A {\em procBody}$_i$ may be an invokation of another process. The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
+Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. A {\em procBody}$_i$ may be an invokation of another process. 
+%The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
 
 
 \subsection{Channels}
