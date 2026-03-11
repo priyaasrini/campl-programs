@@ -36,10 +36,13 @@ Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek
 
 To be written... 
 
-\section{Concurrent types}
+This section should introduce the salient details of CaMPL (like it should be a highlight reel of CaMPL. if people don't read past this section they should still be able to be like ``oh yeah i heard of CaMPL it was cool because of x, y, z'') which could include some of the following points:
 
+\begin{itemize}
 
-At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of {\em processes} which are nodes of the graph and {\em channels} which are the edges of the graph. The following table draws analogue between the constructs of sequential and concurrent MPL.
+\item message passing concurrency (opposed to shared memory) and maybe the benefits in terms of distributed systems that cannot share memory?? even though the current implementation still heavily relies on the processes sharing memory?
+
+\item two tiered message-passing logic called MPL . The following table draws analogues between the constructs of sequential and concurrent MPL.
 
 \begin{center}
 \begin{tabular}{ | c ||  c | c | c | }
@@ -52,6 +55,18 @@ At any instance in run-time, the topology of a CaMPL program is a finite acyclic
  \hline
 \end{tabular}
 \end{center} 
+
+\item that the categorical semantics (the concept of which should be mentioned in the previous section) allow us to mathematically prove things about programs written in this language, and that specifically it has been shown that formal campl programs (i.e. those without general recursion) will never deadlock or livelock. we can also mention that even with general recursion they still don't deadlock.
+
+\item and related to the last point, we can talk about how the type system given by the semantics means that this guarantee of progress for CaMPL programs can be made as a type check. we can also mention that the current CaMPL compiler performs type inference, so programs can be written without explicit typing and the compiler will confirm whether the program will deadlock or livelock.
+
+\end{itemize}
+
+\section{Concurrent types}
+% maybe change to concurrent constructs?
+
+
+At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of {\em processes} which are nodes of the graph and {\em channels} which are the edges of the graph. 
 
 
 \subsection{Processes}
