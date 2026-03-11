@@ -81,9 +81,10 @@ The type signature of a process consists of three comma-seperated list of types:
 	\item output concurrent types, e.g. {\em O1, ..., Om}.
 \end{itemize}
 The instances of concurrent types are called {\em channels}.
+A CaMPL program has at least one process in which the execution of the program begins. 
+This process is the main process which must have the process name {\tt run} and its type signature must only consist of ``service channels'' which are explained in Section~\ref{Sec:ServiceChannels}.
 
-A CaMPL process is given by the following syntax (the CaMPL tokens are specified by {\tt typewriter} font and in red color) :-
-
+A CaMPL process is defined using the following syntax (the CaMPL tokens are specified by {\tt typewriter} font and in red color):
   \begin{center}
     \textcolor{red}{\tt proc} {\em procName} \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$ \textcolor{red}{ \tt = }
     
@@ -92,7 +93,9 @@ A CaMPL process is given by the following syntax (the CaMPL tokens are specified
     ... \\ 
     \quad \quad \quad \quad \quad \quad   $~a_{p1}, ..., a_{pk}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_p$}
   \end{center}
-The type signature is optional and may be omitted. The process definition may pattern-match on sequential types. We call the list of channels $i_1, \ldots, i_n$ occurring to the left of {\tt =>} as {\em input polarity} or {\em left polarity} channels. We call the list of channels $o_1, \ldots, o_m$ occurring to the right of {\tt =>} as {\em output polarity} or {\em right polarity} channels. We also say that the channels $i_1, \ldots, i_n$ and $o_1, \ldots, o_m$ are in the scope of the process body --- operationally, this means that these channels can be accessed inside the {\em procBody$_p$}. 
+The type signature, \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$, is optional and may be omitted. 
+The process definition may pattern-match on instances of sequential types as illustrated by the \(p\) different process body definitions. 
+We call the list of channels $i_1, \ldots, i_n$ occurring to the left of {\tt =>} as {\em input polarity} or {\em left polarity} channels. We call the list of channels $o_1, \ldots, o_m$ occurring to the right of {\tt =>} as {\em output polarity} or {\em right polarity} channels. We also say that the channels $i_1, \ldots, i_n$ and $o_1, \ldots, o_m$ are in the scope of the process body --- operationally, this means that these channels can be accessed inside the {\em procBody$_p$}. 
 
   \[ \begin{tikzpicture}[scale=1.5]
 	\begin{pgfonlayer}{nodelayer}
@@ -194,7 +197,6 @@ The process body {\em procBody} may be a single process command written as as {\
 
 Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. A {\em procBody}$_i$ may be an invokation of another process. The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
 
-A CaMPL program has at least one process. A CaMPL program begins execution in the main process named {\tt run}.
 
 \subsection{Channels}
 \label{Sec:Channels}
