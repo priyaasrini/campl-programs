@@ -217,7 +217,7 @@ Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or
 %
 Processes are defined with two lists of channels that are in its scope: input (or left) polarity channels and output (or right) polarity channels.
 The polarity of a channel can be thought of as which ``end'' of the channel the process has access to.
-Two processes can be connected along a channel if they both have a channel in scope with the same type and opposite polarity.
+Two processes can be connected along a channel if their process definitions both have a channel with the same type and opposite polarities.
 This section will discuss the details of how and why this has been defined in this way.
 
 A process ``uses'' a channel to interact with another process on the other end of the channel.
