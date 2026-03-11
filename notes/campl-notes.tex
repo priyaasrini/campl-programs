@@ -217,6 +217,8 @@ Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or
 %
 Processes are defined with two lists of channels that are in its scope: input (or left) polarity channels and output (or right) polarity channels.
 The polarity of a channel can be thought of as which ``end'' of the channel the process has access to.
+% we could change the word ``end'' to side if that would be more natural?
+Processes that have the input (or left) polarity of a channel are on the ``right end'', and processes that have the output (or right) polarity are on the ``left end.''
 Two processes can be connected along a channel if their process definitions both have a channel with the same type and opposite polarities.
 This section will discuss the details of how and why this has been defined in this way.
 
@@ -232,6 +234,7 @@ If both processes decide that they should receive the message, they will both be
 This is precisely what a deadlock is.
 
 If we have polarities and types and we enforce that processes can only be connected if they use channels with the same type and opposite polarity, we can specify that \(p\) uses \(c\) with output polarity, \(q\) uses \(c\) with input polarity, and \(c\) has a type indicating that messages travel from input to output polarity.
+This means that information flows from the process on the right end to the process on the left end (right to left).
 Then, both processes' roles in the interaction are unambiguous:  \(q\) knows that it should send a message and \(p\) knows that it should receive a message.
 Each built-in channel type in CaMPL similarly specifies the complementary roles of the processes on each end of the channel.
 
@@ -239,21 +242,39 @@ Each built-in channel type in CaMPL similarly specifies the complementary roles 
 
 \subsubsection{Built-in Channel types}
 
-In CaMPL, processes send and receive messages from one another via channels. CaMPL provides built-in channel types from which one may build custom channel types. Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
+The built-in channel types define the fundamental interactions that are permitted to occur between processes.
+This includes message passing as well as changes to the network of processes in the program.
+From the built-in channel types, one may construct custom channel types which will be discussed in the next section. 
+The commands that each process must perform for a given channel type and polarity will be discussed in Section \ref{sec:concurrent-operators}.
 
-The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
+%In CaMPL, processes send and receive messages from one another via channels. 
+%CaMPL provides built-in channel types from which one may build custom channel types. 
+%Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
+
+%The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
+The following table describes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
+We denote an argument for a sequential type with {\tt A} and a concurrent channel type with {\tt Ch}, {\tt Ch1}, and {\tt Ch2}.
+Channel types that take another channel type as an argument are recursive cases. 
+The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
 
 \begin{tabular}{r l}
-{\tt Get (A|Ch)} & channel type  takes as arguments a sequential type {\tt A} and a channel of type {\tt Ch}. \\
-{\tt Put (A|Ch)} & channel type takes as arguments a sequential type {\tt A} and a channel of type {\tt Ch}. \\ 
-{\tt Neg (Ch)} & channel type takes as arguments a channel of type {\tt P}. \\ 
-{\tt TopBot} & which is acronym for as arguments {\tt Top} and {\tt Bottom} does not take arguments. \\
-{\tt Ch1 (+) Ch2} & takes in two channels of types {\tt Ch1} and {\tt Ch2} \\
-{\tt Ch1 (*) Ch2} & takes in two channels of types {\tt Ch1} and {\tt Ch2}
-
+{\tt Get (A|Ch)} & a message of type {\tt A} travels from input to output polarity (right to left). \\
+{\tt Put (A|Ch)} & a message of type {\tt A} travels from output to input polarity (left to right). \\ 
+{\tt Neg (Ch)} & swap the polarity of the given channel. \\ 
+{\tt TopBot} & end communication on the channel (this is the base case). \\
+{\tt Ch1 (+) Ch2} & the process with input polarity (on the right end) becomes two processes. \\
+{\tt Ch1 (*) Ch2} & the process with output polarity (on the left end) becomes two processes. \\
+~ & ~
 \end{tabular}
 
-The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
+\noindent 
+%The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
+The {\tt Get} and {\tt Put} types are used to send and receive messages.
+The operations that are performed on each polarity of these types are explained in Section \ref{subsec:put-get}. 
+The {\tt Neg} type swaps the polarity of a channel so that two channels of same polarity can be identified as the same channel. See Section \ref{sec:neg} for more information. 
+The {\tt TopBot} type is used to end communication over a channel, see Section \ref{sec:close}. 
+The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels. 
+The operations that are performed on each polarity of these types are explained in Section \ref{sec:split-fork}. 
 
 \subsubsection{Constructing custom channel types}
 
