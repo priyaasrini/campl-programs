@@ -67,6 +67,8 @@ This section should introduce the salient details of CaMPL (like it should be a 
 
 
 At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of {\em processes} which are nodes of the graph and {\em channels} which are the edges of the graph. 
+The property of acyclicity at run-time is guaranteed by a type check at compile-time.
+This section will discuss the concurrent type system in CaMPL and highlight the features that ensure this gurantee can be made.
 
 
 \subsection{Processes}
