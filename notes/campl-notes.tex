@@ -63,21 +63,22 @@ This section should introduce the salient details of CaMPL (like it should be a 
 \end{itemize}
 
 \section{Concurrent types}
-% maybe change to concurrent constructs?
-
 
 At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of {\em processes} which are nodes of the graph and {\em channels} which are the edges of the graph. 
-The property of acyclicity at run-time is guaranteed by a type check at compile-time.
+The property of acyclicity at run-time is guaranteed by a type inference and type check at compile-time.
 This section will discuss the concurrent type system in CaMPL and highlight the features that ensure this gurantee can be made.
 
 
 \subsection{Processes}
 
-Processes are the main actors of a CaMPL program. In CaMPL, a {\em process} is specified by a process name and an optional type signature\footnote{\textcolor{purple}{CaMPL does type-inferencing. To write a few more sentences about this.}}. The type signature of a process consists of: 
+Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
+In CaMPL, a {\em process} is specified by a process name and an optional type signature.
+%\footnote{\textcolor{purple}{CaMPL does type-inferencing. To write a few more sentences about this.}}
+The type signature of a process consists of three comma-seperated list of types: 
 \begin{itemize}
-	\item an optional comma-seperated list of sequential types, say {\em A1, ..., Ak},
-    \item an optional comma-seperated list of input concurrent types, say {\em I1, ..., In}, and
-	\item an optional comma-seperated list of output concurrent types, say {\em O1, ..., Om}.
+	\item sequential types, e.g. {\em A1, ..., Ak},
+    \item input concurrent types, e.g. {\em I1, ..., In}, and
+	\item output concurrent types, e.g. {\em O1, ..., Om}.
 \end{itemize}
 The instances of concurrent types are called {\em channels}.
 
