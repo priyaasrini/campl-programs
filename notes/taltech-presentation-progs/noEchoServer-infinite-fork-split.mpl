@@ -61,7 +61,7 @@ proc client_spawner :: | Console => Clients( | Echo) =
                     halt 
             False -> do 
                 hput ConsoleStringTerminal on console
-                split console into new_console, neg_term
+                split console into new_console, neg_term -- create a new terminal for the client
 
                 hput Cons on clients
                 fork clients as 
