@@ -56,7 +56,7 @@ This section should introduce the salient details of CaMPL (like it should be a 
 \end{tabular}
 \end{center} 
 
-\item that the categorical semantics (the concept of which should be mentioned in the previous section) allow us to mathematically prove things about programs written in this language, and that specifically it has been shown that formal campl programs (i.e. those without general recursion) will never deadlock or livelock. we can also mention that even with general recursion they still don't deadlock.
+\item that the categorical semantics (the concept of which should be mentioned in the previous section) allow us to mathematically prove things about programs written in this language, and that specifically it has been shown that formal CaMPL programs (i.e. those without general recursion) will never deadlock or livelock. we can also mention that even with general recursion they still don't deadlock.
 
 \item and related to the last point, we can talk about how the type system given by the semantics means that this guarantee of progress for CaMPL programs can be made as a type check. we can also mention that the current CaMPL compiler performs type inference, so programs can be written without explicit typing and the compiler will confirm whether the program will deadlock or livelock.
 
@@ -473,154 +473,85 @@ A detailed explanation of the code is as follows:
 \subsection{Complementary pairs }
 \label{subsec:pairs}
 
-A complementary pair in CAMPL is a pair of process commands which in-unison is used by two connected processes for communication. In a complementary pair, one of the commands is of blocking nature until the other command is unblocking. For example, the  {\tt get}  command is used to receive a message, hence it blocks, until another process performs a corresponding {\tt put} command which is used to send a message.
+A complementary pair in CaMPL is a pair of process commands used by a pair connected processes for communication. In a complementary pair, one of the commands is of blocking nature and the other command is unblocks. For example, the  {\tt get}  command is used to receive a message, hence it blocks, until another process performs complementary {\tt put} command which is used to send a message.
 
 \subsubsection{{\tt put} and {\tt get}: Send and receive messages}
 \label{subsec:put-get}
 
-The semantics of message passing in CaMPL is given by a linear actegory. The operator $\circ$ 
-in linear actegory corresponds to the {\tt Put(A|Ch)} and the operator $\bullet$ corresponds to 
-the {\sf Get(A|Ch)} channel types. A process may perform {\tt put} and {\tt get} commands on 
-channels of type either {\tt Put(A|Ch)} or {\tt Get(A|Ch)}.
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			 put <message> on <channel_i>
+			 get <message> on <channel_j>	 
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+
+The {\tt put} and the {\tt get} process commands are used to send and receive messages respectively over a channel either {\tt Put(-|-)} or {\tt Get(-|-)} type. 
 
 \begin{figure}
-\[  
- [{\tt Put}]: \quad \xymatrix{   
- \blackman  \quad
- \ar[rrr]^{(+) \quad  {\tt Put(}A|X{\tt)} \quad   (-)}  
- &  & & \quad \blackman   } \quad \quad \quad 
- [{\tt Get}]: \quad\xymatrix{  
+\[  \xymatrix{  
  \blackman  \quad
  \ar@{<-}[rrr]^{(+) \quad \quad {\tt Get(}B|Y{\tt)} \quad \quad (-)} 
  &  & & \quad \blackman   }  
+ \quad \quad \quad 
+ \quad  \xymatrix{   
+ \blackman  \quad
+ \ar[rrr]^{(+) \quad  {\tt ch: Put(}A|X{\tt)} \quad   (-)}
+ &  & & \quad \blackman } 
  \]
  \caption{Schematic of {\tt Put} and {\tt Get} types}
  \label{Fig: Put and Get}
 \end{figure}
 
-Given a channel of type \texttt{Put(A|X)}, a process may:
-\begin{itemize}
-	\item {\tt put} (send) a message of type {\tt A} over an output channel (left process sends), and
-	\item {\tt get} (receive) a message of {\tt A} over an input channel (right process receives).
-\end{itemize}
 
-Dually, given a channel of type \texttt{Get(A|X)}, a process may:
-\begin{itemize}
-	\item {\tt get} (receive) a message of type {\tt A} over an output channel (left process receives), and
-	\item {\tt put} (send) a message of {\tt A} over an input channel (right process sends) .
-\end{itemize}
+The command "{\tt get} {\em msg} {\tt on} {\em ch}" forces the calling process to wait for a value to be received on channel {\em ch}, and when the value is received, it binds the value to the variable {\em msg} and proceeds down the process command block. Note that the get process command cannot be the last command in a process command block. We say that the channel {\em ch} is used in the get process command, and hence must be in scope. 
 
-This means that over a channel of type {\tt Put(A|Ch)}, data of type {\tt A} flows towards the right.  This means that over a channel of type {\tt Get(A|Ch)}, data of type {\tt A} flows towards the left.  
+We discuss the typing of the channel {\em ch} with the {\bf "{\tt get} {\em msg} {\tt on} {\em ch}"} process command. Suppose {\tt S} is the sequential type of {\em msg}. If the channel {\em ch} has  has {\bf output polarity}, then the process command "{\tt put} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Get(S|P)} which reads as “the output polarity channel {\em ch} will wait for a sequential value of type {\tt S}. After the value is received, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". Note that “|” is a separator for the sequential type S and the concurrent type P. But dually, if {\em ch} has {\bf input polarity}, the process command "{\tt get} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Put(S|P)} which reads as “the input polarity channel {\em ch} will wait for a sequential value of type {\tt S}. After the value is received, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". 
 
-\begin{figure}[h]
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			Put( <sequential_type> | <concurrent_type> )
-		\end{verbatim}
-	\end{varwidth}
-
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			Get( <sequential_type> | <concurrent_type> )
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-\vspace{-2em}
-\caption{Syntax for {\tt Put} and {\tt Get}}
-\label{Fig: Put and Get syntax}
-\end{figure}
-
-% Side-by-side figures
-\begin{figure}[h]
-\begin{minipage}{.5\textwidth}
-	\[ \infer[\circ_R]{B ~|~ X \dashvv A' \circ Y}{A \dashv A' \quad A, B ~|~ X \dashvv Y} \]
-	\[ \infer[\circ_L]{A ~|~ B \circ X \dashvv Y}{A,B ~|~ X \dashvv Y} \]
-  	\vspace{-2em}
-  \captionof{figure}{Sequent rules for Put}
-  \label{Fig: sequent rules for Put}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
-	\[ \infer[\bullet_R]{B ~|~ X \dashvv A \circ Y}{A,B ~|~ X \dashvv Y} \]
-	\[ \infer[\bullet_L]{A ~|~ B' \bullet X \dashvv Y}{B \dashv B' \quad \quad A,B ~|~ X \dashvv Y} \]
-	\vspace{-2em}
-  \captionof{figure}{Sequent rules for Get}
-  \label{Fig: sequent rules for Get}
-\end{minipage}
-\end{figure}
-
-Figure \ref{Fig: Put process} shows a sample communication over a channel of \texttt{Put(A|Ch)} 
-type. Process \texttt{p} sends the string ``Sending on output channel" which is received by 
+In Figure \ref{Fig: Put and Get}, on the left, is shown a sample communication over a channel of \texttt{Put(A|X)} 
+type. Process \texttt{p} sends the string ``Sending on output polarity channel" which is received by 
 process \texttt{q}. 
-Dually, in Figure \ref{Fig: Get process}, Process \texttt{q} sends a string ``Sending on input 
-channel" which is received by \texttt{q}. 
 
-% Side-by-side figures
-\begin{figure}[h]
-\centering
-\begin{minipage}{.5\textwidth}
-	\begin{verbatim}
-		proc p :: A | => Put( [Char] | Y ) = 
-			a | => y -> do
-				send "Sending on output channel" on y
-				halt y
-			
-		proc q ::  | Put( [Char] | Y ) =>  = 
-			| y => do
-				recv b on y
-				halt y
+The command {\bf "{\tt put} {\em msg} {\tt on} {\em ch}"} sends the value of the variable {\em msg} on channel {\em ch} and proceeds down the process command block. Suppose {\tt S} is the sequential type of {\em msg}. If the channel {\em ch} has  has {\bf output polarity}, then the process command "{\tt put} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Put(S|P)} which reads as “the output polarity channel {\em ch} will carry a sequential value of type {\tt S}. After the value is sent, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". But dually, if {\em ch} has {\bf input polarity}, the process command "{\tt get} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Get(S|P)} which reads as “the input polarity channel {\em ch} will carry a sequential value of type {\tt S}. After the value is sent, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". 
 
-	\end{verbatim}
-  	\vspace{-3em}
-  \captionof{figure}{Send-Receive via \texttt{Put}}
-  \label{Fig: Put process}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
-  \centering
-	\begin{verbatim}
-		proc q :: A | Get( [Char] | Y ) => = 
-			a | y => -> do
-				send "Sending on input channel" on y
-				halt y
-			
-		proc p ::  | => Get( [Char] | Y )  = 
-			| => y do
-				recv b on y
-				halt y
+In Figure \ref{Fig: Put and Get}, on the right, is shown a sample communication over a channel of \texttt{Put(A|X)} 
+type. Process \texttt{p} sends the string ``Sending on input polarity channel" which is received by 
+process \texttt{q}. 
 
-	\end{verbatim}
-	\vspace{-3em}
-  \captionof{figure}{Send-Receive via \texttt{Get}}
-  \label{Fig: Get process}
-\end{minipage}
-\end{figure}
-
-In Example {\bf EchoServer} in Section ??, in line ??, the handle {\tt EchoSend} constructs a channel of {\tt Put-Get} type allowing the {\tt server} to receive and send in sequence (or vice versa for the {\tt Client}).
-
-The above described usage of \texttt{Put} and \texttt{Get} channel types apply for channels which are instances of Protocols. For coProtocols, the role of {\tt Put} and {\tt Get} gets reversed, as shown in the following tables:
+Table \ref{Table: Usage of get and put process commands} describes the usage {\tt get} and {\tt put} process commands on a channel based on its type and polarity.
+\begin{table}
 \begin{center}
-	\begin{tabular}{ c || c | c }
-		     (P)       & (o) & (i) \\
+
+	(a): \quad \begin{tabular}{  c | c || c }
+		  Type & Polarity & Command \\
 		 \hline
 		 \hline      
-		 {\tt Get}  & {\tt recv}  & {\tt send} \\
+		 {\tt Get} & {\tt (+)}  & {\tt get} \\
 		 \hline
-		 {\tt Put}  & {\tt send}  & {\tt recv} 
+		 {\tt Get} & {\tt (-)}  & {\tt put} 
 	\end{tabular}
 	\quad \quad 
-	\begin{tabular}{ c || c | c }
-		     (coP)       & (o) & (i) \\
+	(b): \quad \begin{tabular}{  c | c || c }
+		 Type & Polarity & Command \\
 		 \hline
 		 \hline      
-		 {\tt Get}  & {\tt send}  & {\tt recv} \\
+		 {\tt Put} & {\tt (+)}  & {\tt put} \\
 		 \hline
-		 {\tt Put}  & {\tt recv}  & {\tt send} 
+		 {\tt Put} & {\tt (-)}  & {\tt get} 
 	\end{tabular}
+	\caption{Usage of {\tt get} and {\tt put} process commands for (a): {\tt Get} and (b): {\tt Put} types.}
+	\label{Table: Usage of get and put process commands}
 \end{center}
+\end{table}
+
+====
 
 Read this as, if I (process) have an output channel which is a {\tt Put} type on a protocol, then I can {\tt send} (put) data on this channel. Alternatively, if I (process) have an input channel which is a {\tt Put} type on a protocol, then someone will be {\tt send}ing (putting) data on this channel for me.
 
 If I (process) have an input channel which is a {\tt Get} type on a protocol, then I can {\tt recv} (get) data on this channel. Alternatively, if I (process) have an output channel which is a {\tt Get} type on a protocol, then someone will be {\tt recv}ing (getting) data on this channel from me.
+
+In Example {\bf EchoServer} in Section ??, in line ??, the handle {\tt EchoSend} constructs a channel of {\tt Put-Get} type allowing the {\tt server} to receive and send in sequence (or vice versa for the {\tt Client}).
 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
@@ -1114,7 +1045,7 @@ Note that the above method for higher-order message passing behavior is implicit
 
 In all the examples, the processes interact with the outside world using two special channels ---  a protocol called {\tt StringTerminal} and a coprotocol {\tt Console} --- which are hard-coded in the compiler. 
 \begin{itemize}
-	\item The {\tt Console} type channels allow communication with the outside world via the console in which the campl program is executed. The console coprotocol provides handles {\tt ConsolePut}, {\tt ConsoleGet}, and {\tt ConsoleClose} which is used to send string, receive string from console, and to close console respectively. 
+	\item The {\tt Console} type channels allow communication with the outside world via the console in which the CaMPL program is executed. The console coprotocol provides handles {\tt ConsolePut}, {\tt ConsoleGet}, and {\tt ConsoleClose} which is used to send string, receive string from console, and to close console respectively. 
 	
 	\item Each {\tt StringTerminal} channel, on the other hand, is connected to an {\em Alacritty}\footnote{https://alacritty.org/} terminal process, and allows reading and writing to the terminal. 
 \end{itemize}
@@ -1152,7 +1083,7 @@ A sample output from the console is as follows:
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		> campl helloWorld.mpl 
+		> CaMPL helloWorld.mpl 
 			 Hello World
 	 >
 	\end{verbatim}
@@ -1206,7 +1137,7 @@ Full version of the program is available in Appendix \ref{prog:getUntil}. A samp
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		> campl getUntil.mpl 
+		> CaMPL getUntil.mpl 
 			 Enter any string (Enter q to exit)
 			 Apple
 			 I received Apple
@@ -1308,7 +1239,7 @@ A full version of the program is available in Appendix \ref{prog:echo}. A sample
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		> campl echoServer.mpl 
+		> CaMPL echoServer.mpl 
 		  I received Apple
 		  I received Orange
 		  Done
@@ -1460,7 +1391,7 @@ On running the program, the {\tt server} and the {\tt helloworld} prints the fol
 \begin{center}
 \begin{varwidth}{\linewidth}
 	\begin{verbatim}
-		> campl echoServer-higher-order.mpl 
+		> CaMPL echoServer-higher-order.mpl 
 		  Server says: Running the stored process
 		  Stored process says: Hello World
 	\end{verbatim}
