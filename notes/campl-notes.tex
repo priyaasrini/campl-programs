@@ -211,6 +211,8 @@ Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or
 \subsection{Channels}
 \label{Sec:Channels}
 
+A brief recollection of how channels have both types and polarities goes here.. 
+
 \subsubsection{On Channel polarities}
 %
 %\textcolor{purple}{Content to be written. Xanna has a nice explanation as to why polarities matter. Should this section to be moved later?}
@@ -492,13 +494,9 @@ The {\tt put} and the {\tt get} process commands are used to send and receive me
 \begin{figure}
 \[  \xymatrix{  
  \blackman  \quad
- \ar@{<-}[rrr]^{(+) \quad \quad {\tt Get(}B|Y{\tt)} \quad \quad (-)} 
+  \ar@<8pt>[rrr]^{(+) \quad  {\tt ch1: Put(}A|X{\tt)} \quad   (-)}
+ \ar@<-8pt>@{<-}[rrr]_{(+) \quad {\tt ch2: Get(}B|Y{\tt)} \quad  (-)} 
  &  & & \quad \blackman   }  
- \quad \quad \quad 
- \quad  \xymatrix{   
- \blackman  \quad
- \ar[rrr]^{(+) \quad  {\tt ch: Put(}A|X{\tt)} \quad   (-)}
- &  & & \quad \blackman } 
  \]
  \caption{Schematic of {\tt Put} and {\tt Get} types}
  \label{Fig: Put and Get}
@@ -545,13 +543,66 @@ Table \ref{Table: Usage of get and put process commands} describes the usage {\t
 \end{center}
 \end{table}
 
-====
+The following is a simple code demonstrates a use of {\tt put} and {\tt get} commands:
 
-Read this as, if I (process) have an output channel which is a {\tt Put} type on a protocol, then I can {\tt send} (put) data on this channel. Alternatively, if I (process) have an input channel which is a {\tt Put} type on a protocol, then someone will be {\tt send}ing (putting) data on this channel for me.
+\noindent
+%%% Code for client
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			 1. proc client :: | => Put([Char]| ( Get([Char] | TopBot) ) = 
+			 2.	| => ch -> do 
+			 3.	     put "Hello" on ch 
+			 4.	     get msg on ch
+			 5.	     halt ch
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
 
-If I (process) have an input channel which is a {\tt Get} type on a protocol, then I can {\tt recv} (get) data on this channel. Alternatively, if I (process) have an output channel which is a {\tt Get} type on a protocol, then someone will be {\tt recv}ing (getting) data on this channel from me.
+%%% Code for server
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc server :: | Put([Char]| (Get([Char] | TopBot)) => = 
+			2. 	| => ch -> do 
+			3.	     get msg on ch 
+			4.	     put msg on ch
+			5.	     halt ch
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
 
-In Example {\bf EchoServer} in Section ??, in line ??, the handle {\tt EchoSend} constructs a channel of {\tt Put-Get} type allowing the {\tt server} to receive and send in sequence (or vice versa for the {\tt Client}).
+%%% Code for main process
+\hspace{3.5em}
+\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc run :: | => = 
+			2. 	| => -> do 
+			3.	     plug
+						client( | => ch)
+						server ( | ch =>)
+		\end{verbatim}
+\end{varwidth}
+
+The {\tt client} process has an output polarity channel of type {\tt Put([Char]| ( Get([Char] | TopBot) )}. The {\tt server} process has an input polarity of the same type. The opposite polarities and same type allows the process {\tt run} to plug the client and the server in {\tt line 3.} of {\tt proc run}.
+
+In {\tt proc client},  
+\begin{itemize}
+	\item Line 1. provides the type signature. The process has no sequential arguments. The process has no input polarity channel and an output polarity channel of type {\tt Put([Char]| ( Get([Char] | TopBot))}. 
+	\item Line 2. provides variable name {\tt ch} to the concurrent type. 
+	\item Line 3. sends a string "Hello" over the channel {\tt ch}. After this command is run, in line 4, {\tt ch} is of type {\tt Get([Char] | TopBot)}. 
+	\item Line 4. receives a string over the channel {\tt ch} and binds it to a variable named {\tt msg}. After this command is run, in line 5, {\tt ch} is of type {\tt TopBot}. 
+	\item Line 5. closes the channel {\tt ch} and the process halts. 
+\end{itemize}
+
+In {\tt proc server},
+\begin{itemize}
+	\item Line 1. provides the type signature. The process has no sequential arguments. The process has an output polarity channel of type {\tt Put([Char]| ( Get([Char] | TopBot))} and no output polarity channel. 
+	\item Line 2. provides variable name {\tt ch} to the concurrent type. 
+	\item Line 3. receives a string over the channel {\tt ch} and binds it to a variable named {\tt msg}. After this command is run, in line 5, {\tt ch} is of type {\tt Get([Char] | TopBot)}. 
+	\item Line 3. sends {\tt msg} over the channel {\tt ch}. After this command is run, in line 5, {\tt ch} is of type {\tt TopBot}. 
+	\item Line 5. closes the channel {\tt ch} and the process halts. 
+\end{itemize}
 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
