@@ -65,10 +65,98 @@ The {\tt helloworld} process can be invoked by calling it in the main process, {
 	\end{varwidth}
 \end{center}
 
-To be written... 
+The ``Hello World!'' example demonstrates communication between a process and the outside world using the {\tt Console} channel type. 
+In our next example, we will demonstrate communication between two user-defined processes -- a client and a server. 
+The client will send a string to the server, and the server will receive the string and echo it back.
+When the client is finished sending messages to the server, the client and server will halt.
+
+The processes will use a custom channel type called \texttt{Echo} for this interaction which is defined as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. protocol Echo => S =
+			2.    EchoSend :: Put([Char] | Get([Char] | S)) => S
+			3.    EchoClose :: TopBot => S
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+It provides a handle \texttt{EchoSend} which sets the channel type to indicate that, first, client will send and server will receive, second, server will send and client will receive, and finally, the channel will reset for another handle to be selected.
+The handle \texttt{EchoClose} is used to indicate the client is finished sending messages and the channel should be closed. 
+
+The main process will create {\tt client} and {\tt server} processes and plug them together by a channel named {\tt ch} as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc run = 
+			2.    | => -> plug 
+			3.        client( | => ch )
+			4.        server( | ch => )
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+The CaMPL compiler will infer that the type of {\tt ch} is \texttt{Echo} using the process' definitions.
+%We can express the program structure in a diagram as follows:
+%\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
+
+We can define the  {\tt client} process as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc client :: | => Echo =
+			2.    | => ch ->
+			3.        on ch do 
+			4.            hput EchoSend 
+			5.            put "Hello Server!" 
+			6.            get echo1
+			
+			7.            hput EchoSend 			
+			8.            put "Goodbye Server!" 
+			9.            get echo2        
+			              
+			10.           hput EchoClose
+			11.           halt
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+The client process has an output channel {\tt ch} of type \texttt{Echo} which connects it to the server.
+For each message it sends to the server, it will first \texttt{hput} the \texttt{EchoSend} handle to indicate it has another message, then \texttt{put} its message to send it, and finally {\tt get} the server's echo. 
+After it sends all its messages, it will send the \texttt{EchoClose} handle and halt.
+
+We can define the  {\tt server} process as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc server :: | Echo => =
+			2.    | ch => ->
+			3.        hcase ch of
+			4.            EchoSend -> do
+			5.                on ch do
+			6.                    get msg  
+			7.                    put msg 
+			8.                server( | ch => )   -- recursion  
+			9.             EchoClose -> halt ch
+		\end{verbatim}
+	\end{varwidth}
+\end{center}	
+The server process has an input channel {\tt ch} of type \texttt{Echo} which connects it to the client. 
+It first listens to the handle from the client using \texttt{hcase} to determine whether it will be receiving another message. 
+If the handle received is \texttt{EchoSend}, it will \texttt{get} the client's message and then {\tt put} the message to echo it back.
+Since the server doesn't know how many messages the client is going to send, it calls itself recursively to receive the next handle. 
+If the handle received is \texttt{EchoClose}, the client is finished sending messages, so it halts. 
+
+This version of the program is intended to have easy-to-read code to exemplify how CaMPL programs are written.
+Running this program does not produce any observable effects since none of the processes are connected to the outside world.
+An alternate version of the program, which takes user input and echos it to the console rather than back to the client, is available in Appendix \ref{prog:echo}. 
+
+These two examples are intended to leave a reader with open questions such as ``what was that {\tt Put([Char] | Get([Char] | S))} type?'' and ``what else can this language do?'' which should motivate a reader to continue on to the more detailed explanations of the structure and features of CaMPL in the remaining sections of this paper.
+
 
 % Hashimoto suggested that we take an ``examples first'' approach to writing this paper as programmers will be interested in seeing what the code looks like first and then read on to figure out why it or how it works that way.
 % xanna also thought this was a cool way to introduce the language, so she is going to test this idea out by making some very major structural changes to the document. this comment is the first commit in this process to signify what we should revert back to if we don't like this structure. :)
+
+ Everything below is what was here before. maybe some of these details should be in the introduction instead??
+
+To be written... 
 
 This section should introduce the salient details of CaMPL (like it should be a highlight reel of CaMPL. if people don't read past this section they should still be able to be like ``oh yeah i heard of CaMPL it was cool because of x, y, z'') which could include some of the following points:
 
