@@ -606,34 +606,96 @@ In {\tt proc server},
 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
-The {\tt hput} command sends a handle of a protocol over a right polarity channel which is matched by a {\tt hcase} command on the left polarity. For co-protocols, handles are sent over a left polarity channel and received over the corresponding right polarity channel. Figure \ref{Fig: hput and hcase} shows the syntax for {\tt hput} and {\tt hcase}.
+The {\tt hput} process command constructs a protocol handle on a channel (Recall that protocol handles are analogous to session types); and correspondingly, the hcase command allows one to choose how to respond to each possible protocol handle. This situation is the concurrent analogue to data constructors and the {\tt case} expression.
 
-\begin{figure}[h]
+\[ \text{\tt hput <handle> on <channel>} \]
+The {\tt hput} command is used to send a protocol handle over an output polarity channel of appropriate type. For example, given a protocol handle {\tt  EchoSend :: Put ([Char] | S ) => S}, a process may use the process command "{\tt hput EchoSend on ch}" on an output polarity channel of type {\tt S}. After the {\tt hput} command will proceed with type {\tt Put ([Char] | S )}.
+
+The {\tt hput} command cannot be the last command of a process block. The channel over which the handle is sent must be in scope. The {\tt hput} command must be matched by a {\tt hcase} process command on the input polarity end of the same channel type. The syntax of the {\tt hcase} command is as follows:
 \begin{center}
 	\begin{varwidth}{\linewidth}
 		\begin{verbatim}
-			hput <handle_name> on <channel_name>	
-		\end{verbatim}
-	\end{varwidth}
-
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
 			hcase <channel_name> of
-				<handle1> -> ... 
-				<handle2> -> ... 
+				<handle-1> -> <proc_block-1>
+				<handle-2> -> <proc_block-2>
+
 				.
 				.
-				<handlen> -> ... 
+				<handle-n> -> <proc_block-n>
 		\end{verbatim}
 	\end{varwidth}
 \end{center}
-\vspace{-2em}
-\caption{Syntax for {\tt hput} and {\tt hcase}}
-\label{Fig: hput and hcase}
-\end{figure}
+The {\tt hcase} process command makes the process to wait for an appropriate protocol handle to be received. When the process receives {\tt <handle-i>}, it will proceed as {\tt<proc\_block-i>}. 
 
-For example, in line ?? of the program shown in Section \ref{}, the {\tt Client}  hputs {\tt EchoClose} on channel {\tt ch} of type {\tt Echo}. This {\tt hput} is matched by {\tt hcase} in line ?? of the {\tt Server}. 
+Let us look at a sample usage of ({\tt hput}, {\tt hcase})) process commands using the following protocol:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. protocol Echo => S =
+			2.    EchoSend :: Put( [Char] | S)) => S
+			3.    EchoClose :: TopBot => S
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+The protocol {\tt Echo} has two handles namely {\tt EchoSend} and {\tt EchoClose}. We will upgrade the client-server communication shown in the previous section using these protocol handles, allowing the server to receive message any number of times.
 
+\noindent
+\begin{minipage}{0.48\textwidth}
+%%% Code for client
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			 1. proc client :: | => Echo = 
+			 2.	| => ch -> do 
+			 3.      hput EchoSend on ch
+			 4.      put "Hello" on ch
+			 5.	     hput EchoClose on ch
+			 6.	     halt ch
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+\vfill
+\end{minipage}
+%%% Code for server
+\begin{minipage}{0.48\textwidth}
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+		
+			1. proc server :: | Echo => = 
+			2. 	| => ch -> do 
+			3.	     hcase ch of  
+			4.	     	EchoSend -> do 
+			4a. 				    get message on ch 
+			4b          server( | ch =>) -- recursion
+			5.	     	EchoClose -> halt ch
+		\end{verbatim}
+	\end{varwidth}
+\end{center} 
+\end{minipage}
+
+In the {\tt client} process,
+\begin{itemize}
+\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, no input concurrent type, and one output polarity channel of type {\tt Echo}.
+\item Line 2. assigns variable name {\tt ch} to the output concurrent type.
+\item Line 3. places the handle {\tt EchoSend} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt Put([Char] | Echo)}.
+\item Line 4. puts a message at which the {\tt ch} proceeds with type {\tt Echo)}.
+\item Line 5. places the handle {\tt EchoClose} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt TopBot}.
+\item Line 6. close {\tt ch} and halts the process.
+\end{itemize}
+Note that the client process sends a static message "Hello". Instead, the client process can read a message from a {\tt StringTerminal} and relay it to the server process, any number of times by recursively. 
+In the {\tt server} process,
+\begin{itemize}
+\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, one input polarity channel of type {\tt Echo}, and no output concurrent type.
+\item Line 2. assigns variable name {\tt ch} to the input concurrent type.
+\item Line 3. executes {\tt hcase} process command causing the server process to wait to receive a handle from the client process.
+\item Line 4. does case matching. In case, the server receives the handle {\tt EchoSend}, then it proceeds with Lines 4a and 4b.
+\item Line 4a. receives a message over {\tt ch}.
+\item Line 4b. calls the server process (recursively) allowing it receive another handle from the client process.
+\item Line 5. does case matching. In case, the server receives the handle {\tt EchoClose}, then closes the channel and halts the process.
+\end{itemize}
+
+See section \ref{Sec:Simple EchoServer} for a fully-developed example of {\tt EchoServer} using the {\tt Echo} protocol. 
 
 \subsubsection{{\tt split} and {\tt fork}: Multi-processes communication}
 \label{sec:split-fork}
@@ -1204,6 +1266,7 @@ Full version of the program is available in Appendix \ref{prog:getUntil}. A samp
 \end{center}
 
 \subsection{Simple EchoServer}
+\label{Sec:Simple EchoServer}
 The examples so far demonstrated communication between a process and the outside world via the console. In this example, we have two user-defined processes -- a client and a server. A client reads input string from the terminal, and sends it to the server. The server on listens to the client and on receiving an input string, it prints it to the console. When the user enters {\tt q}, the client and the server halt.
 \[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
