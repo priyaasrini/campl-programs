@@ -32,7 +32,38 @@ of a programming language built from the mathematics of linear actegories.
 
 Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek-like correspondence), and its history.
 
+xanna note:
+i am assuming introduction will establish justification for why we have submitted this paper to this venue.
+and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics
+
+
 \section{A brief overview of CaMPL}
+
+As is tradition, we will introduce CaMPL with a ``Hello World!'' example program.
+We demonstrate a CaMPL process named {\tt helloworld} printing {\tt ``Hello World!''} by sending the string as a message on a channel named {\tt console}. 
+The {\tt console} channel has the type {\tt Console} which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			1. proc helloworld :: | Console => = 
+			2.    | console => -> do
+			3.        hput ConsolePut on console              
+			4.        put "Hello World!" on console    -- sends message to the console        
+			
+			5.        hput ConsoleClose on console       
+			6.        halt console                     -- closes console channel and halts               
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
+The {\tt helloworld} process can be invoked by calling it in the main process, {\tt run}, and giving it the {\tt console} channel as follows:
+\begin{center}
+	\begin{varwidth}{\linewidth}
+		\begin{verbatim}
+			7. proc run = 
+			8.    | console => -> helloworld( | console => )  -- creates helloworld process
+		\end{verbatim}
+	\end{varwidth}
+\end{center}
 
 To be written... 
 
