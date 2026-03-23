@@ -299,64 +299,6 @@ TODO change diagram
 
 %The above picture is a schematic of a process with input channels $i_1,i_2,\ldots,i_n$ and output channels $o_1,o_2,\ldots,o_m$. The sequential types are not shown in the schematic.
 
-Two processes can be connected by a channel if their process definitions both have a channel with the same type but opposite polarities. 
-We explain channel types and polarities in Section \ref{Sec:Channels}. 
-The operations that a process performs on a channel are governed by both the type and polarity of the channel.
-We explain the operations, called process commands, that are facilitated by CaMPL in Section~\ref{Sec:concurrent-commands}.
-We specifically discuss the complementary operations that are performed on each polarity of a channel, e.g. sending and receiving a message, in Section~\ref{subsec:pairs}.
-
-%% i think the polarity of channels is more than just information flow.
-%The polarity of the channels encode the bidirectional flow of information. Two processes are connected by a channel of same {\em type} but of opposite polarities. We explain channel types and polarities in Section \ref{Sec:Channels}. 
-
-%% i think that we don't need this amount of detail yet and instead we should be forward referencing the process commands section and the complementary pairs section.
-%When a process sends message over an output channel (to another process which then receives the message over an input polarity channels), the information flows from left to right. When a process receives message over an output channel (from another process which then send the message over an input channel), the information flows from right to left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
-
-  
-The process body {\em procBody} may be a single process command written as as {\em procCmd} or a {\tt do} block of process commands taking one of the following forms:-
-\begin{center}
-\begin{minipage}[t]{0.2\textwidth}
-{\tt do } 
-
-\quad \quad {\em procCmd}$_1$ 
- 
-\quad \quad {\em procCmd}$_2$ 
-
-\quad \quad $\cdots$ 
-
-\quad \quad {\em procCmd}$_n$  
-\end{minipage}
-\begin{minipage}[t]{0.3\textwidth}
-{\tt do } 
-
-\quad \quad {\em procCmd}
-
-\quad \quad $\cdots$ 
-
-\quad \quad {\tt if } {\em expr}
-
-\quad \quad \quad \quad {\tt then } {\em procBody}$_1$  
-
-\quad \quad \quad \quad {\tt else } {\em procBody}$_2$  
-\end{minipage}
-\begin{minipage}[t]{0.45\textwidth}
-{\tt do } 
-
-\quad \quad {\em procCmd}
-
-\quad \quad $\cdots$ 
-
-\quad \quad {\tt case } {\em expr} {\tt of}
-
-\quad \quad \quad \quad $C_1(a_{11, \ldots,a_{1n}})$ {\tt ->} {\em procBody}$_1$
-
-\quad \quad \quad \quad $\cdots$ 
-
-\quad \quad \quad \quad $C_1(a_{p1, \ldots,a_{pn}})$ {\tt ->} {\em procBody}$_p$  
-\end{minipage}
-\end{center}
-
-Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. A {\em procBody}$_i$ may be an invokation of another process. 
-%The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
 
 
 \subsection{Channels}
@@ -1303,6 +1245,51 @@ Note that the above method for higher-order message passing behavior is implicit
 \label{Sec:ServiceChannels}
 	
 \section{Sequential types}
+\label{Sec:SequentialTypes}
+
+Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. 
+
+\begin{center}
+\begin{minipage}[t]{0.2\textwidth}
+{\tt do } 
+
+\quad \quad {\em procCmd}$_1$ 
+ 
+\quad \quad {\em procCmd}$_2$ 
+
+\quad \quad $\cdots$ 
+
+\quad \quad {\em procCmd}$_n$  
+\end{minipage}
+\begin{minipage}[t]{0.3\textwidth}
+{\tt do } 
+
+\quad \quad {\em procCmd}
+
+\quad \quad $\cdots$ 
+
+\quad \quad {\tt if } {\em expr}
+
+\quad \quad \quad \quad {\tt then } {\em procBody}$_1$  
+
+\quad \quad \quad \quad {\tt else } {\em procBody}$_2$  
+\end{minipage}
+\begin{minipage}[t]{0.45\textwidth}
+{\tt do } 
+
+\quad \quad {\em procCmd}
+
+\quad \quad $\cdots$ 
+
+\quad \quad {\tt case } {\em expr} {\tt of}
+
+\quad \quad \quad \quad $C_1(a_{11, \ldots,a_{1n}})$ {\tt ->} {\em procBody}$_1$
+
+\quad \quad \quad \quad $\cdots$ 
+
+\quad \quad \quad \quad $C_1(a_{p1, \ldots,a_{pn}})$ {\tt ->} {\em procBody}$_p$  
+\end{minipage}
+\end{center}
 	
 	
 \section{Example programs}
