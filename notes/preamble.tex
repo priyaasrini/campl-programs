@@ -45,6 +45,58 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \usepackage{fancyvrb}
 \usepackage{xcolor}
 \usepackage{listings}
+\lstdefinelanguage[2026]{CaMPL}{%
+  keywords={},%
+  % Use otherkeywords for symbols
+  otherkeywords={->,=>,::,|},%
+  % Use keywords [1] for keywords
+  morekeywords={[1]data,codata,protocol,coprotocol,proc,%
+    do,%
+    hput,hcase,put,get,halt,plug,%
+	%on,with,into,%
+  },%
+  % Use keywords [2] for types
+  morekeywords={[2]Console,},
+  sensitive,%
+  morecomment=[l]--,%
+  morecomment=[n]{\{-}{-\}},%
+  morestring=[b]"%
+}[keywords,comments,strings]%
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{purple}{rgb}{0.8,0,0.3}
+\definecolor{orange}{rgb}{1,0.4,0}
+\definecolor{lightlightgray}{rgb}{.95,.95,.95}
+\definecolor{lightgray}{rgb}{.9,.9,.9}
+\definecolor{lightgray2}{rgb}{.85,.85,.85}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\lstdefinestyle{CaMPLstyle}{%
+  language=CaMPL,%
+  %
+  keywordstyle={[1]\color{purple}},%
+  keywordstyle={[2]\color{blue}},%
+  commentstyle={\itshape\color{orange}},%
+  identifierstyle=\color{black},%
+  stringstyle=\color{dkgreen},%
+  showstringspaces=false,%
+  basicstyle=\ttfamily\small,%
+  %
+  tabsize=2,%
+  showtabs=true,%
+  tab={\color{gray}\rightarrowfill},%
+  %
+  numbers=left,%
+  numberstyle=\color{gray},%
+  %
+  breaklines=true,%
+  frame=single,%
+  framexleftmargin=0pt,%
+  %
+  rulecolor=\color{lightgray2},%
+  rulesepcolor=\color{gray},%
+  backgroundcolor=\color{lightgray},%
+}%
+\lstset{defaultdialect=[2026]CaMPL,style=CaMPLstyle}%
 
 \definecolor{darkMagenta}{HTML}{DE3163}
 \newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}

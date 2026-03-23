@@ -1,0 +1,91 @@
+diff --git a/notes/CaMPL-for-programmers.tex b/notes/CaMPL-for-programmers.tex
+index db18c8c..d4fdd17 100644
+--- a/notes/CaMPL-for-programmers.tex
++++ b/notes/CaMPL-for-programmers.tex
+@@ -40,6 +40,14 @@ As is tradition, we will introduce CaMPL with a ``Hello World!'' example program
+ 
+ The following code snippet shows a CaMPL process named {\tt helloworld} printing {\tt ``Hello World!''} by sending the string as a message on a channel named {\tt console}. 
+ The {\tt console} channel has the type {\tt Console} which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
++\begin{lstlisting}
++proc helloworld :: | Console => =
++	| console => -> do
++		hput ConsolePut on console
++		put "Hello World!" on console    -- sends message to the console
++		hput ConsoleClose on console
++		halt console                     -- closes console channel and halts
++\end{lstlisting}
+ \begin{center}
+ 	\begin{varwidth}{\linewidth}
+ 		\begin{verbatim}
+@@ -53,6 +61,9 @@ The {\tt console} channel has the type {\tt Console} which is a special channel
+ 		\end{verbatim}
+ 	\end{varwidth}
+ \end{center}
++The \tc{process} \lstinline$helloworld$ communicates to an in-built printing process via a channel of type \lstinline*Console*. In CaMPL, concurrent types are \tc{(co)protocols}, the instantiations of which are called as \tc{channels}. The \tc{process command} \lstinline$hput$ may seem strange at the first sight --- read as `handle put',  it initiates a channel for a  communication session. \tc{Protocol handles} are analogous to session types. As indicated by their names, the \lstinline$put$ process command sends a message, and the \lstinline$halt$ process command halts the calling process.
++
++{\color{red} Note: Delete this paragraph}
+ The \tc{process} {\tt helloworld} communicates to an in-built printing process via a channel of type {\tt Console}. In CaMPL, concurrent types are \tc{(co)protocols}, the instantiations of which are called as \tc{channels}. The \tc{process command} \ttc{hput} may seem strange at the first sight --- read as `handle put',  it initiates a channel for a  communication session. \tc{Protocol handles} are analogous to session types. As indicated by their names, the \ttc{put} process command sends a message, and the \ttc{halt} process command halts the calling process.
+ 
+ The {\tt helloworld} process can be invoked by calling it in the main process, {\tt run}, and giving it the {\tt console} channel as follows:
+diff --git a/notes/preamble.tex b/notes/preamble.tex
+index ea944f0..94e1689 100644
+--- a/notes/preamble.tex
++++ b/notes/preamble.tex
+@@ -45,6 +45,57 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
+ \usepackage{fancyvrb}
+ \usepackage{xcolor}
+ \usepackage{listings}
++\lstdefinelanguage[2026]{CaMPL}{%
++  keywords={},%
++  % Use otherkeywords for symbols
++  otherkeywords={->,=>,::,|},%
++  % Use keywords [1] for keywords
++  morekeywords={[1]data,codata,protocol,coprotocol,proc,%
++    do,%
++    hput,hcase,put,get,%
++  },%
++  % Use keywords [2] for types
++  morekeywords={[2]Console,},
++  sensitive,%
++  morecomment=[l]--,%
++  morecomment=[n]{\{-}{-\}},%
++  morestring=[b]"%
++}[keywords,comments,strings]%
++\definecolor{dkgreen}{rgb}{0,0.6,0}
++\definecolor{gray}{rgb}{0.5,0.5,0.5}
++\definecolor{purple}{rgb}{0.8,0,0.3}
++\definecolor{orange}{rgb}{1,0.4,0}
++\definecolor{lightlightgray}{rgb}{.95,.95,.95}
++\definecolor{lightgray}{rgb}{.9,.9,.9}
++\definecolor{lightgray2}{rgb}{.85,.85,.85}
++\definecolor{darkgray}{rgb}{.4,.4,.4}
++\lstdefinestyle{CaMPLstyle}{%
++  language=CaMPL,%
++  %
++  keywordstyle={[1]\color{purple}},%
++  keywordstyle={[2]\color{blue}},%
++  commentstyle={\itshape\color{orange}},%
++  identifierstyle=\color{black},%
++  stringstyle=\color{dkgreen},%
++  showstringspaces=false,%
++  basicstyle=\ttfamily\small,%
++  %
++  tabsize=2,%
++  showtabs=true,%
++  tab={\color{gray}\rightarrowfill},%
++  %
++  numbers=left,%
++  numberstyle=\color{gray},%
++  %
++  breaklines=true,%
++  frame=single,%
++  framexleftmargin=0pt,%
++  %
++  rulecolor=\color{lightgray2},%
++  rulesepcolor=\color{gray},%
++  backgroundcolor=\color{lightgray},%
++}%
++\lstset{defaultdialect=[2026]CaMPL,style=CaMPLstyle}%
+ 
+ \definecolor{darkMagenta}{HTML}{DE3163}
+ \newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}
