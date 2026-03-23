@@ -88,10 +88,10 @@ We can define the  \lstinline{client} process as follows:
 \begin{lstlisting}
 proc client = 
 	| => ch ->
-	on ch do 
+		on ch do 
 			put "Hello Server!"	-- sends message to the server      
 			get echo						-- receives server's echo  
-		halt
+			halt
 \end{lstlisting}
 The client process has an output channel \lstinline{ch} which connects it to the server.
 It sends its message with \lstinline{put}, and it receives the server's echo with \lstinline{get}.
@@ -103,10 +103,10 @@ We can define the  \lstinline{server} process as follows:
 \begin{lstlisting}
 proc server =  
 	| ch => ->
-	on ch do
+		on ch do
 			get msg					-- receives client's message
 			put msg					-- sends message back
-		halt
+			halt
 \end{lstlisting}	
 The server process has an input channel \lstinline{ch} which connects it to the client. 
 It listens to the client and receives the client's message with \lstinline{get}, echos the message back with \lstinline{put}, and finally closes the channel and halts with \lstinline{halt}.
@@ -156,7 +156,8 @@ This section should introduce the salient details of CaMPL (like it should be a 
 \section{Concurrent types}
 
 At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of {\em processes} which are nodes of the graph and {\em channels} which are the edges of the graph. 
-The property of acyclicity at run-time is guaranteed by a type inference and type check at compile-time.
+The property of acyclicity at run-time is guaranteed by CaMPL's type system.
+The current implementation of the CaMPL compiler performs both a type inference and type check at compile-time to ensure the compiled program follows the type system and will not deadlock or livelock.
 This section will discuss the concurrent type system in CaMPL and highlight the features that ensure this gurantee can be made.
 
 
