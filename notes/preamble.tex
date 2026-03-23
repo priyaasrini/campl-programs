@@ -49,14 +49,16 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
   keywords={},%
   % Use otherkeywords for symbols
   otherkeywords={->,=>,::,|},%
-  % Use keywords [1] for keywords
+  % Use keywords [1] for keywords -- Can we have a seperate color scheme for process commands
   morekeywords={[1]data,codata,protocol,coprotocol,proc,%
     do,%
-    hput,hcase,put,get,halt,plug,%
+    %hput,hcase,put,get,halt,plug,%
 	%on,with,into,%
   },%
   % Use keywords [2] for types
   morekeywords={[2]Console,},
+  morekeywords={[3]Put,Get,TopBot},
+  morekeywords={[4]hput,hcase,put,get,halt,plug},
   sensitive,%
   morecomment=[l]--,%
   morecomment=[n]{\{-}{-\}},%
@@ -70,14 +72,17 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \definecolor{lightgray}{rgb}{.9,.9,.9}
 \definecolor{lightgray2}{rgb}{.85,.85,.85}
 \definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{darkred}{rgb}{0.6,0,0}
 \lstdefinestyle{CaMPLstyle}{%
   language=CaMPL,%
   %
-  keywordstyle={[1]\color{purple}},%
+  keywordstyle={[1]\color{darkred}},%
   keywordstyle={[2]\color{blue}},%
+  keywordstyle={[3]\color{dkgreen}},%
+  keywordstyle={[4]\color{purple}},%
   commentstyle={\itshape\color{orange}},%
   identifierstyle=\color{black},%
-  stringstyle=\color{dkgreen},%
+  stringstyle=\color{teal},%
   showstringspaces=false,%
   basicstyle=\ttfamily\small,%
   %

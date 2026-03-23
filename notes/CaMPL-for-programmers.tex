@@ -85,6 +85,29 @@ Note: The choice of terminology -- input and output -- polarities is best unders
 Thus, it must be obvious now that CaMPL allows processes to be plugged together only along channels of same type and opposite polarities. 
 
 Let us now to code the client process:
+\begin{lstlisting}
+proc client :: | => Put(Int | Get( [Char] | TopBot)) =
+    | => ch, term -> do
+        on term do 
+            hput StringTerminalPut 
+            put "Enter any string (Enter q to exit)" 
+            hput StringTerminalGet 
+            get input 
+
+        case isExit(input) of 
+            True -> do 
+                on term do 
+                    hput StringTerminalClose
+                    close 
+                on ch do 
+                    hput EchoClose
+                    halt 
+            False -> do 
+                on ch do 
+                    hput EchoSend 
+                    put input 
+                client( |  => ch, term )
+\end{lstlisting}
 
 \section{Concurrent type system: Handling multiple sequential queries}
 
