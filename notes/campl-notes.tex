@@ -70,10 +70,11 @@ and that we will mention things like there is a beautiful type system and that w
 
 \section{A brief overview of CaMPL}
 
-As is tradition, we will introduce CaMPL with a ``Hello World!'' example program.
+As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a CaMPL process named \lstinline{helloworld} printing \lstinline{"Hello World!"} by sending the string as a message on a channel named \lstinline{console}. 
 The \lstinline{console} channel has the type \lstinline{Console} which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
-\begin{lstlisting}
+\begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
+
 proc helloworld :: | Console => = 
 	| console => -> do
 		hput ConsolePut on console
@@ -87,7 +88,7 @@ proc run =
 	| console => -> helloworld( | console => )  -- creates helloworld process
 \end{lstlisting}
 
-In our next example, we will demonstrate communication between two user-defined processes: a client and a server. 
+In Example \ref{ex:serverecho}, we will demonstrate communication between two user-defined processes: a client and a server. 
 The client will send a string to the server, and the server will receive the string and echo it back.
 %When the client is finished sending messages to the server, the client and server will halt.
 
@@ -105,7 +106,7 @@ The client will send a string to the server, and the server will receive the str
 %The handle \texttt{EchoClose} is used to indicate the client is finished sending messages and the channel should be closed. 
 
 The main process will create \lstinline{client} and \lstinline{server} processes and use \lstinline{plug} to connect them by a channel named \lstinline{ch} as follows:
-\begin{lstlisting}
+\begin{lstlisting}[label=ex:serverecho, caption=Server echos Client's message]
  proc run = 
  	| => -> plug				-- connects processes by shared channel ch
  		client( | => ch )	-- creates client process
