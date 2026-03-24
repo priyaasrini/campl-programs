@@ -486,27 +486,27 @@ This type is used to negate the polarity of a given channel type, and the corres
 %Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
 
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
-The following table describes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
-We denote an argument for a sequential type with {\tt A} and a concurrent channel type with {\tt Ch}, {\tt Ch1}, and {\tt Ch2}.
+The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
+We denote an argument for a sequential type with \lstinline{A} and a concurrent channel type with \lstinline{Ch}, \lstinline{Ch1}, and \lstinline{Ch2}.
 Channel types that take another channel type as an argument are recursive cases. 
 The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
 
 \begin{tabular}{r l}
-{\tt TopBot} & end communication on the channel (this is the base case). \\
-{\tt Neg (Ch)} & swap the polarity of the given channel. \\ 
-{\tt Get (A|Ch)} & a message of type {\tt A} travels from input to output polarity (right to left). \\
-{\tt Put (A|Ch)} & a message of type {\tt A} travels from output to input polarity (left to right). \\ 
-{\tt Ch1 (+) Ch2} & the process with input polarity (on the right end) becomes two processes. \\
-{\tt Ch1 (*) Ch2} & the process with output polarity (on the left end) becomes two processes. \\
+\lstinline{TopBot} & end communication on the channel (this is the base case). \\
+\lstinline{Neg(Ch)} & negate the channel to have the opposite polarity. \\ 
+\lstinline{Put (A|Ch)} & a message of type \lstinline{A} travels from left to right (output to input polarity). \\ 
+\lstinline{Get (A|Ch)} & a message of type \lstinline{A} travels from right to left (input to output polarity). \\
+\lstinline{Ch1(*) Ch2} & process on the left becomes two processes both connected to process on the right. \\
+\lstinline{Ch1(+) Ch2} & process on the right becomes two processes both connected to process on the left. \\
 ~ & ~
 \end{tabular}
 
 \noindent 
 %The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
-The {\tt TopBot} type is used to end communication on a channel, and its corresponding operations are given in Section \ref{sec:close}. 
-The {\tt Neg} type swaps the polarity of a channel so two channels of the same polarity can be identified as the same channel, and the corresponding operations are given in Section \ref{sec:neg}. 
-The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
-The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
+%The {\tt TopBot} type is used to end communication on a channel, and its corresponding operations are given in Section \ref{sec:close}. 
+%The {\tt Neg} type swaps the polarity of a channel so two channels of the same polarity can be identified as the same channel, and the corresponding operations are given in Section \ref{sec:neg}. 
+%The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
+%The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
 \subsubsection{Constructing custom channel types}
 
