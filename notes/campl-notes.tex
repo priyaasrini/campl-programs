@@ -313,26 +313,78 @@ A brief recollection of how channels have both types and polarities goes here..
 Processes are defined with two lists of channels that are in its scope: input (or left) polarity channels and output (or right) polarity channels.
 The polarity of a channel can be thought of as which ``end'' of the channel the process has access to.
 % we could change the word ``end'' to side if that would be more natural?
-Processes that have the input (or left) polarity of a channel are on the ``right end'', and processes that have the output (or right) polarity are on the ``left end.''
+Processes that have the input (or left) polarity of a channel are ``on the right end'', and processes that have the output (or right) polarity are ``on the left end.''
 Two processes can be connected along a channel if their process definitions both have a channel with the same type and opposite polarities.
 This section will discuss the details of how and why this has been defined in this way.
 
+Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline{ch}:
+\begin{lstlisting}
+proc client = 
+	| => ch ->
+		on ch do 
+			put "Hello Server!"	-- sends message to the server      
+			get echo						-- receives server's echo  
+			halt
+
+proc server =  
+	| ch => ->
+		on ch do
+			get msg							-- receives client's message
+			put msg							-- sends message back
+			halt
+			
+ proc run = 
+ 	| => -> plug						-- connects processes by shared channel ch
+ 		client( | => ch )			-- creates client process
+ 		server( | ch => )			-- creates server process
+\end{lstlisting}
+Observe that \lstinline{client} uses \lstinline{ch} with output polarity (on the left end) and \lstinline{server} uses \lstinline{ch} with input polarity (on the right end).
 A process ``uses'' a channel to interact with another process on the other end of the channel.
-The way a process can use a channel depends on both the channel's type and polarity.
-The type of the channel defines the interaction that the processes will have on it, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
-The polarity of the channel that each process has access to defines that process's role in the interaction, i.e. sending the message or receiving the message.
+In this case, the processes are using \lstinline{ch} to pass messages to each other.
+The process commands that a process can use on a channel depend on both the channel's type and polarity.
+The type of the channel defines the interaction that the processes will have on it.
+%, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
+In this case, the interaction is that messages will travel from left to right (\lstinline{client} to \lstinline{server}) and then in the opposite direction from right to left.
+The polarity of the channel that each process has access to defines that process's role in the interaction.
+%, i.e. sending the message or receiving the message.
+In this case, messages travelling from left to right means the process on the left end, \lstinline{client}, must use the \lstinline{put} command and the process on the right end, \lstinline{server}, must use the \lstinline{get} command.
 
 Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
-For example, suppose we remove polarity and we have two processes \(p\) and \(q\) that are connected along a channel \(c\) which has a type indicating that a message should be sent and received on it.
-The processes know the type of the channel, but they can't definitively know whether they should be the one to send or receive the message.
-If both processes decide that they should receive the message, they will both become stuck waiting for a message to be sent by the other.
+For example, suppose we do not consider polarity and rewrite our code as follows:
+\begin{lstlisting}[label=ex:ambiguityce, caption=Code without channel polarity (this code will not compile)] 
+ proc run = 
+ 	| => -> plug				-- connects processes by shared channel ch
+ 		client( | ch )		-- client process has channel ch (no defined polarity)
+ 		server( | ch )		-- server process has channel ch (no defined polarity)
+\end{lstlisting}
+We know that we want \lstinline{ch} to have a type indicating that a message should be sent and received on it.
+%The processes know the type of the channel, but they can't definitively know whether they should be the one to send or receive the message.
+However, if both processes are defined to first receive a message and then reply, they will both become stuck waiting for a message to be sent by the other:
+\begin{lstlisting}
+proc client = 
+	| ch ->
+		on ch do 
+			get msg							-- receives server's message  
+			put "Hello Server!"	-- sends message to the server      
+			halt
+
+proc server =  
+	| ch ->
+		on ch do
+			get msg							-- receives client's message
+			put "Hello Client!"	-- sends message to client
+			halt
+\end{lstlisting}
 This is precisely what a deadlock is.
+In this simple example, it is easy to see the mistake, but in more complicated systems, the type system with polarities has the ability to catch these sorts of errors.
+Each built-in channel type in CaMPL specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
 
-If we have polarities and types and we enforce that processes can only be connected if they use channels with the same type and opposite polarity, we can specify that \(p\) uses \(c\) with output polarity, \(q\) uses \(c\) with input polarity, and \(c\) has a type indicating that messages travel from input to output polarity.
-This means that information flows from the process on the right end to the process on the left end (right to left).
-Then, both processes' roles in the interaction are unambiguous:  \(q\) knows that it should send a message and \(p\) knows that it should receive a message.
-Each built-in channel type in CaMPL similarly specifies the complementary roles of the processes on each end of the channel.
-
+%
+%If we have polarities and types and we enforce that processes can only be connected if they use channels with the same type and opposite polarity, we can specify that \(p\) uses \(c\) with output polarity, \(q\) uses \(c\) with input polarity, and \(c\) has a type indicating that messages travel from input to output polarity.
+%This means that information flows from the process on the right end to the process on the left end (right to left).
+%Then, both processes' roles in the interaction are unambiguous:  \(q\) knows that it should send a message and \(p\) knows that it should receive a message.
+%Each built-in channel type in CaMPL similarly specifies the complementary roles of the processes on each end of the channel.
+%
 
 
 \subsubsection{Built-in Channel types}
