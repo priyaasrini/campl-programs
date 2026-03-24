@@ -393,7 +393,93 @@ Each built-in channel type in CaMPL specifies the complementary roles of the pro
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 This includes message passing as well as changes to the network of processes in the program.
 From the built-in channel types, one may construct custom channel types which will be discussed in the next section. 
-The commands that each process must perform for a given channel type and polarity will be discussed in Section \ref{sec:concurrent-operators}.
+The commands that each process must perform for a given channel type and polarity will be discussed in detail in Section \ref{sec:concurrent-operators}.
+
+As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type signature that indicates the types of the variables and channels it uses.
+We will modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
+We will define \lstinline{server} to have a \lstinline{server_id} variable that it will send back to the client instead of echoing the message:
+\begin{lstlisting}[label=ex:serverid, caption=Server replies to Client with server id] 
+proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
+	| => ch ->
+		on ch do 
+			put "Hello Server!"	
+			get int					
+			halt
+
+proc server :: Int | Put([Char]|Get(Int|TopBot)) => = 	-- type signature
+	server_id | ch => ->				-- new server_id variable
+		on ch do
+			get msg							
+			put server_id						-- sends server_id back
+			halt
+			
+ proc run :: | => = 					-- type signature
+ 	| => -> plug					
+ 		client( | => ch )		
+ 		server( 1234 | ch => )		-- server process created with server_id
+\end{lstlisting}
+Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
+The names of the variables and channels are bound to the types in the order they appear.
+We can observe that the type signature of \lstinline{run} does not contain any variables or channels because it is not using any channels to interact with other processes.
+%It creates the channel \lstinline{ch} in \lstinline{plug} command to connect the processes.
+
+We can also observe that the type of \lstinline{ch} is \lstinline{Put([Char]|  Get(Int| TopBot))}.
+Recall that the type of the channel defines the interaction that the processes will have on it.
+%, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
+In this case, the interaction is that, first, a message of type \lstinline{[Char]}, i.e. a string, will travel from left to right (\lstinline{client} to \lstinline{server}), second, a message of type  \lstinline{Int} will travel from right to left (\lstinline{server} to \lstinline{client}), and finally, the channel will be closed when the processes \lstinline{halt}.
+From this we can see that a channel of type \lstinline{Put} indicates messages will travel from left to right, type \lstinline{Get} indicates messages will travel from right to left, and type \lstinline{TopBot} indicates the interaction is over and the channel will be closed.
+More details about these channel types and their corresponding process commands are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
+
+We can also notice that channel types are constructed inductively.
+The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
+The base case is the \lstinline{TopBot} type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
+
+In our next example, we will consider a channel type that allows one to make changes to the network of processes in the program.
+We will again modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
+We will define another process \lstinline{two_clients} that forks into two instances of \lstinline{client} that both send a message to a modified \lstinline{server} process:
+\begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes] 
+proc client :: | => Put([Char]|TopBot) = 		
+	| => ch ->
+		on ch do 
+			put "Hello Server!"				  -- client sends string
+			halt
+
+proc two_clients :: | => Put([Char]|TopBot) (*) Put([Char]|TopBot) =
+	| => two_ch ->
+		fork two_ch as								-- creates two new client processes
+			ch1 -> client( | => ch1)
+			ch2 -> client( | => ch2)
+
+proc server :: | Put([Char]|TopBot) (*) Put([Char]|TopBot)) => =  
+	| two_ch => -> do
+		split two_ch into ch1, ch2		-- server splits channel
+		on ch1 do											-- interacts with first client
+			get msg						
+			close
+		on ch2 do											-- interacts with second client
+			get msg						
+			halt
+			
+proc run :: | => = 
+ 	| => -> plug						
+ 		two_clients( | => two_ch )		-- creates a single two_clients process
+ 		server( | two_ch => )				
+\end{lstlisting}
+Observe that \lstinline{two_ch} has type \lstinline{Put([Char]|TopBot) (*) Put([Char]|TopBot)}.
+This is quite intimidating, but we have already discussed the \lstinline{Put([Char]|TopBot)} type.
+Let us use \(X\) as a shorthand for that channel type.
+Then, we can consider the type \(X\)\lstinline{(*)}\(X\).
+The interaction this type defines is that the process on the left (\lstinline{two_clients}) will fork into two new processes, and the process on the right (\lstinline{server}) will split the channel into two new channels and interact with each of the new processes according to type \(X\).
+
+We could also write a program that has different interactions with the two new processes, and this would need a type like \(X\)\lstinline{(*)}\(Y\).
+We can see that a channel of type \lstinline{(*)} indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
+What if we wanted the process on the right to be replaced by two new processes instead?
+Then, we would use the \lstinline{(+)} channel type which is dual to the \lstinline{(*)} type.
+More details about these channel types and their corresponding process commands are given in Section~\ref{sec:split-fork}.
+
+Finally, we have the \lstinline{Neg} channel type.
+This type is used to negate the polarity of a given channel type, and the corresponding process commands are described in Section \ref{sec:neg}. 
+
 
 %In CaMPL, processes send and receive messages from one another via channels. 
 %CaMPL provides built-in channel types from which one may build custom channel types. 
