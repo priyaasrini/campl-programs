@@ -169,7 +169,7 @@ This section will highlight the features of CaMPL that consitute its concurrent 
 Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
 A {\em process} is specified by a process name, an optional type signature, and lists of the variables and channels used by the process.
 
-In Example \ref{ex:helloworld}, the type signature of process \lstinline{helloworld} was \lstinline{ :: | Console => } and it only used one channel indicated by \lstinline{ = | console => } in its definition.
+In Example \ref{ex:helloworld}, the type signature of process \lstinline{helloworld} was \lstinline{ :: | Console => } which indicates that it only has access to one channel of type \lstinline{Console} and this channel is given the name \lstinline{console} indicated by \lstinline{ = | console => } on the next line.
 We will discuss type signatures in more detail in Section~\ref{Sec:Channels} on channel types.
 
 A CaMPL program must have a process with the name \lstinline{run} in which the execution of the program begins. 
