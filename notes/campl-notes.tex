@@ -477,8 +477,10 @@ What if we wanted the process on the right to be replaced by two new processes i
 Then, we would use the \lstinline{(+)} channel type which is dual to the \lstinline{(*)} type.
 More details about these channel types and their corresponding process commands are given in Section~\ref{sec:split-fork}.
 
-Finally, we have the \lstinline{Neg} channel type.
-This type is used to negate the polarity of a given channel type, and the corresponding process commands are described in Section \ref{sec:neg}. 
+Finally, we have the \lstinline{Neg} channel type which negates a given channel type.
+This means that the ``direction'' of the interaction is reversed.
+A \lstinline{Neg(Put)} channel becomes a \lstinline{Get} channel (and vice versa), and a \lstinline{Neg((*))} channel becomes a \lstinline{(+)} channel (and vice versa).
+The corresponding process commands are described in Section \ref{sec:neg}. 
 
 
 %In CaMPL, processes send and receive messages from one another via channels. 
@@ -493,7 +495,7 @@ The outer most layer is the first interaction that will take place, and after th
 
 \begin{tabular}{r l}
 \lstinline{TopBot} & end communication on the channel (this is the base case). \\
-\lstinline{Neg(Ch)} & negate the channel to have the opposite polarity. \\ 
+\lstinline{Neg(Ch)} & negate the channel type (interaction is the dual of \lstinline{Ch}). \\ 
 \lstinline{Put (A|Ch)} & a message of type \lstinline{A} travels from left to right (output to input polarity). \\ 
 \lstinline{Get (A|Ch)} & a message of type \lstinline{A} travels from right to left (input to output polarity). \\
 \lstinline{Ch1(*) Ch2} & process on the left becomes two processes both connected to process on the right. \\
