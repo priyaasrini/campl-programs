@@ -512,7 +512,45 @@ The outer most layer is the first interaction that will take place, and after th
 
 \subsubsection{Constructing custom channel types}
 
-Using CaMPL, a programmer may design communication over a channel using {\em protocols} and {\em coprotocols}. Protocols and coprotocols are concurrent analogue of inductive and co-inductive data types in functional programming languages. In a CaMPL program, Instances of protocols and coprotocols are called channels.
+We have covered the basic channel types, but the programs we have written so far notably lack a variable number of messages to be sent.
+Recall the process \lstinline{broadcast} from Example \ref{ex:broadcastmsg} with the addition of a type signature:
+% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
+\begin{lstlisting}
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) => Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source, dest1 => dest2, dest3 -> do
+		get msg on source								-- receive message from source
+		put msg on dest1								-- broadcast message to other process
+		put msg on dest2
+		put msg on dest3
+		put confirmation_msg on source	-- send confirmation message to source
+		close source										-- close all channels and halt
+		close dest1
+		close dest2
+		halt dest3       
+\end{lstlisting}
+This process is only able to broadcast a single message from the source.
+To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline{Put} (or \lstinline{Get}) to \lstinline{TopBot}.
+This can be achieved by defining custom channel types, called {\em protocols} and {\em coprotocols}, which can be recursively defined.
+
+Let us consider the following example of a simple protocol called \lstinline{PassMessages}:  
+\begin{lstlisting}
+protocol PassMessages (A | ) => S =			-- passes messages of type A
+    SendMsg :: Put(A | S) => S 					-- handle to send another message
+    CloseCh :: TopBot => S 							-- handle to finish sending messages
+\end{lstlisting}
+This protocol allows an arbitrary number of messages of type \lstinline{A} to be passed on a \lstinline{Put} channel.
+The two {\em handles}, \lstinline{SendMsg} and \lstinline{CloseCh}, allow the type of the channel to be set to either \lstinline{Put} or \lstinline{TopBot}.
+In general, handles represent the set of valid interactions that may take place on a channel.
+
+Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
+The only difference between protocols and coporotocols is the direction that the handles travel on the channel.
+For a protocol, handles travel in the same direction as messages do on a \lstinline{Put} channel, and for coprotocols handles travel in the same direction as a \lstinline{Get} channel.
+This means that any protocol becomes a coprotcol if the channel type is negated, which is not true for sequential inductive and coinductive datatypes.
+
+We can modify \lstinline{broadcast} to use the \lstinline{PassMessages} protocol as follows:
+
+
+
  
 In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
   \begin{center}
