@@ -422,7 +422,7 @@ proc server :: Int | Put([Char]|Get(Int|TopBot)) => = 	-- type signature
 \end{lstlisting}
 Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
 The names of the variables and channels are bound to the types in the order they appear.
-We can observe that the type signature of \lstinline{run} does not contain any variables or channels because it is not using any channels to interact with other processes.
+We can observe that the type signature of \lstinline{run} does not contain any types because it is not using any variables or any channels to interact with other processes.
 %It creates the channel \lstinline{ch} in \lstinline{plug} command to connect the processes.
 
 We can also observe that the type of \lstinline{ch} is \lstinline{Put([Char]|  Get(Int| TopBot))}.
@@ -430,7 +430,7 @@ Recall that the type of the channel defines the interaction that the processes w
 %, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
 In this case, the interaction is that, first, a message of type \lstinline{[Char]}, i.e. a string, will travel from left to right (\lstinline{client} to \lstinline{server}), second, a message of type  \lstinline{Int} will travel from right to left (\lstinline{server} to \lstinline{client}), and finally, the channel will be closed when the processes \lstinline{halt}.
 From this we can see that a channel of type \lstinline{Put} indicates messages will travel from left to right, type \lstinline{Get} indicates messages will travel from right to left, and type \lstinline{TopBot} indicates the interaction is over and the channel will be closed.
-More details about these channel types and their corresponding process commands are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
+More details about the corresponding process commands of these types are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
 
 We can also notice that channel types are constructed inductively.
 The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
@@ -469,15 +469,15 @@ proc run :: | => =
 \end{lstlisting}
 Observe that \lstinline{two_ch} has type \lstinline{Put([Char]|TopBot) (*) Put([Char]|TopBot)}.
 This is quite intimidating, but we have already discussed the \lstinline{Put([Char]|TopBot)} type.
-Let us use \(X\) as a shorthand for that channel type.
-Then, we can consider the type \(X\)\lstinline{(*)}\(X\).
-The interaction this type defines is that the process on the left (\lstinline{two_clients}) will fork into two new processes, and the process on the right (\lstinline{server}) will split the channel into two new channels and interact with each of the new processes according to type \(X\).
+Let us use \lstinline{X} as a shorthand for that channel type.
+Then, we can consider the type \lstinline{X(*)X}.
+The interaction this type defines is that the process on the left (\lstinline{two_clients}) will fork into two new processes, and the process on the right (\lstinline{server}) will split the channel into two new channels and interact with each of the new processes according to type  \lstinline{X}.
+We could also write a program that has different interactions with the two new processes, and this would need a type like \lstinline{X(*)Y}.
 
-We could also write a program that has different interactions with the two new processes, and this would need a type like \(X\)\lstinline{(*)}\(Y\).
 We can see that a channel of type \lstinline{(*)} indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
 Then, we would use the \lstinline{(+)} channel type which is dual to the \lstinline{(*)} type.
-More details about these channel types and their corresponding process commands are given in Section~\ref{sec:split-fork}.
+More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
 
 Finally, we have the \lstinline{Neg} channel type which negates a given channel type.
 This means that the ``direction'' of the interaction is reversed.
