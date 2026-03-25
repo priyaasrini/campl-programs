@@ -936,44 +936,51 @@ TODO: make an example using passer protocol that is not 100 lines long.
 \subsection{Ending communication using {\tt halt} and {\tt close}}
 \label{sec:close}
 
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			 close <channel_1>
-			 close <channel_2>
-			 ...
-			 halt <channel_n>		 
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
+The \lstinline{close} and \lstinline{halt} commands terminate the interaction along a channel and remove it from scope. 
+Recall the modified version of \lstinline{broadcast} from Example \ref{ex:negdest1}.
+We can reorder the process commands without changing the functionality of the process as follows:
+% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
+\begin{lstlisting} [label=ex:closehalt, caption=Closing and halting channels in broadcast] 
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2, dest3 -> do
+		get msg on source						
+		put msg on dest1		-- the type of dest1 is TopBot after this line
+		close dest1					-- close can be used on a TopBot channel at any point
+		put msg on dest2
+		close dest2
+		put msg on dest3
+		close dest3      
+		put confirmation_msg on source	
+		halt source					-- halt is used to close the last channel and halt
+\end{lstlisting}
+Notice that the \lstinline{close} command cannot be used as the last command in a process block, but it can be used at any other point to close \lstinline{TopBot} channels.
+The \lstinline{halt} command must be used for the last command of a process block because it halts a process after closing the last \lstinline{TopBot} channel.
 
-\vspace{-1em}
 
-The {\tt close} or the {\tt halt} command on a channel terminates any interaction along that channel, and removes the channel out of scope. The {\tt halt} command is expected to be the last command of a process block. Such terminal of communication is allowed only on a channel type {\tt TopBot}. The {\tt halt} command halts a process after closing the last channel (to be closed). 
-
-The following is a simple process demonstrating the usage of {\tt close} and {\tt halt}.
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc noInteraction :: | TopBot => TopBot = 
-			2. 	| chA => chB -> do
-			3.		close chA
-			4.		halt chB	 
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
-A detailed explanation of the code is as follows:
-
-\begin{itemize}
-\item Line {\tt 1.} provides the type signature of the process {\tt noInteraction}. The process has no sequential arguments, an input polarity channel of type {\tt TopBot}, and an output polarity channel of type {\tt TopBot}.
-
-\item Line {\tt 2.} provides variable names to the concurrent types. Since {\tt chA} and {\tt chB} are channels of type {\tt TopBot}, all interactions on these channels can be stopped.
-
-\item Line {\tt 3.} closes {\tt chA} which mean it will be out of scope in the rest of the process code.
-
-\item Line {\tt 4.} closes {\tt chB} and terminates the process.
-
-\end{itemize}
+%The following is a simple process demonstrating the usage of {\tt close} and {\tt halt}.
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			1. proc noInteraction :: | TopBot => TopBot = 
+%			2. 	| chA => chB -> do
+%			3.		close chA
+%			4.		halt chB	 
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center} 
+%A detailed explanation of the code is as follows:
+%
+%\begin{itemize}
+%\item Line {\tt 1.} provides the type signature of the process {\tt noInteraction}. The process has no sequential arguments, an input polarity channel of type {\tt TopBot}, and an output polarity channel of type {\tt TopBot}.
+%
+%\item Line {\tt 2.} provides variable names to the concurrent types. Since {\tt chA} and {\tt chB} are channels of type {\tt TopBot}, all interactions on these channels can be stopped.
+%
+%\item Line {\tt 3.} closes {\tt chA} which mean it will be out of scope in the rest of the process code.
+%
+%\item Line {\tt 4.} closes {\tt chB} and terminates the process.
+%
+%\end{itemize}
  
 \subsection{Complementary pairs }
 \label{subsec:pairs}
