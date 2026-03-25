@@ -577,12 +577,13 @@ The outer most layer is the first interaction that will take place, and after th
 
 \subsubsection{Constructing custom channel types}
 
-We have covered the basic channel types, but the programs we have written so far notably lack a variable number of messages to be sent.
-Recall the process \lstinline{broadcast} from Example \ref{ex:broadcastmsg} with the addition of a type signature:
+We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
+Recall the modified version of \lstinline{broadcast} from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) => Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source, dest1 => dest2, dest3 -> do
+\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels] 
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2, dest3 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- broadcast message to other process
 		put msg on dest2
@@ -594,18 +595,29 @@ proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) =>
 		halt dest3       
 \end{lstlisting}
 This process is only able to broadcast a single message from the source.
-To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline{Put} (or \lstinline{Get}) to \lstinline{TopBot}.
+To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline{Put} to \lstinline{TopBot}.
 This can be achieved by defining custom channel types, called {\em protocols} and {\em coprotocols}, which can be recursively defined.
 
-Let us consider the following example of a simple protocol called \lstinline{PassMessages}:  
-\begin{lstlisting}
-protocol PassMessages (A | ) => S =			-- passes messages of type A
-    SendMsg :: Put(A | S) => S 					-- handle to send another message
+Let us consider the following example of a protocol called \lstinline{PassMessages}:  
+\begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages] 
+protocol PassMessages (A| ) => S =			-- passes messages of type A
+    SendMsg :: Put(A|S) => S 						-- handle to send another message
     CloseCh :: TopBot => S 							-- handle to finish sending messages
 \end{lstlisting}
 This protocol allows an arbitrary number of messages of type \lstinline{A} to be passed on a \lstinline{Put} channel.
 The two {\em handles}, \lstinline{SendMsg} and \lstinline{CloseCh}, allow the type of the channel to be set to either \lstinline{Put} or \lstinline{TopBot}.
 In general, handles represent the set of valid interactions that may take place on a channel.
+They can be thought of as session types.
+
+When we use \lstinline{PassMessages} as a channel type, we will be able to instantiate the sequential type variable \lstinline{A}.
+In the case of  \lstinline{broadcast}, we want to pass strings, so we will use the channel type \lstinline{PassMessages([Char]| )}.
+Alternatively, we could have enforced that \lstinline{PassMessages} only passes messages of strings by omitting the type variable \lstinline{A} and setting the channel type to \lstinline{Put([Char]|S)} on line 2 instead.
+In that case, we would have the channel type \lstinline{PassMessages(|)}.
+
+This protocol does not use any concurrent type variables, but if it did, the list of the concurrent type variables would be on the right of the bar next to \lstinline{A}.
+For example, if it took a concurrent type variable \lstinline{X}, we would have \lstinline{PassMessages(A| X)}.
+
+The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character. 
 
 Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
 The only difference between protocols and coporotocols is the direction that the handles travel on the channel.
