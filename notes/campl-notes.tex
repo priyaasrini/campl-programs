@@ -620,57 +620,124 @@ For example, if it took a concurrent type variable \lstinline{X}, we would have 
 The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character. 
 
 Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
-The only difference between protocols and coporotocols is the direction that the handles travel on the channel.
-For a protocol, handles travel in the same direction as messages do on a \lstinline{Put} channel, and for coprotocols handles travel in the same direction as a \lstinline{Get} channel.
-This means that any protocol becomes a coprotcol if the channel type is negated, which is not true for sequential inductive and coinductive datatypes.
+The only difference between protocols and coporotocols is the direction that handles travel on the channel.
+For a protocol, handles travel in the same direction as messages on a \lstinline{Put} channel, and for coprotocols, handles travel in the same direction as a \lstinline{Get} channel.
+This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
 
-We can modify \lstinline{broadcast} to use the \lstinline{PassMessages} protocol as follows:
+We can further modify \lstinline{broadcast} to use the \lstinline{PassMessages} protocol as follows:
+\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)] %can we change listing so that it says Example insted of Listing in the caption?
 
+proc broadcast :: [Char] | PassMessages([Char]| ) 
+	=> PassMessages([Char]| ), PassMessages([Char]| ), PassMessages([Char]| ) = 
+	confirmation_msg | source => dest1, dest2, dest3 -> do
+		hcase source of					-- check whether there is another message
+			SendMsg -> do
+				get msg on source		-- receive message
+				on dest1 do					-- broadcast message to other processes
+					hput SendMsg			-- indicate there is another message
+					put msg						-- send that message
+				on dest2 do
+					hput SendMsg
+					put msg
+				on dest3 do
+					hput SendMsg
+					put msg
+				broadcast(confirmation_msg | source => dest1, dest2, dest3) -- recurse
+			CloseCh -> do					-- close all channels and halt
+				close source							
+				on dest1 do						
+					hput CloseCh			-- indicate source is finished
+					close							-- close channel
+				on dest2 do
+					hput CloseCh		
+					close	
+				on dest3 do
+					hput CloseCh		
+					halt	
+\end{lstlisting}
+Since protocol handles travel in the same direction as messages on a \lstinline{Put} channel, \lstinline{broadcast} is receiving handles on \lstinline{source} and sending handles on its destination channels.
+A handle is sent on a channel using \lstinline{hput} which {\em activates} the channel and sets its type as specified by the handle.
+A handle is received on a channel using \lstinline{hcase} which allows a process to define a different process body for each possible channel type.
+More details on these process commands are given in Section~\ref{subsec:pairs}.
 
+If we want \lstinline{broadcast} to also send a confirmation message on \lstinline{source} as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
+ \begin{lstlisting}
+protocol PassMsgsWithConf (A| ) => S =
+    SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
+    CloseConfCh :: TopBot => S 		
+\end{lstlisting}
+We need to use different names for the handles because all handle names must be globally unique.
 
+We can imagine that \lstinline{dest1} connects \lstinline{broadcast} to a \lstinline{send_to_dest1} process that is connected to \lstinline{proc1} by a \lstinline{Neg(PassMessages([Char]| ))} channel.
+Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline{PassMessages} instead.
+We can define a coprotocol \lstinline{CoPassMessages} as follows:
+ \begin{lstlisting}
+coprotocol S => CoPassMessages (A| ) =
+    CoSendMsg ::  S => Get(A|S)
+    CoCloseCh :: S => TopBot
+\end{lstlisting}
+Then, we can write \lstinline{send_to_dest1} as follows:
+\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
+proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest1 => -> 
+		hcase source of					-- check whether there is another message
+			SendMsg -> do
+				get msg on source 		
+				on dest1 do
+					hput CoSendMsg		-- use coprotocol handle
+					put msg
+				send_to_dest1( | source, dest1 => ) -- recurse
+			CloseCh -> do
+				close source
+				on dest1 do
+					hput CoCloseCh
+					halt
+				
+ \end{lstlisting}
+ From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
  
-In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
-  \begin{center}
-    \textcolor{red}{\tt protocol} {\em <ProtocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
-    
-    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$ \\
-    ... \\ 
-    ... \\ 
-    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$
-   \end{center}
-The protocol, the handle and the (sequential and concurrent) type names MUST begin with an uppercase alphabet. The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types. 
-   
-Let us consider the following example of a protocol:  
-\begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}
-protocol EchoSimple (A | ) => S =
-    EchoSend :: Put(A | S) => S
-    EchoClose :: TopBot => S
-\end{verbatim}
-\end{varwidth}
-\end{center}
-
-In the above code, {\tt EchoSimple} is a protocol that has an output concurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} which are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel by a process connected to it.
-
-\[ \xymatrix{ A~\blackman \ar@{-}@<-5pt>[rrr]^{(+) ~~ {\tt ch: EchoSimple} ~~ (-)} & & & \blackman~B } \]
-
-Consider two processes $A$ and $B$ connected by a channel {\tt ch} of protocol type {\tt EchoSimple}. In the above picture, $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
-
-Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. The following code snippet shows {\tt EchoSimple} as a coprotocol. 
-\begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}    
-coprotocol S => coEchoSimple (A | ) =
-    coEchoSend ::  S => Put(A | S)
-    coEchoClose :: S => TopBot
-\end{verbatim}
-\end{varwidth}
-\end{center}
-
-Suppose {\tt ch} is a channel with the handle {\tt EchoSend} connecting process $A$ on the left and process $B$ on the right. Then, a message is sent from output polarity to input polarity, as shown in (1) and (2) in the following figure. One can use a coprotocol to avoid bending wires as shown in (3).
-\[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
-A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
+%In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
+%  \begin{center}
+%    \textcolor{red}{\tt protocol} {\em <ProtocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
+%    
+%    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$ \\
+%    ... \\ 
+%    ... \\ 
+%    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$
+%   \end{center}
+%The protocol, the handle and the (sequential and concurrent) type names MUST begin with an uppercase alphabet. The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types. 
+%   
+%Let us consider the following example of a protocol:  
+%\begin{center}
+%\begin{varwidth}{\linewidth}
+%\begin{verbatim}
+%protocol EchoSimple (A | ) => S =
+%    EchoSend :: Put(A | S) => S
+%    EchoClose :: TopBot => S
+%\end{verbatim}
+%\end{varwidth}
+%\end{center}
+%
+%In the above code, {\tt EchoSimple} is a protocol that has an output concurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} which are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel by a process connected to it.
+%
+%\[ \xymatrix{ A~\blackman \ar@{-}@<-5pt>[rrr]^{(+) ~~ {\tt ch: EchoSimple} ~~ (-)} & & & \blackman~B } \]
+%
+%Consider two processes $A$ and $B$ connected by a channel {\tt ch} of protocol type {\tt EchoSimple}. In the above picture, $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
+%
+%Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. The following code snippet shows {\tt EchoSimple} as a coprotocol. 
+%\begin{center}
+%\begin{varwidth}{\linewidth}
+%\begin{verbatim}    
+%coprotocol S => coEchoSimple (A | ) =
+%    coEchoSend ::  S => Put(A | S)
+%    coEchoClose :: S => TopBot
+%\end{verbatim}
+%\end{varwidth}
+%\end{center}
+%
+%Suppose {\tt ch} is a channel with the handle {\tt EchoSend} connecting process $A$ on the left and process $B$ on the right. Then, a message is sent from output polarity to input polarity, as shown in (1) and (2) in the following figure. One can use a coprotocol to avoid bending wires as shown in (3).
+%\[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
+%A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
 
 \section{Process Commands}
