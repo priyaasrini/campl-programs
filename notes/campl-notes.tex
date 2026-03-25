@@ -897,7 +897,8 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 \label{sec:neg}
 
 The identification command, written as \lstinline{|=|}, equates two channels the same type and opposite polarities.
-This command can be thought of as an identity process that ``does nothing'' to a channel.
+This command can be thought of as calling an identity process that ``does nothing'' to a channel.
+It must be used as the last command in a process block.
 
 The \lstinline{neg} command is used to equate two channels of the same polarity if one of them is a \lstinline{Neg} type.
 This is because because the \lstinline{neg} command will change a channel of type \lstinline{X} to type \lstinline{Neg(X)} and flip the polarity. 
