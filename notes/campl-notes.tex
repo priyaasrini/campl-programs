@@ -823,6 +823,24 @@ Two processes can be plugged to each other if and only if they satisfy the follo
 In the above example, \lstinline{proc2} to \lstinline{proc3} could not be connected because they both only have input polarity channels.
 Furthermore, changing their process definitions and adding a channels is not possible either because they are both already connected to \lstinline{broadcast}.
 
+A \lstinline{plug} command can plug previously defined processes, as above, and/or in-line process definitions.
+Recall Example \ref{ex:negdest1}, and notice the in-line process definitions on lines 7 - 8 and 9 - 12:
+\begin{lstlisting}
+proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
+	| source, neg_dest1 => -> do
+		on source do						
+			get msg
+			close
+		plug
+			neg_dest1, dest1 => -> 		-- channels used by in-line proc definition
+				neg_dest1 |=| neg dest1 -- in-line process body
+			=> dest1 -> 							-- channels used by in-line proc definition
+				on dest1 do							-- in-line process body
+					put msg
+					halt
+\end{lstlisting}
+Notice that on lines 7 and 9, the input and output channels used by each process are given, but sequential variables are not given.
+Any sequential data in scope at line 6 can be used in the in-line process definitions.
 
 %
 %The following code demonstrates a usage of the {\tt plug} command. 
