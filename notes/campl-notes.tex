@@ -748,6 +748,9 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
 
+We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
+The novel features that we will introduce in this section are controlled non-determinism using the \lstinline{race} command and higher-order message passing using the \lstinline{store} and \lstinline{use} commands.
+
 Table \ref{tab:mpl-constructs} summarizes the operations / commands that may be performed by a process on the concurrent types. In this section, we explain each of these commands and their usage. 
 
  \begin{table}[!h]
