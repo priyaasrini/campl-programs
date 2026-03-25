@@ -867,6 +867,31 @@ Any sequential data in scope at line 6 can be used in the in-line process defini
 %\item Line {\tt 3.} causes {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channel types (since channels are linear resources).
 %\end{itemize}
 
+\subsection{Calling processes}
+
+A process can be created and called using its name and by giving it variables and channels that match its process definition.
+We have seen this in the \lstinline{plug} command of a \lstinline{run} process quite often.
+
+Recall that we also called \lstinline{send_to_dest1} recursively in Example~\ref{ex:coprotocoldest1}:
+\begin{lstlisting} 
+proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest1 => -> 
+		hcase source of				
+			SendMsg -> do							
+				get msg on source 									-- first line of the do block
+				on dest1 do
+					hput CoSendMsg		
+					put msg
+				send_to_dest1( | source, dest1 => )	-- process call in the last line
+			CloseCh -> do
+				close source
+				on dest1 do
+					hput CoCloseCh
+					halt
+				
+ \end{lstlisting}
+ Notice that when we make the process call on line 9, it is the last command in the \lstinline{do} block that starts on line 4.
+ When a process is called outside of a \lstinline{plug} command, it must be the last command in the process block.
 
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
