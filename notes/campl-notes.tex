@@ -479,9 +479,74 @@ More details about these channel types and their corresponding process commands 
 
 Finally, we have the \lstinline{Neg} channel type which negates a given channel type.
 This means that the ``direction'' of the interaction is reversed.
-A \lstinline{Neg(Put)} channel becomes a \lstinline{Get} channel (and vice versa), and a \lstinline{Neg((*))} channel becomes a \lstinline{(+)} channel (and vice versa).
-The corresponding process commands are described in Section \ref{sec:neg}. 
+A \lstinline{Neg(Put)} channel can be used like a \lstinline{Get} channel (and vice versa), and a \lstinline{Neg((*))} channel can be used like a \lstinline{(+)} channel (and vice versa).
 
+Recall the process \lstinline{broadcast} from Example~\ref{ex:broadcastmsg}.
+We can write the type signature of \lstinline{broadcast} as follows:
+\begin{lstlisting}
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source, dest1 => dest2, dest3 ->
+\end{lstlisting}
+Observe that the type of \lstinline{dest1} is \lstinline{Get([Char]|TopBot)} which is dual to the type of \lstinline{dest2} and \lstinline{dest3} which is \lstinline{Put([Char]|TopBot)}.
+We will refer to the process on the other end of  \lstinline{dest1} as \lstinline{proc1}.
+Notice that \lstinline{proc1} uses \lstinline{dest1} with output polarity.
+
+Suppose we want the type and polarity of all of the destination channels in \lstinline{broadcast} to be the same, i.e. we want the type signature of  \lstinline{broadcast} to be:
+\begin{lstlisting}
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2, dest3 ->
+\end{lstlisting}
+However, we still want \lstinline{proc1} to use \lstinline{dest1} with output polarity.
+Instead of connecting \lstinline{broadcast} with \lstinline{proc1} directly, we can write another process, \lstinline{send_to_dest1}, that connects to  \lstinline{proc1} with a \lstinline{Neg(Put)} channel.
+Our \lstinline{run} process would be defined as follows:
+\begin{lstlisting}
+proc run =
+    | => -> plug
+        sender( | => source)
+        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
+        send_to_dest1( | dest1, neg_dest1 => )
+        proc1( | => neg_dest1)				-- neg_dest1 has Neg(Put) type 
+        proc2( | dest2 =>)
+        proc3( | dest3 =>)
+\end{lstlisting}	
+We can define process \lstinline{send_to_dest1} as follows:
+\begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
+proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
+	| source, neg_dest1 => -> do
+		on source do								-- receive message from source via broadcast
+			get msg
+			close
+		plug
+			neg_dest1, dest1 => -> 
+				neg_dest1 |=| neg dest1 -- negate and identify channels
+			=> dest1 -> 							-- use like Get channel in original broadcast
+				on dest1 do							-- forward message to proc1
+					put msg
+					halt
+\end{lstlisting}
+To connect to this process, \lstinline{proc1} would also need to be modified to have a \lstinline{Neg(Put)} channel instead of a \lstinline{Get} channel because they are not actually the {\em same} type.
+Additionally, \lstinline{proc1} would need to include code similar to lines 6 - 9 to be able to use the \lstinline{Neg(Put)} channel.
+The \lstinline{neg} and identification \lstinline{|=|} process commands are described in more detail in Section~\ref{sec:neg}. 
+
+
+
+%
+%We can again modify Example~\ref{ex:serverecho} to use a \lstinline{Neg(Get)} channel instead of a \lstinline{Put} channel:
+%\begin{lstlisting} [label=ex:negclient, caption=Client uses a Neg(Get) channel instead of a Put channel] 
+%proc client :: | => Neg(Get([Char] | TopBot)) = 		-- Neg(Get) = Put
+%    | => neg_ch ->                                    
+%        plug
+%            ch => ->                                -- create a new non-neg channel
+%                on ch do                            -- use like Put channel in original client
+%                    put "Hello Server!"	
+%                    get echo	
+%                    halt                 
+%            => ch, neg_ch -> neg_ch |=| neg ch          -- negate and identify with original
+%\end{lstlisting}
+%The \lstinline{server} process would also need to be modified in the same way to be connected to this \lstinline{client} because the \lstinline{Neg(Get)} type is not the same as the \lstinline{Put} type, but they can act in the same way.
+%The \lstinline{neg} and identification \lstinline{|=|}  process commands are described in Section \ref{sec:neg}. 
 
 %In CaMPL, processes send and receive messages from one another via channels. 
 %CaMPL provides built-in channel types from which one may build custom channel types. 
