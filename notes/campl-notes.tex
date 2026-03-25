@@ -853,34 +853,39 @@ Furthermore, changing their process definitions and adding a channels is not pos
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
 
-The {\tt id} command is used identify two channels of opposite polarities as the same, that is, to equate one to the other. The {\tt neg} command is used to equate two channel of same polarities --- this is because because the {\tt neg} command flips the polarity of channel. 
+The identification command, written as \lstinline{|=|}, equates two channels of opposite polarities.
+The \lstinline{neg} command is used to equate two channels of the same polarity if one of them is a \lstinline{Neg} type.
+This is because because the \lstinline{neg} command will change a channel of type \lstinline{X} to type \lstinline{Neg(X)} and flip the polarity. 
 
-The following code snippet demonstrates the usage of these commands. The {\tt id} command is written as {\tt |=|}.
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc equateChannels :: | A, Neg(A) => A = 
-			2.		  | a, neg_a => a' -> 
-			3.		       a |=| a'						                    -- equating
-			4.		       neg_a |=| neg(a)                  -- equating after negating
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
+The \lstinline{neg} process command is particularly useful when channels are passed as resources between multiple processes. \textcolor{purple}{See example ... for a case study.} 
+TODO: make an example using passer protocol that is not 100 lines long.
 
-A detailed explanation of the code is as follows:
+%THIS CODE DOESN'T ACTUALLY COMPILE.
+%The following code snippet demonstrates the usage of these commands. The {\tt id} command is written as {\tt |=|}.
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			1. proc equateChannels :: | A, Neg(A) => A = 
+%			2.		  | a, neg_a => a' -> 
+%			3.		       a |=| a'						                    -- equating
+%			4.		       neg_a |=| neg(a)                  -- equating after negating
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center} 
+%
+%A detailed explanation of the code is as follows:
+%
+%\begin{itemize}
+%\item Line {\tt 1.} provides the type signature of the process {\tt equateChannels}. The process has no sequential arguments, two input polarity channel of type {\tt A} and {\tt Neg(A)}, and an output polarity channel of type {\tt A}.
+%
+%\item Line {\tt 2.} provides variable names to the concurrent types.
+%
+%\item Line {\tt 3.} equates the input channel {\tt a} to the output channel {\tt a'}, both of type {\tt A}.
+%
+%\item Line {\tt 4.} first negates channel  {\tt a} --- since {\tt a} is an input channel of type {\tt A}, {\tt neg(a)} is an output channel of type {\tt Neg(A)}. Then, it equates input channel {\tt neg\_a} of type {\tt Neg(A)} with {\tt neg(a)}.
+%
+%\end{itemize}
 
-\begin{itemize}
-\item Line {\tt 1.} provides the type signature of the process {\tt equateChannels}. The process has no sequential arguments, two input polarity channel of type {\tt A} and {\tt Neg(A)}, and an output polarity channel of type {\tt A}.
-
-\item Line {\tt 2.} provides variable names to the concurrent types.
-
-\item Line {\tt 3.} equates the input channel {\tt a} to the output channel {\tt a'}, both of type {\tt A}.
-
-\item Line {\tt 4.} first negates channel  {\tt a} --- since {\tt a} is an input channel of type {\tt A}, {\tt neg(a)} is an output channel of type {\tt Neg(A)}. Then, it equates input channel {\tt neg\_a} of type {\tt Neg(A)} with {\tt neg(a)}.
-
-\end{itemize}
-
-The {\tt neg} process command is particularly useful when channels are passed as resources between multiple processes. \textcolor{purple}{See example ... for a case study.} 
 
 \subsection{Ending communication using {\tt halt} and {\tt close}}
 \label{sec:close}
