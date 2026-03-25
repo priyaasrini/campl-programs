@@ -772,54 +772,83 @@ Table \ref{tab:mpl-constructs} summarizes the operations / commands that may be 
 \caption{Concurrent MPL Constructs}
 \label{tab:mpl-constructs}
 \end{table} 
+% what about race? store? use?
 
 \subsection{Connecting processes using {\tt plug}}
 
-\begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}
-	plug 
-		    process1( .. | ch1 => ch2)
-		    process2( .. | ch2 => ch3)
-		    process3( .. | ch3 => ch4)
-		    ...
-		    processn( .. | chn => last_ch)
-\end{verbatim}
-\end{varwidth}
-\end{center}
+%\begin{center}
+%\begin{varwidth}{\linewidth}
+%\begin{verbatim}
+%	plug 
+%		    process1( .. | ch1 => ch2)
+%		    process2( .. | ch2 => ch3)
+%		    process3( .. | ch3 => ch4)
+%		    ...
+%		    processn( .. | chn => last_ch)
+%\end{verbatim}
+%\end{varwidth}
+%\end{center}
 
-Composition of two or more processes in the concurrent side of CaMPL is defined by 
-{\em plug} command. Two processes can only be plugged to each other along a channel if and only if they satisfy the following conditions:
+We have seen the \lstinline{plug} command used in most of our examples, especially in the main \lstinline{run} processes.
+This command must be used as the last command in a process block.
+
+Recall the \lstinline{run} process from Example \ref{ex:negdest1} that connected the \lstinline{broadcast} process to the source and destination processes:
+\begin{lstlisting}
+proc run =
+    | => -> plug							-- plug command is the last (and only) command
+        sender( | => source)
+        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
+        send_to_dest1( | dest1, neg_dest1 => )
+        proc1( | => neg_dest1)				
+        proc2( | dest2 =>)		-- proc2 cannot be connected to proc3
+        proc3( | dest3 =>)
+\end{lstlisting}	
+The \lstinline{plug} command, used on line 2 in the above example, connects any number processes along channels such that the network of the connected processes remains acyclic.
+The processes which are plugged together run in parallel, and may communicate via the channels connecting them. 
+
+Notice that each channel connects exactly two processes.
+Channels are linear resources which means they cannot be arbitrarily created or duplicated.
+A channel can only be created in a \lstinline{plug} command.
+A channel cannot appear more than twice in a \lstinline{plug} command.
+
+Sequential data is not a linear resource, so it can be duplicated and passed into any number of processes in a \lstinline{plug} command.
+
+%A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. 
+
+Two processes can be plugged to each other if and only if they satisfy the following conditions:
 \begin{enumerate}[(1)]
-	\item they share a channel of the same type but opposite polarity, and 
-	\item there exists no connection between them.
+	\item both process definitions have a channel with the same type and opposite polarities.
+	\item plugging the processes will not create a cycle (they cannot already be connected).
 \end{enumerate}
+In the above example, \lstinline{proc2} to \lstinline{proc3} could not be connected because they both only have input polarity channels.
+Furthermore, changing their process definitions and adding a channels is not possible either because they are both already connected to \lstinline{broadcast}.
 
-The processes which are plugged together run in parallel, and may communicate via the channels connecting them. The following code demonstrates a usage of the {\tt plug} command. 
 
-\begin{center}
-\begin{varwidth}{\linewidth}
-\begin{verbatim}
-	1. proc pulgDemo :: A | X => Z = 
-	2.	    a | x => z -> 
-	3.		    plug 
-				       processA(a | x => y)
-				       processB(a | y => z)
-\end{verbatim}
-\end{varwidth}
-\end{center}
+%
+%The following code demonstrates a usage of the {\tt plug} command. 
+%
+%\begin{center}
+%\begin{varwidth}{\linewidth}
+%\begin{verbatim}
+%	1. proc pulgDemo :: A | X => Z = 
+%	2.	    a | x => z -> 
+%	3.		    plug 
+%				       processA(a | x => y)
+%				       processB(a | y => z)
+%\end{verbatim}
+%\end{varwidth}
+%\end{center}
+%
+%A detailed explanation of the code is as follows:
+%
+%\begin{itemize}
+%\item Line {\tt 1.} provides the type signature of the process {\tt plugDemo}. The process has a sequential argument of type {\tt A}, an input polarity channel of type {\tt X}, and an output polarity channel of type {\tt Z}.
+%
+%\item Line {\tt 2.} provides variable names to the sequential and concurrent types.
+%
+%\item Line {\tt 3.} causes {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channel types (since channels are linear resources).
+%\end{itemize}
 
-A detailed explanation of the code is as follows:
-
-\begin{itemize}
-\item Line {\tt 1.} provides the type signature of the process {\tt plugDemo}. The process has a sequential argument of type {\tt A}, an input polarity channel of type {\tt X}, and an output polarity channel of type {\tt Z}.
-
-\item Line {\tt 2.} provides variable names to the sequential and concurrent types.
-
-\item Line {\tt 3.} causes {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channel types (since channels are linear resources).
-\end{itemize}
-
-A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. The {\tt plug} command can only occur as the last command in a process block.
 
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
