@@ -622,7 +622,7 @@ For example, if it took a concurrent type variable \lstinline{X}, we would have 
 The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character. 
 
 Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
-The only difference between protocols and coporotocols is the direction that handles travel on the channel.
+The only difference between protocols and coprotocols is the direction that handles travel on the channel.
 For a protocol, handles travel in the same direction as messages on a \lstinline{Put} channel, and for coprotocols, handles travel in the same direction as a \lstinline{Get} channel.
 This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
 
@@ -662,13 +662,13 @@ A handle is sent on a channel using \lstinline{hput} which {\em activates} the c
 A handle is received on a channel using \lstinline{hcase} which allows a process to define a different process body for each possible channel type.
 More details on these process commands are given in Section~\ref{subsec:pairs}.
 
-If we want \lstinline{broadcast} to also send a confirmation message on \lstinline{source} as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
+If we want \lstinline{broadcast} to also send a confirmation message on \lstinline{source}, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
  \begin{lstlisting}
 protocol PassMsgsWithConf (A| ) => S =
     SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
     CloseConfCh :: TopBot => S 		
 \end{lstlisting}
-We need to use different names for the handles because all handle names must be globally unique.
+We need to use different handle names than we did in \lstinline{PassMessages} because all handle names must be globally unique.
 
 We can imagine that \lstinline{dest1} connects \lstinline{broadcast} to a \lstinline{send_to_dest1} process that is connected to \lstinline{proc1} by a \lstinline{Neg(PassMessages([Char]| ))} channel.
 Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline{PassMessages} instead.
@@ -678,7 +678,9 @@ coprotocol S => CoPassMessages (A| ) =
     CoSendMsg ::  S => Get(A|S)
     CoCloseCh :: S => TopBot
 \end{lstlisting}
-Then, we can write \lstinline{send_to_dest1} as follows:
+Notice that the state variable \lstinline{S} is on the left side of \lstinline{=>} in the \lstinline{CoPassMessages} definition instead of the right side like in the \lstinline{PassMessages} and \lstinline{PassMsgsWithConf} definitions.
+
+We can write \lstinline{send_to_dest1} as follows:
 \begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
 proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 	| source, dest1 => -> 
