@@ -317,6 +317,7 @@ Two processes can be connected along a channel if their process definitions both
 This section will discuss the details of how and why this has been defined in this way.
 
 \subsubsection{On Channel polarities}
+\label{Sec:polarities}
 
 Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline{ch}.
 Observe that \lstinline{client} uses \lstinline{ch} with output polarity (on the left end) and \lstinline{server} uses \lstinline{ch} with input polarity (on the right end):
@@ -391,6 +392,7 @@ Each built-in channel type in CaMPL specifies the complementary roles of the pro
 
 
 \subsubsection{Built-in Channel types}
+\label{Sec:channeltypes}
 
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 This includes message passing as well as changes to the network of processes in the program.
@@ -578,6 +580,7 @@ The outer most layer is the first interaction that will take place, and after th
 %The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
 \subsubsection{Constructing custom channel types}
+\label{Sec:protocols}
 
 We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
 Recall the modified version of \lstinline{broadcast} from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
@@ -968,6 +971,7 @@ The \lstinline{halt} command must be used for the last command of a process bloc
 
 We use the term {\em complementary pair} to describe the process commands that are used on a channel with the same type but on opposite polarities.
 That is, two processes connected along a channel will each use one of the commands in a complementary pair to perform their role in the interaction.
+An extended discussion on defining the commands that can be used on a channel by both type and polarity is given in Section~\ref{Sec:polarities}.
 
 In a complementary pair, one command {\em blocks} a process until the other process performs its command and {\em unblocks}. 
 For example, the \lstinline{get} command is used to receive a message, and it blocks until the other process performs its complementary \lstinline{put} command to send the message.
