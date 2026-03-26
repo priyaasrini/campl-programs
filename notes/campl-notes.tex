@@ -750,29 +750,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 
 We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
 The novel features that we will introduce in this section are controlled non-determinism using the \lstinline{race} command and higher-order message passing using the \lstinline{store} and \lstinline{use} commands.
-
-Table \ref{tab:mpl-constructs} summarizes the operations / commands that may be performed by a process on the concurrent types. In this section, we explain each of these commands and their usage. 
-
- \begin{table}[!h]
-\centering
-	\begin{tabular}{|l|l|l|}
-	\hline
-	{\tt id} & equates two channels &  non-blocking  \\ \hline
-	{\tt neg} & inverts channel polarity & non-blocking \\ \hline
-	{\tt plug} & connects two processes by a channel & non-blocking \\ \hline
-	{\tt get} & send/receive a value on a channel & blocking \\ \hline
-	{\tt put} & send/receive a value on a channel &  non-blocking \\ \hline
-	{\tt hput} & puts a handle on a channel & non-blocking \\ \hline
-	{\tt hcase} & cases on the handles obtained on channel & blocking \\ \hline
-	{\tt split} & splits a channel into two channels  & blocking\\ \hline
-	{\tt fork} & forks two new processes & non-blocking \\ \hline
-	{\tt close} & closes a channel & non-blocking \\ \hline
-	{\tt halt} & closes a channel. Usually the last channel is halted. & non-blocking \\ \hline
-	\end{tabular}
-\caption{Concurrent MPL Constructs}
-\label{tab:mpl-constructs}
-\end{table} 
-% what about race? store? use?
+TODO: add section references
 
 \subsection{Connecting processes using {\tt plug}}
 
@@ -988,7 +966,36 @@ The \lstinline{halt} command must be used for the last command of a process bloc
 \subsection{Complementary pairs }
 \label{subsec:pairs}
 
-A complementary pair in CaMPL is a pair of process commands used by a pair connected processes for communication. In a complementary pair, one of the commands is of blocking nature and the other command is unblocks. For example, the  {\tt get}  command is used to receive a message, hence it blocks, until another process performs complementary {\tt put} command which is used to send a message.
+We use the term {\em complementary pair} to describe the process commands that are used on a channel with the same type but on opposite polarities.
+That is, two processes connected along a channel will each use one of the commands in a complementary pair to perform their role in the interaction.
+
+In a complementary pair, one command {\em blocks} a process until the other process performs its command and {\em unblocks}. 
+For example, the \lstinline{get} command is used to receive a message, and it blocks until the other process performs its complementary \lstinline{put} command to send the message.
+Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands and whether they are blocking or non-blocking.
+%In this section, we explain each of these commands and their usage. 
+
+ \begin{table}[!h]
+\centering
+	\begin{tabular}{|l|l|l|}
+	\hline
+%	{\tt id} & equates two channels &  non-blocking  \\ \hline
+%	{\tt neg} & inverts channel polarity & non-blocking \\ \hline
+%	{\tt plug} & connects two processes by a channel & non-blocking \\ \hline
+	{\tt put} & send a value on a channel &  non-blocking \\ \hline
+	{\tt get} & receive a value on a channel & blocking \\ \hline
+	{\tt hput} & send a handle on a channel & non-blocking \\ \hline
+	{\tt hcase} & cases on the handle received on channel & blocking \\ \hline
+	{\tt fork} & creates two new processes (and halts original) & non-blocking \\ \hline
+	{\tt split} & creates two new channels (and closes original) & blocking\\ \hline
+%	{\tt close} & closes a channel & non-blocking \\ \hline
+%	{\tt halt} & closes a channel. Usually the last channel is halted. & non-blocking \\ \hline
+	\end{tabular}
+\caption{Complementary pairs of process commands}
+\label{tab:mpl-constructs}
+\end{table} 
+% what about race? store? use?
+
+
 
 \subsubsection{{\tt put} and {\tt get}: Send and receive messages}
 \label{subsec:put-get}
