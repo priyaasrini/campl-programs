@@ -71,7 +71,7 @@ and that we will mention things like there is a beautiful type system and that w
 \section{A brief overview of CaMPL}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
-We demonstrate a CaMPL process named \lstinline{helloworld} printing \lstinline{"Hello World!"} by sending the string as a message on a channel named \lstinline{console}. 
+We demonstrate a process named \lstinline{helloworld} printing \lstinline{"Hello World!"} by sending the string as a message on a channel named \lstinline{console}. 
 The \lstinline{console} channel has the type \lstinline{Console} which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
 
@@ -803,15 +803,16 @@ proc run =
         proc2( | dest2 =>)		-- proc2 cannot be connected to proc3
         proc3( | dest3 =>)
 \end{lstlisting}	
-The \lstinline{plug} command, used on line 2 in the above example, connects any number processes along channels such that the network of the connected processes remains acyclic.
-The processes which are plugged together run in parallel, and may communicate via the channels connecting them. 
+The \lstinline{plug} command, used on line 2 in the above example, connects any number of processes along channels such that the network of the connected processes remains acyclic.
+The processes which are plugged together run in parallel and may communicate via the channels connecting them. 
 
 Notice that each channel connects exactly two processes.
-Channels are linear resources which means they cannot be arbitrarily created or duplicated.
-A channel can only be created in a \lstinline{plug} command.
-A channel cannot appear more than twice in a \lstinline{plug} command.
+Channels are linear resources which means that they cannot be arbitrarily created, duplicated, or destroyed.
+A channel can only be created in a \lstinline{plug} command and each end must be plugged into a process.
+A channel cannot appear more than twice in a \lstinline{plug} command either.
+Since the \lstinline{plug} command is the last command in the process block, all existing open channels in scope must be passed to the processes being plugged.
 
-Sequential data is not a linear resource, so it can be duplicated and passed into any number of processes in a \lstinline{plug} command.
+Sequential data is not a linear resource, so it can be duplicated and passed into and used by any number of processes in a \lstinline{plug} command.
 
 %A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. 
 
@@ -820,8 +821,8 @@ Two processes can be plugged to each other if and only if they satisfy the follo
 	\item both process definitions have a channel with the same type and opposite polarities.
 	\item plugging the processes will not create a cycle (they cannot already be connected).
 \end{enumerate}
-In the above example, \lstinline{proc2} to \lstinline{proc3} could not be connected because they both only have input polarity channels.
-Furthermore, changing their process definitions and adding a channels is not possible either because they are both already connected to \lstinline{broadcast}.
+In the above example, \lstinline{proc2} and \lstinline{proc3} could not be connected because they both have an input polarity channel but no output polarity channels.
+Furthermore, changing their process definitions and adding a channel is not possible either because they are both already connected to \lstinline{broadcast}.
 
 A \lstinline{plug} command can plug previously defined processes, as above, and/or in-line process definitions.
 Recall Example \ref{ex:negdest1}, and notice the in-line process definitions on lines 7 - 8 and 9 - 12:
@@ -869,7 +870,7 @@ Any sequential data in scope at line 6 can be used in the in-line process defini
 
 \subsection{Calling processes}
 
-A process can be created and called using its name and by giving it variables and channels that match its process definition.
+A process can be invoked by calling it using its name and passing it valid instances of all of the variables and channels in its process definition.
 We have seen this in the \lstinline{plug} command of a \lstinline{run} process quite often.
 
 Recall that we also called \lstinline{send_to_dest1} recursively in Example~\ref{ex:coprotocoldest1}:
@@ -892,15 +893,16 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
  \end{lstlisting}
  Notice that when we make the process call on line 9, it is the last command in the \lstinline{do} block that starts on line 4.
  When a process is called outside of a \lstinline{plug} command, it must be the last command in the process block.
+This means that all existing open channels in scope at the time the process is called must be passed to the process.
 
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
 
-The identification command, written as \lstinline{|=|}, equates two channels the same type and opposite polarities.
+The identification command, written as \lstinline{|=|}, equates two channels of the same type and opposite polarities.
 This command can be thought of as calling an identity process that ``does nothing'' to a channel.
 It must be used as the last command in a process block.
 
-The \lstinline{neg} command is used to equate two channels of the same polarity if one of them is a \lstinline{Neg} type.
+The \lstinline{neg} command is used to equate two channels of the same polarity if one of them has a \lstinline{Neg} type.
 This is because because the \lstinline{neg} command will change a channel of type \lstinline{X} to type \lstinline{Neg(X)} and flip the polarity. 
 
 The \lstinline{neg} process command is particularly useful when channels are passed as resources between multiple processes. \textcolor{purple}{See example ... for a case study.} 
@@ -937,6 +939,7 @@ TODO: make an example using passer protocol that is not 100 lines long.
 \label{sec:close}
 
 The \lstinline{close} and \lstinline{halt} commands terminate the interaction along a channel and remove it from scope. 
+These commands are the only way a channel can be destroyed, and they can only be used on a channel with type \lstinline{TopBot}.
 Recall the modified version of \lstinline{broadcast} from Example \ref{ex:negdest1}.
 We can reorder the process commands without changing the functionality of the process as follows:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
@@ -1001,7 +1004,7 @@ A complementary pair in CaMPL is a pair of process commands used by a pair conne
 
 The {\tt put} and the {\tt get} process commands are used to send and receive messages respectively over a channel either {\tt Put(-|-)} or {\tt Get(-|-)} type. 
 
-\begin{figure}
+\begin{figure}[b]
 \[  \xymatrix{  
  \blackman  \quad
   \ar@<8pt>[rrr]^{(+) \quad  {\tt ch1: Put(}A|X{\tt)} \quad   (-)}
