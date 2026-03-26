@@ -1153,41 +1153,76 @@ Examples using \lstinline{hput} and \lstinline{hcase} are given in Section~\ref{
 \subsubsection{{\tt split} and {\tt fork}: Multi-process communication}
 \label{sec:split-fork}
 
-%\begin{figure}[h]
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%			{\tt fork } <{\em bundled\_ch}> {\tt as} 
-%			
-%				\qquad \qquad  
-%			 				{\em <new\_ch1>} [{\tt with} {\em <channels>}] {\tt -> } {\em procBody}$_1$
-%				
-%				\qquad \qquad  
-%				{\em <new\_ch2>} [{\tt with} {\em <channels>}] {\tt -> } {\em procBody}$_2$
-%				
-%				\vspace{1em}
-%			
-%			{\tt split } {\em <bundled\_ch>} {\tt into} {\em <new\_ch1>, <new\_ch2>}
-%			
-%	\end{varwidth}
-%	\end{center}
-%\vspace{-2em}
-%\caption{Syntax for fork and split}
-%\label{Fig: fork and split}
-%\end{figure}
-
 The \lstinline{fork} and \lstinline{split} commands are used to make changes to the network of processes at run-time while ensuring no cycles are introduced.
-The command ``\lstinline{fork bundled_ch as},'' followed by two process bodies, removes the channel \lstinline{bundled_ch} from scope and creates two new channels that are each passed into one of the two new processes.
-After the \lstinline{fork} command, the two process bodies will each have one of the two new channels in scope and process commands in each process body will be executed concurrently.
-The \lstinline{bundled_ch} is {\em used} in the \lstinline{fork} command, so it must be in scope before, but it is removed from scope by the command.
-The two new channels will have the same polarity as the original bundled channel.
-The \lstinline{fork} command must be the last command in a process block. 
-All variables that are in scope when the \lstinline{fork} command is made are also in scope for each process block, so they can be passed into new processes.
+We will consider another example using these commands.
+Recall the modified version of \lstinline{broadcast} from Example \ref{ex:negdest1}.
+We will consider the corresponding \lstinline{sender} process that is connected along the \lstinline{source} channel:
+\begin{lstlisting}
+proc sender =
+    | => source ->
+        on source do
+            put "Hi everyone!"
+            halt
+\end{lstlisting} 
 
-The command ``\lstinline{split bundled_ch into ch1, ch2}'' removes the channel \lstinline{bundled_ch} from scope, creates two new channels \lstinline{ch1} and \lstinline{ch2} in scope, and blocks the calling process until two new processes are created and connected on the new channels.
-After the \lstinline{split} command, the process will proceed down the process command block which means process commands used on the two new channels will be executed sequentially.
-The \lstinline{bundled_ch} is {\em used} in the \lstinline{split} command, so it must be in scope before, but it is removed from scope by the command.
-The two new channels will have the same polarity as the original bundled channel.
+Suppose we want this process to first send a message that every other process will receive and then split the channel and send different messages to some processes.
+We can define this modified version of \lstinline{sender} as follows:
+\begin{lstlisting} [label=ex:sendersplit, caption=Splitting the source channel] 
+proc sender =
+	| => source -> do
+		on source do
+			put "Hi everyone!"										-- msg sent to every proc
+		split source into source1, source2			-- unbundle channel
+		on source1 do														-- first send msg to 1 and 2
+			put "Hello proc1 and proc2"
+			close
+		on source2 do														-- then send msg to 3 and halt
+			put "Hello proc3"
+			halt
+\end{lstlisting} 
+The \lstinline{split} command on line 6 removes the channel \lstinline{source} from scope, creates two new channels \lstinline{source1} and \lstinline{source2} in scope, and blocks \lstinline{sender} until two new processes are created and connected on the new channels.
+After the \lstinline{split} command, \lstinline{sender} will proceed down the process command block, which means the process commands used on the two new channels in lines 7 - 10 and 11 - 14 will be executed sequentially.
+The \lstinline{source} is {\em used} in the \lstinline{split} command, so it must be in scope at line 6, but it is removed from scope by the command.
+The two new channels will have the same polarity as the original channel.
 The \lstinline{split} command cannot be the last command in a process block. 
+
+The corresponding \lstinline{broadcast} process will need to \lstinline{fork} its \lstinline{source} channel and create two new processes to concurrently broadcast the second round of messages.
+We can define this modified \lstinline{broadcast} process as follows:
+\begin{lstlisting} [label=ex:broadcastfork, caption=Forking the source channel] 
+proc broadcast = 
+	confirmation_msg | source => dest1, dest2, dest3 -> do
+		get msg1 on source				
+		put msg1 on dest1									-- broadcast msg1 to every process
+		put msg1 on dest2
+		put msg1 on dest3
+		fork source as										-- unbundle channel
+			source1 with dest1, dest2 -> do	-- send same msg2 to 1 and 2
+				get msg2 on source1
+				on dest1 do
+					put msg2
+					close
+				on dest2 do
+					put msg2
+					close
+				halt source1
+			source2 with dest3 -> do				-- send different msg2 to 3
+				get msg2 on source2
+				on dest3 do
+					put msg2
+					close
+				halt source2
+\end{lstlisting} 
+The \lstinline{fork} command on line 7 removes the channel \lstinline{source} from scope and creates two new channels that are each passed into one of the two process bodies on lines 8 - 16 and 17 - 22.
+After the \lstinline{fork} command, the two process bodies each have one of the two new channels in scope and process commands in each process body will be executed concurrently.
+The \lstinline{source} is {\em used} in the \lstinline{fork} command, so it must be in scope at line 7, but it is removed from scope by the command.
+The two new channels will have the same polarity as the original channel.
+The \lstinline{fork} command must be the last command in a process block. 
+This means that all existing open channels in scope at line 7, i.e. \lstinline{dest1}, \lstinline{dest2}, and \lstinline{dest3}, must be passed into the process bodies.
+On line 8, we can see that  \lstinline{dest1} and \lstinline{dest2} are passed into the the first process body, and on line 17, we can see that \lstinline{dest3} is passed into the second process body.
+All variables that are in scope when the \lstinline{fork} command is made are also in scope for each process block, so they can be passed into new processes.
+For example, if this broadcast process was sending confirmation messages, the variable \lstinline{confirmation_msg} could be used in both process bodies.
+
+TODO: talk about types
 
 
  allows plugging two processes along utmost one channel to avoid cycles. 
