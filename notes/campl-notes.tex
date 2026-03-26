@@ -1057,96 +1057,95 @@ Table \ref{Table: Usage of get and put process commands} describes the usage of 
 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
-The {\tt hput} process command constructs a protocol handle on a channel (Recall that protocol handles are analogous to session types); and correspondingly, the hcase command allows one to choose how to respond to each possible protocol handle. This situation is the concurrent analogue to data constructors and the {\tt case} expression.
+Custom channel types, called protocols and coprotocols, allow processes to change the type of a channel dynamically at run-time.
+The command ``\lstinline{hput Handle on ch}'' {\em activates} channel \lstinline{ch} and sets its type according to the handle \lstinline{Handle}.
+We say that \lstinline{ch} is {\em used} in the \lstinline{hput} command, and hence, it must be in scope. 
+The \lstinline{hput} command cannot be the last command in a process block. 
+Since protocols and coprotocols are concurrent analogues of inductive and coinductive data types, we can think of \lstinline{hput} as constructing the handle on the channel.
+We can also think of the handle as a session type and that the \lstinline{hput} command initializes a session.
 
-\[ \text{\tt hput <handle> on <channel>} \]
-The {\tt hput} command is used to send a protocol handle over an output polarity channel of appropriate type. For example, given a protocol handle {\tt  EchoSend :: Put ([Char] | S ) => S}, a process may use the process command "{\tt hput EchoSend on ch}" on an output polarity channel of type {\tt S}. After the {\tt hput} command will proceed with type {\tt Put ([Char] | S )}.
+The command ``\lstinline{hcase ch of},'' followed by cases of handles, blocks the calling process to wait for a handle to be received on channel \lstinline{ch}, and when the handle is received, the process proceeds according to the handle's corresponding process command block.
+We say that \lstinline{ch} is {\em used} in the \lstinline{hcase} command, and hence, it must be in scope. 
+The \lstinline{hcase} command must be the last command in a process block. 
+All variable and channels that are in scope when the \lstinline{hcase} command is made are also in scope for each handle's process block.
+This also means that channels must be closed or passed into other processes by the end of each block.
 
-The {\tt hput} command cannot be the last command of a process block. The channel over which the handle is sent must be in scope. The {\tt hput} command must be matched by a {\tt hcase} process command on the input polarity end of the same channel type. The syntax of the {\tt hcase} command is as follows:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			hcase <channel_name> of
-				<handle-1> -> <proc_block-1>
-				<handle-2> -> <proc_block-2>
+The handles that are \lstinline{hput} or \lstinline{hcase}d on must belong to the type of the channel, and which command each process uses depends on whether the channel type is defined as a protocol or coprotocol.
+Recall that handles travel on a protocol channel from left to right (output to input polarity which is the same as \lstinline{Put}), and handles travel on a coprotocol channel from right to left (input to output polarity which is the same as \lstinline{Get}).
 
-				.
-				.
-				<handle-n> -> <proc_block-n>
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-The {\tt hcase} process command makes the process to wait for an appropriate protocol handle to be received. When the process receives {\tt <handle-i>}, it will proceed as {\tt<proc\_block-i>}. 
+If the type of a channel is not explicitly defined, using the handles of an existing protocol in an \lstinline{hput} command on the output polarity end and an \lstinline{hcase} command on the input polarity end will force the channel type to be that protocol.
+This would not work if the handles belong to an existing coprotocol; in that case, the \lstinline{hput} and \lstinline{hcase} commands would need to be used on the opposite ends.
+Examples using \lstinline{hput} and \lstinline{hcase} are given in Section~\ref{Sec:protocols}.
 
-Let us look at a sample usage of ({\tt hput}, {\tt hcase})) process commands using the following protocol:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. protocol Echo => S =
-			2.    EchoSend :: Put( [Char] | S)) => S
-			3.    EchoClose :: TopBot => S
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
-The protocol {\tt Echo} has two handles namely {\tt EchoSend} and {\tt EchoClose}. We will upgrade the client-server communication shown in the previous section using these protocol handles, allowing the server to receive message any number of times.
+%Let us look at a sample usage of ({\tt hput}, {\tt hcase})) process commands using the following protocol:
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			1. protocol Echo => S =
+%			2.    EchoSend :: Put( [Char] | S)) => S
+%			3.    EchoClose :: TopBot => S
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center} 
+%The protocol {\tt Echo} has two handles namely {\tt EchoSend} and {\tt EchoClose}. We will upgrade the client-server communication shown in the previous section using these protocol handles, allowing the server to receive message any number of times.
+%
+%\noindent
+%\begin{minipage}{0.48\textwidth}
+%%%% Code for client
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			 1. proc client :: | => Echo = 
+%			 2.	| => ch -> do 
+%			 3.      hput EchoSend on ch
+%			 4.      put "Hello" on ch
+%			 5.	     hput EchoClose on ch
+%			 6.	     halt ch
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center} 
+%\vfill
+%\end{minipage}
+%%%% Code for server
+%\begin{minipage}{0.48\textwidth}
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%		
+%			1. proc server :: | Echo => = 
+%			2. 	| => ch -> do 
+%			3.	     hcase ch of  
+%			4.	     	EchoSend -> do 
+%			4a. 				    get message on ch 
+%			4b          server( | ch =>) -- recursion
+%			5.	     	EchoClose -> halt ch
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center} 
+%\end{minipage}
+%
+%In the {\tt client} process,
+%\begin{itemize}
+%\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, no input concurrent type, and one output polarity channel of type {\tt Echo}.
+%\item Line 2. assigns variable name {\tt ch} to the output concurrent type.
+%\item Line 3. places the handle {\tt EchoSend} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt Put([Char] | Echo)}.
+%\item Line 4. puts a message at which the {\tt ch} proceeds with type {\tt Echo)}.
+%\item Line 5. places the handle {\tt EchoClose} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt TopBot}.
+%\item Line 6. close {\tt ch} and halts the process.
+%\end{itemize}
+%Note that the client process sends a static message "Hello". Instead, the client process can read a message from a {\tt StringTerminal} and relay it to the server process, any number of times by recursively. 
+%In the {\tt server} process,
+%\begin{itemize}
+%\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, one input polarity channel of type {\tt Echo}, and no output concurrent type.
+%\item Line 2. assigns variable name {\tt ch} to the input concurrent type.
+%\item Line 3. executes {\tt hcase} process command causing the server process to wait to receive a handle from the client process.
+%\item Line 4. does case matching. In case, the server receives the handle {\tt EchoSend}, then it proceeds with Lines 4a and 4b.
+%\item Line 4a. receives a message over {\tt ch}.
+%\item Line 4b. calls the server process (recursively) allowing it receive another handle from the client process.
+%\item Line 5. does case matching. In case, the server receives the handle {\tt EchoClose}, then closes the channel and halts the process.
+%\end{itemize}
 
-\noindent
-\begin{minipage}{0.48\textwidth}
-%%% Code for client
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			 1. proc client :: | => Echo = 
-			 2.	| => ch -> do 
-			 3.      hput EchoSend on ch
-			 4.      put "Hello" on ch
-			 5.	     hput EchoClose on ch
-			 6.	     halt ch
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
-\vfill
-\end{minipage}
-%%% Code for server
-\begin{minipage}{0.48\textwidth}
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-		
-			1. proc server :: | Echo => = 
-			2. 	| => ch -> do 
-			3.	     hcase ch of  
-			4.	     	EchoSend -> do 
-			4a. 				    get message on ch 
-			4b          server( | ch =>) -- recursion
-			5.	     	EchoClose -> halt ch
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
-\end{minipage}
-
-In the {\tt client} process,
-\begin{itemize}
-\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, no input concurrent type, and one output polarity channel of type {\tt Echo}.
-\item Line 2. assigns variable name {\tt ch} to the output concurrent type.
-\item Line 3. places the handle {\tt EchoSend} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt Put([Char] | Echo)}.
-\item Line 4. puts a message at which the {\tt ch} proceeds with type {\tt Echo)}.
-\item Line 5. places the handle {\tt EchoClose} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt TopBot}.
-\item Line 6. close {\tt ch} and halts the process.
-\end{itemize}
-Note that the client process sends a static message "Hello". Instead, the client process can read a message from a {\tt StringTerminal} and relay it to the server process, any number of times by recursively. 
-In the {\tt server} process,
-\begin{itemize}
-\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, one input polarity channel of type {\tt Echo}, and no output concurrent type.
-\item Line 2. assigns variable name {\tt ch} to the input concurrent type.
-\item Line 3. executes {\tt hcase} process command causing the server process to wait to receive a handle from the client process.
-\item Line 4. does case matching. In case, the server receives the handle {\tt EchoSend}, then it proceeds with Lines 4a and 4b.
-\item Line 4a. receives a message over {\tt ch}.
-\item Line 4b. calls the server process (recursively) allowing it receive another handle from the client process.
-\item Line 5. does case matching. In case, the server receives the handle {\tt EchoClose}, then closes the channel and halts the process.
-\end{itemize}
-
-See section \ref{Sec:Simple EchoServer} for a fully-developed example of {\tt EchoServer} using the {\tt Echo} protocol. 
+%See section \ref{Sec:Simple EchoServer} for a fully-developed example of {\tt EchoServer} using the {\tt Echo} protocol. 
 
 \subsubsection{{\tt split} and {\tt fork}: Multi-processes communication}
 \label{sec:split-fork}
