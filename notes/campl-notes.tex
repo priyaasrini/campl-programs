@@ -439,7 +439,9 @@ The outer-most layer is the first step of the interaction and the inner-most lay
 The base case is the \lstinline{TopBot} type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
 
 In our next example, we will consider a channel type that {\em bundles} two other channels together.
-By unbundling the channels, we are able to make changes to the network of processes in the program.
+The bundled channel types \lstinline{(*)} and \lstinline{(+)} come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+By unbundling the channels, two new channels are created and passed into two new processes.
+
 We will again modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
 We will define another process \lstinline{two_clients} that unbundles a channel and forks into two instances of \lstinline{client} that both send a message to a modified \lstinline{server} process:
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes] 
