@@ -1000,65 +1000,52 @@ Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands an
 \subsubsection{{\tt put} and {\tt get}: Send and receive messages}
 \label{subsec:put-get}
 
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			 put <message> on <channel_i>
-			 get <message> on <channel_j>	 
-		\end{verbatim}
-	\end{varwidth}
-\end{center} 
+We have used the \lstinline{put} and \lstinline{get} process commands to send messages and receive messages, respectively, in most of our examples so far.
+The command ``\lstinline{get msg on ch}'' blocks the calling process to wait for a value to be received on channel \lstinline{ch}, and when the value is received, it binds the value to the variable \lstinline{msg} and proceeds down the process command block. 
+We say that \lstinline{ch} is {\em used} in the \lstinline{get} command, and hence, it must be in scope. 
+The \lstinline{get} command cannot be the last command in a process block. 
 
-The {\tt put} and the {\tt get} process commands are used to send and receive messages respectively over a channel either {\tt Put(-|-)} or {\tt Get(-|-)} type. 
+The command ``\lstinline{put msg on ch}'' sends the value of the variable \lstinline{msg} on channel \lstinline{ch} and proceeds down the process command block. 
+This will allow the process that called the complementary \lstinline{get} command on the other end of the channel to unblock.
+Again, \lstinline{ch} is {\em used} in the \lstinline{put} command, and hence, it must be in scope, and the \lstinline{get} command cannot be the last command in a process block. 
 
-\begin{figure}[b]
+These commands can be used on channels with type \lstinline{Put} or \lstinline{Get} depending on the direction the message is travelling on the channel.
+Recall that messages travel on \lstinline{Put} channels from left to right (output to input polarity), and messages travel on \lstinline{Get} channels from right to left (input to output polarity).
+The following diagram visualizes the direction messages are sent on each channel type and uses \lstinline{+} to denotes output polarity and \lstinline{-} to denote input polarity:
+\begin{figure}[h]
 \[  \xymatrix{  
  \blackman  \quad
-  \ar@<8pt>[rrr]^{(+) \quad  {\tt ch1: Put(}A|X{\tt)} \quad   (-)}
- \ar@<-8pt>@{<-}[rrr]_{(+) \quad {\tt ch2: Get(}B|Y{\tt)} \quad  (-)} 
+  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
+ \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
  &  & & \quad \blackman   }  
  \]
- \caption{Schematic of {\tt Put} and {\tt Get} types}
+ \caption{Direction of messages on \lstinline{Put} and \lstinline{Get} types}
  \label{Fig: Put and Get}
 \end{figure}
 
-
-The command "{\tt get} {\em msg} {\tt on} {\em ch}" forces the calling process to wait for a value to be received on channel {\em ch}, and when the value is received, it binds the value to the variable {\em msg} and proceeds down the process command block. Note that the get process command cannot be the last command in a process command block. We say that the channel {\em ch} is used in the get process command, and hence must be in scope. 
-
-We discuss the typing of the channel {\em ch} with the {\bf "{\tt get} {\em msg} {\tt on} {\em ch}"} process command. Suppose {\tt S} is the sequential type of {\em msg}. If the channel {\em ch} has  has {\bf output polarity}, then the process command "{\tt put} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Get(S|P)} which reads as “the output polarity channel {\em ch} will wait for a sequential value of type {\tt S}. After the value is received, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". Note that “|” is a separator for the sequential type S and the concurrent type P. But dually, if {\em ch} has {\bf input polarity}, the process command "{\tt get} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Put(S|P)} which reads as “the input polarity channel {\em ch} will wait for a sequential value of type {\tt S}. After the value is received, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". 
-
-In Figure \ref{Fig: Put and Get}, on the left, is shown a sample communication over a channel of \texttt{Put(A|X)} 
-type. Process \texttt{p} sends the string ``Sending on output polarity channel" which is received by 
-process \texttt{q}. 
-
-The command {\bf "{\tt put} {\em msg} {\tt on} {\em ch}"} sends the value of the variable {\em msg} on channel {\em ch} and proceeds down the process command block. Suppose {\tt S} is the sequential type of {\em msg}. If the channel {\em ch} has  has {\bf output polarity}, then the process command "{\tt put} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Put(S|P)} which reads as “the output polarity channel {\em ch} will carry a sequential value of type {\tt S}. After the value is sent, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". But dually, if {\em ch} has {\bf input polarity}, the process command "{\tt get} {\em msg} {\tt on} {\em ch}" forces the type of the channel {\em ch} to be {\tt Get(S|P)} which reads as “the input polarity channel {\em ch} will carry a sequential value of type {\tt S}. After the value is sent, the type of the channel {\em ch} will proceed with the concurrent type {\tt P}". 
-
-In Figure \ref{Fig: Put and Get}, on the right, is shown a sample communication over a channel of \texttt{Put(A|X)} 
-type. Process \texttt{p} sends the string ``Sending on input polarity channel" which is received by 
-process \texttt{q}. 
-
-Table \ref{Table: Usage of get and put process commands} describes the usage {\tt get} and {\tt put} process commands on a channel based on its type and polarity.
-\begin{table}
+If the type of a channel is not explicitly defined, using a \lstinline{put} command on the output polarity end and a \lstinline{get} command on the input polarity end will force the type of the channel to be \lstinline{Put}.
+Dually, using a \lstinline{get} command on the output polarity end and a \lstinline{put} command on the input polarity end will force the type of the channel to be \lstinline{Get}.
+Table \ref{Table: Usage of get and put process commands} describes the usage of \lstinline{put} and \lstinline{get} process commands on a channel based on its type and polarity.
+\begin{table}[h]
 \begin{center}
-
 	(a): \quad \begin{tabular}{  c | c || c }
 		  Type & Polarity & Command \\
 		 \hline
 		 \hline      
-		 {\tt Get} & {\tt (+)}  & {\tt get} \\
+		 \lstinline{Put} & {\tt +}  & \lstinline{put} \\
 		 \hline
-		 {\tt Get} & {\tt (-)}  & {\tt put} 
+		 \lstinline{Put} & {\tt -}  & \lstinline{get} 
 	\end{tabular}
 	\quad \quad 
 	(b): \quad \begin{tabular}{  c | c || c }
 		 Type & Polarity & Command \\
 		 \hline
 		 \hline      
-		 {\tt Put} & {\tt (+)}  & {\tt put} \\
+		 \lstinline{Get} & {\tt +}  & \lstinline{get} \\
 		 \hline
-		 {\tt Put} & {\tt (-)}  & {\tt get} 
+		 \lstinline{Get} & {\tt -}  & \lstinline{put} 
 	\end{tabular}
-	\caption{Usage of {\tt get} and {\tt put} process commands for (a): {\tt Get} and (b): {\tt Put} types.}
+	\caption{Usage of \lstinline{put} and \lstinline{get} process commands for (a): \lstinline{Put} and (b): \lstinline{Get} types.}
 	\label{Table: Usage of get and put process commands}
 \end{center}
 \end{table}
