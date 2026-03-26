@@ -1062,15 +1062,15 @@ Table \ref{Table: Usage of get and put process commands} describes the usage of 
 
 Custom channel types, called protocols and coprotocols, allow processes to change the type of a channel dynamically at run-time.
 The command ``\lstinline{hput Handle on ch}'' {\em activates} channel \lstinline{ch} and sets its type according to the handle \lstinline{Handle}.
-We say that \lstinline{ch} is {\em used} in the \lstinline{hput} command, and hence, it must be in scope. 
+Since \lstinline{ch} is {\em used} in the \lstinline{hput} command, it must be in scope. 
 The \lstinline{hput} command cannot be the last command in a process block. 
 Since protocols and coprotocols are concurrent analogues of inductive and coinductive data types, we can think of \lstinline{hput} as constructing the handle on the channel.
 We can also think of the handle as a session type and that the \lstinline{hput} command initializes a session.
 
 The command ``\lstinline{hcase ch of},'' followed by cases of handles, blocks the calling process to wait for a handle to be received on channel \lstinline{ch}, and when the handle is received, the process proceeds according to the handle's corresponding process command block.
-We say that \lstinline{ch} is {\em used} in the \lstinline{hcase} command, and hence, it must be in scope. 
+Since \lstinline{ch} is {\em used} in the \lstinline{hcase} command, it must be in scope. 
 The \lstinline{hcase} command must be the last command in a process block. 
-All variable and channels that are in scope when the \lstinline{hcase} command is made are also in scope for each handle's process block.
+All variables and channels that are in scope when the \lstinline{hcase} command is made are also in scope for each handle's process block.
 This also means that channels must be closed or passed into other processes by the end of each block.
 
 The handles that are \lstinline{hput} or \lstinline{hcase}d on must belong to the type of the channel, and which command each process uses depends on whether the channel type is defined as a protocol or coprotocol.
