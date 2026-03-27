@@ -1008,13 +1008,29 @@ Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands an
 \label{subsec:put-get}
 
 We have used the \lstinline{put} and \lstinline{get} process commands to send messages and receive messages, respectively, in most of our examples so far.
-The command ``\lstinline{get msg on ch}'' blocks the calling process to wait for a value to be received on channel \lstinline{ch}, and when the value is received, it binds the value to the variable \lstinline{msg} and proceeds down the process command block. 
+Recall Example~\ref{ex:serverid} in which two processes are connected along a channel \lstinline{ch}:
+\begin{lstlisting}
+proc client =
+	| => ch ->									-- uses ch with output polarity
+		on ch do 
+			put "Hello Server!"			-- client sends string which will unblock server
+			get int					
+			halt
+
+proc server =
+	server_id | ch => ->				-- uses ch with input polarity
+		on ch do
+			get msg									-- server waits here until msg is received
+			put server_id						
+			halt
+\end{lstlisting}
+The \lstinline{get} command on line 11 blocks \lstinline{server} to wait for a value to be received on channel \lstinline{ch}, and when the value is received, it binds the value to the variable \lstinline{msg} and proceeds down the process command block. 
 We say that \lstinline{ch} is {\em used} in the \lstinline{get} command, and hence, it must be in scope. 
 The \lstinline{get} command cannot be the last command in a process block. 
 
-The command ``\lstinline{put msg on ch}'' sends the value of the variable \lstinline{msg} on channel \lstinline{ch} and proceeds down the process command block. 
-This will allow the process that called the complementary \lstinline{get} command on the other end of the channel to unblock.
-Again, \lstinline{ch} is {\em used} in the \lstinline{put} command, and hence, it must be in scope, and the \lstinline{get} command cannot be the last command in a process block. 
+The \lstinline{put} command on line 4 sends the value \lstinline{"Hello Server!"} on channel \lstinline{ch} and proceeds down the process command block. 
+This will allow the \lstinline{server} process to unblock from its complementary \lstinline{get} command on line 11.
+Again, \lstinline{ch} is used in the \lstinline{put} command so it must be in scope, and the \lstinline{put} command cannot be the last command in a process block. 
 
 These commands can be used on channels with type \lstinline{Put} or \lstinline{Get} depending on the direction the message is travelling on the channel.
 Recall that messages travel on \lstinline{Put} channels from left to right (output to input polarity), and messages travel on \lstinline{Get} channels from right to left (input to output polarity).
@@ -1030,8 +1046,9 @@ The diagram in Figure~\ref{Fig: Put and Get} visualizes the direction messages a
  \label{Fig: Put and Get}
 \end{figure}
 
-If the type of a channel is not explicitly defined, using a \lstinline{put} command on the output polarity end and a \lstinline{get} command on the input polarity end will force the type of the channel to be \lstinline{Put}.
-Dually, using a \lstinline{get} command on the output polarity end and a \lstinline{put} command on the input polarity end will force the type of the channel to be \lstinline{Get}.
+If the type of a channel is not explicitly defined, using \lstinline{put} on the output polarity end and \lstinline{get} on the input polarity end will force the type of the channel to be \lstinline{Put}.
+Dually, using \lstinline{get} on the output polarity end and \lstinline{put} on the input polarity end will force the type of the channel to be \lstinline{Get}.
+In the above example, the type of channel \lstinline{ch} is \lstinline{Put} when the string \lstinline{"Hello Server!"} is sent and \lstinline{Get} when the integer \lstinline{server_id} is sent.
 Table \ref{Table: Usage of get and put process commands} describes the usage of \lstinline{put} and \lstinline{get} process commands on a channel based on its type and polarity.
 \begin{table}[h]
 \begin{center}
