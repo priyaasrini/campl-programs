@@ -1079,24 +1079,52 @@ Table \ref{Table: Usage of get and put process commands} describes the usage of 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
 Custom channel types, called protocols and coprotocols, allow processes to change the type of a channel dynamically at run-time.
-The command ``\lstinline{hput Handle on ch}'' {\em activates} channel \lstinline{ch} and sets its type according to the handle \lstinline{Handle}.
-Since \lstinline{ch} is {\em used} in the \lstinline{hput} command, it must be in scope. 
+Recall the protocol \lstinline{PassMessages}, coprotocol \lstinline{CoPassMessages}, and modified \lstinline{send_to_dest1} process from Examples~\ref{ex:protocolpassmsgs} and \ref{ex:coprotocoldest1}:
+\begin{lstlisting}
+protocol PassMessages (A| ) => S =		
+    SendMsg :: Put(A|S) => S 				
+    CloseCh :: TopBot => S 				
+
+coprotocol S => CoPassMessages (A| ) =
+    CoSendMsg ::  S => Get(A|S)
+    CoCloseCh :: S => TopBot
+
+proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest1 => -> 
+		hcase source of					-- receive protocol handle from broadcast
+			SendMsg -> do
+				get msg on source 		
+				on dest1 do
+					hput CoSendMsg		-- send coprotocol handle to dest1
+					put msg
+				send_to_dest1( | source, dest1 => ) -- recurse
+			CloseCh -> do
+				close source
+				on dest1 do
+					hput CoCloseCh
+					halt
+				
+ \end{lstlisting}
+The \lstinline{hput} command on line 15 {\em activates} channel \lstinline{dest1} by setting its type according to the handle \lstinline{CoSendMsg} and proceeds down the process command block.
+Since \lstinline{dest1} is used in the \lstinline{hput} command, it must be in scope. 
 The \lstinline{hput} command cannot be the last command in a process block. 
 Since protocols and coprotocols are concurrent analogues of inductive and coinductive data types, we can think of \lstinline{hput} as constructing the handle on the channel.
 We can also think of the handle as a session type and that the \lstinline{hput} command initializes a session.
 
-The command ``\lstinline{hcase ch of},'' followed by cases of handles, blocks the calling process to wait for a handle to be received on channel \lstinline{ch}, and when the handle is received, the process proceeds according to the handle's corresponding process command block.
-Since \lstinline{ch} is {\em used} in the \lstinline{hcase} command, it must be in scope. 
+The \lstinline{hcase} command on line 11 blocks \lstinline{send_to_dest1} until a handle is received on channel \lstinline{source}.
+When the handle is received, \lstinline{send_to_dest1} proceeds according to the corresponding process command block, i.e. either lines 12 - 17 or lines 18 - 22.
+Since \lstinline{source} is used in the \lstinline{hcase} command, it must be in scope. 
+All variables and channels that are in scope at line 11 are also in scope for each process block.
 The \lstinline{hcase} command must be the last command in a process block. 
-All variables and channels that are in scope when the \lstinline{hcase} command is made are also in scope for each handle's process block.
-This also means that channels must be closed or passed into other processes by the end of each block.
+This means that all existing open channels in scope, i.e. \lstinline{source} and \lstinline{dest1}, must be closed or passed into other processes by the end of each block.
 
-The handles that are \lstinline{hput} or \lstinline{hcase}d on must belong to the type of the channel, and which command each process uses depends on whether the channel type is defined as a protocol or coprotocol.
+The handles used in a \lstinline{hput} or \lstinline{hcase} must belong to the type of the channel, and which command each process uses depends on whether the channel type is defined as a protocol or coprotocol.
+TODO: mention above example here.
 Recall that handles travel on a protocol channel from left to right (output to input polarity which is the same as \lstinline{Put}), and handles travel on a coprotocol channel from right to left (input to output polarity which is the same as \lstinline{Get}).
 
 If the type of a channel is not explicitly defined, using the handles of an existing protocol in an \lstinline{hput} command on the output polarity end and an \lstinline{hcase} command on the input polarity end will force the channel type to be that protocol.
 This would not work if the handles belong to an existing coprotocol; in that case, the \lstinline{hput} and \lstinline{hcase} commands would need to be used on the opposite ends.
-Examples using \lstinline{hput} and \lstinline{hcase} are given in Section~\ref{Sec:protocols}.
+%Examples using \lstinline{hput} and \lstinline{hcase} are given in Section~\ref{Sec:protocols}.
 
 %Let us look at a sample usage of ({\tt hput}, {\tt hcase})) process commands using the following protocol:
 %\begin{center}
