@@ -1172,7 +1172,7 @@ proc sender =
 	| => source -> do
 		on source do
 			put "Hi everyone!"										-- msg sent to every proc
-		split source into source1, source2			-- unbundle channel
+		split source into source1, source2			-- unbundle channels
 		on source1 do														-- first send msg to 1 and 2
 			put "Hello proc1 and proc2"
 			close
@@ -1195,7 +1195,7 @@ proc broadcast =
 		put msg1 on dest1									-- broadcast msg1 to every process
 		put msg1 on dest2
 		put msg1 on dest3
-		fork source as										-- unbundle channel
+		fork source as										-- unbundle channels
 			source1 with dest1, dest2 -> do	-- send same msg2 to 1 and 2
 				get msg2 on source1
 				on dest1 do
@@ -1216,10 +1216,11 @@ The \lstinline{fork} command on line 7 removes the channel \lstinline{source} fr
 After the \lstinline{fork} command, the two process bodies each have one of the two new channels in scope and process commands in each process body will be executed concurrently.
 The \lstinline{source} is {\em used} in the \lstinline{fork} command, so it must be in scope at line 7, but it is removed from scope by the command.
 The two new channels will have the same polarity as the original channel.
+
 The \lstinline{fork} command must be the last command in a process block. 
 This means that all existing open channels in scope at line 7, i.e. \lstinline{dest1}, \lstinline{dest2}, and \lstinline{dest3}, must be passed into the process bodies.
 On line 8, we can see that  \lstinline{dest1} and \lstinline{dest2} are passed into the the first process body, and on line 17, we can see that \lstinline{dest3} is passed into the second process body.
-All variables that are in scope when the \lstinline{fork} command is made are also in scope for each process block, so they can be passed into new processes.
+All variables that are in scope when the \lstinline{fork} command is made are also in scope for each process block.
 For example, if this broadcast process was sending confirmation messages, the variable \lstinline{confirmation_msg} could be used in both process bodies.
 
 TODO: talk about types
