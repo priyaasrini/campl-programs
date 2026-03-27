@@ -1024,7 +1024,8 @@ proc server =
 			put server_id						
 			halt
 \end{lstlisting}
-The \lstinline{get} command on line 11 blocks \lstinline{server} to wait for a value to be received on channel \lstinline{ch}, and when the value is received, it binds the value to the variable \lstinline{msg} and proceeds down the process command block. 
+The \lstinline{get} command on line 11 blocks \lstinline{server} until a value is received on channel \lstinline{ch}.
+When the value is received, it binds the value to the variable \lstinline{msg} and proceeds down the process command block. 
 We say that \lstinline{ch} is {\em used} in the \lstinline{get} command, and hence, it must be in scope. 
 The \lstinline{get} command cannot be the last command in a process block. 
 
