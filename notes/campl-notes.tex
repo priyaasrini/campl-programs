@@ -1415,7 +1415,7 @@ The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the chang
 
 Again, if the type of a channel is not explicitly defined, using \lstinline{fork} on the output polarity end and \lstinline{split} on the input polarity end will force the type of the channel to be \lstinline{(*)}.
 Dually, using \lstinline{split} on the output polarity end and \lstinline{fork} on the input polarity end will force the type of the channel to be \lstinline{(+)}.
-In the above example, \ref{ex:sendersplit}, the type of channel \lstinline{source} is \lstinline{(+)} because the process that uses the \lstinline{fork} command is \lstinline{broadcast} which is on the input polarity end.
+In the above example, \ref{ex:sendersplit}, the type of channel \lstinline{source} is \lstinline{(+)} because the process that uses the \lstinline{fork} command is \lstinline{broadcast}, which is on the input polarity end.
 Table \ref{Table: Usage of fork and split process commands} describes the usage of the \lstinline{fork} and \lstinline{split} commands on a channel based on its type and polarity.
 \begin{table}[h]
 \begin{center}
@@ -1439,38 +1439,39 @@ Table \ref{Table: Usage of fork and split process commands} describes the usage 
 	\caption{Usage of \lstinline{fork} and \lstinline{split} process commands for (a): \lstinline{(*)} and (b): \lstinline{(+)} types.}
 	\label{Table: Usage of fork and split process commands}
 \end{center}
-
-Let us look at an example usage of the {\tt split} and {\tt fork} commands where a client process forks into two processes and a server process splits its channel to the client to connect to the two new clients. 
-
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc client :: | => P (*) P =
-			2.    | => _2_ch 
-			3.		-> fork _2_ch as
-			        	ch1 -> client_helper("Client 1: " | => ch1)
-			        	ch2 -> client_helper("Client 2: " | => ch2)
-			
-			4. proc server :: | P (*) P => =
-			5.    | _2_ch => -> do
-			6.        split _2_ch into ch1, ch2
-			7.        server_helper( | ch1, ch2 => )
-			         
-			8. proc run :: | => =
-			9.    | => -> 
-			10.		plug
-			 	       client( | => _2_ch )
-			         server( | _2_ch => )
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-
-\begin{itemize}
-	\item In line 10, the {\tt run} process creates a {\tt server} and a {\tt client} process and plugs them via channel. The {\tt client} and the {\tt server} processes run in parallel. From the type signature of server and the client process, we know that this channel is of type {\tt P(*)P}.
-	\item In line 3, the client process forks on the output channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. The fork command creates two new {\tt client\_helper} processes and run them in parallel.
-	\item In line 6, the {\tt server} process splits the input channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. At this point the {\tt server} process will be blocked, until the client runs the {\tt fork} command.
-	\item The {\tt server} resumes execution in line 7, and invokes a {\tt server\_helper} process with the two new channels given by the {\tt split} process command.
-\end{itemize}
+\end{table}
+%
+%Let us look at an example usage of the {\tt split} and {\tt fork} commands where a client process forks into two processes and a server process splits its channel to the client to connect to the two new clients. 
+%
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			1. proc client :: | => P (*) P =
+%			2.    | => _2_ch 
+%			3.		-> fork _2_ch as
+%			        	ch1 -> client_helper("Client 1: " | => ch1)
+%			        	ch2 -> client_helper("Client 2: " | => ch2)
+%			
+%			4. proc server :: | P (*) P => =
+%			5.    | _2_ch => -> do
+%			6.        split _2_ch into ch1, ch2
+%			7.        server_helper( | ch1, ch2 => )
+%			         
+%			8. proc run :: | => =
+%			9.    | => -> 
+%			10.		plug
+%			 	       client( | => _2_ch )
+%			         server( | _2_ch => )
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center}
+%
+%\begin{itemize}
+%	\item In line 10, the {\tt run} process creates a {\tt server} and a {\tt client} process and plugs them via channel. The {\tt client} and the {\tt server} processes run in parallel. From the type signature of server and the client process, we know that this channel is of type {\tt P(*)P}.
+%	\item In line 3, the client process forks on the output channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. The fork command creates two new {\tt client\_helper} processes and run them in parallel.
+%	\item In line 6, the {\tt server} process splits the input channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. At this point the {\tt server} process will be blocked, until the client runs the {\tt fork} command.
+%	\item The {\tt server} resumes execution in line 7, and invokes a {\tt server\_helper} process with the two new channels given by the {\tt split} process command.
+%\end{itemize}
 
 {\bf Note on logic:} The {\tt split} and the {\tt fork} process commands arise directly from the two-sidedness of the rules of the linear logic. The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. The rule $\otimes_R$ is same as {\tt fork}ing over an input channel, and the rule $\oplus_L$ is same as {\tt fork}ing over an output channel.
 \begin{figure}[h]
