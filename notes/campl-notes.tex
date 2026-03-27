@@ -1155,7 +1155,7 @@ Examples using \lstinline{hput} and \lstinline{hcase} are given in Section~\ref{
 
 The \lstinline{fork} and \lstinline{split} commands are used to make changes to the network of processes at run-time while ensuring no cycles are introduced.
 We will consider another example using these commands.
-Recall the modified version of \lstinline{broadcast} from Example \ref{ex:negdest1}.
+Recall the \lstinline{broadcast} process from Example \ref{ex:negdest1}.
 We will consider the corresponding \lstinline{sender} process that is connected along the \lstinline{source} channel:
 \begin{lstlisting}
 proc sender =
@@ -1165,8 +1165,8 @@ proc sender =
             halt
 \end{lstlisting} 
 
-Suppose we want this process to first send a message that every other process will receive and then split the channel and send different messages to some processes.
-We can define this modified version of \lstinline{sender} as follows:
+Suppose we want this process to first send a message that every other process will receive and then split the channel and send different messages to some processes:
+%We can define this modified version of \lstinline{sender} as follows:
 \begin{lstlisting} [label=ex:sendersplit, caption=Splitting the source channel] 
 proc sender =
 	| => source -> do
@@ -1182,12 +1182,12 @@ proc sender =
 \end{lstlisting} 
 The \lstinline{split} command on line 6 removes the channel \lstinline{source} from scope, creates two new channels \lstinline{source1} and \lstinline{source2} in scope, and blocks \lstinline{sender} until two new processes are created and connected on the new channels.
 After the \lstinline{split} command, \lstinline{sender} will proceed down the process command block, which means the process commands used on the two new channels in lines 7 - 10 and 11 - 14 will be executed sequentially.
-The \lstinline{source} is {\em used} in the \lstinline{split} command, so it must be in scope at line 6, but it is removed from scope by the command.
+The \lstinline{source} is {\em used} in the \lstinline{split} command, so it must be in scope at line 6, but the command removes it from scope.
 The two new channels will have the same polarity as the original channel.
 The \lstinline{split} command cannot be the last command in a process block. 
 
-The corresponding \lstinline{broadcast} process will need to \lstinline{fork} its \lstinline{source} channel and create two new processes to concurrently broadcast the second round of messages.
-We can define this modified \lstinline{broadcast} process as follows:
+The corresponding \lstinline{broadcast} process will need to \lstinline{fork} its \lstinline{source} channel and create two new processes to concurrently broadcast the second round of messages:
+%We can define this modified \lstinline{broadcast} process as follows:
 \begin{lstlisting} [label=ex:broadcastfork, caption=Forking the source channel] 
 proc broadcast = 
 	confirmation_msg | source => dest1, dest2, dest3 -> do
@@ -1219,7 +1219,7 @@ The two new channels will have the same polarity as the original channel.
 
 The \lstinline{fork} command must be the last command in a process block. 
 This means that all existing open channels in scope at line 7, i.e. \lstinline{dest1}, \lstinline{dest2}, and \lstinline{dest3}, must be passed into the process bodies.
-On line 8, we can see that  \lstinline{dest1} and \lstinline{dest2} are passed into the the first process body, and on line 17, we can see that \lstinline{dest3} is passed into the second process body.
+On line 8, \lstinline{dest1} and \lstinline{dest2} are passed into the the first process body, and on line 17, \lstinline{dest3} is passed into the second process body.
 All variables that are in scope when the \lstinline{fork} command is made are also in scope for each process block.
 For example, if this broadcast process was sending confirmation messages, the variable \lstinline{confirmation_msg} could be used in both process bodies.
 
