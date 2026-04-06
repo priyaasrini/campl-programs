@@ -15,7 +15,7 @@
 \maketitle
 
 \begin{abstract}
-This document is a preliminary introduction to  a novel concurrent programming language called the 
+These notes are a compact introduction to  a novel concurrent programming language called the 
 categorical message passing language built on the mathematics of linear actegories. 
 Categorical Message Passing Language, to the best of our knowledge, 
 the only\footnote{Is this true?} concurrent programming language with mathematical underpinnings. 
@@ -79,7 +79,9 @@ The channel to the console can only be created by the main process.
 % Describe process command - plug
 % Describe channel polarities and their roles
 % A drop of mathematics and logic
-Keywords: {\tt plug} command, 
+\colorbox{green!40}{Keywords:} {\tt plug, put, get} commands, {\tt Put, Get, TopBot} types.
+
+\noindent \colorbox{green!40}{Concepts:} Connecting processes via a channel, one-shot send and receive, closing communication. 
 
 As we become more familiar with CaMPL, let us begin by designing a simple echo server in which a client and a server will exchange one message each. 
 
@@ -94,7 +96,7 @@ proc run =
 
 The above {\tt run} process, in Line 3, creates a {\tt client} and a {\tt server} process, and plugs them together via a named {\tt ch}. The CaMPL compiler has type-inference ability and will resolve the type of the channel {\tt ch}. 
 
-It may be noticed that, in line 4, that {\tt ch} is placed after "\lstinline$=>$" for the client, and in line 5, that, {\tt ch} is placed before "\lstinline$=>$" for the server. Whether {\tt ch} occurs before or after the arrow determines its \tc{channel polarity} --- the different polarities signifies different ends of the channel. In this case, {\tt ch} is of \tc{output polarity}, also written as \ttc{(+)} for the {\tt client}. Dually, {\tt ch} is of \tc{input polarity}, also written as \ttc{(-)} for the {\tt server}. 
+It may be noticed that, in line 4, that {\tt ch} is placed after "\lstinline$=>$" for the client, and in line 5, that, {\tt ch} is placed before "\lstinline$=>$" for the server. Whether the channel {\tt ch} occurs before or after the arrow determines its \tc{channel polarity} --- the different polarities signifies different ends of the channel. In this case, {\tt ch} is of \tc{output polarity}, also written as \ttc{(+)}, for the {\tt client}. Dually, {\tt ch} is of \tc{input polarity}, also written as \ttc{(-)}, for the {\tt server}. 
 
 Note: The choice of terminology -- input and output -- polarities is best understood by imagining a process as a box, with wires entering it and wires leaving it (with respect to the direction of gravity). We call incoming wires as input polarity, and outgoing as output polarity. 
 \comment{from Hashimoto: Figure, please.}
@@ -102,6 +104,7 @@ Note: The choice of terminology -- input and output -- polarities is best unders
 Thus, it must be obvious now that CaMPL allows processes to be plugged together only along channels of same type and opposite polarities. 
 
 Let us now to code the client process:
+\begin{figure}[h]
 \begin{lstlisting}
 proc client :: | => Put(Int | Get( [Char] | TopBot)) =
 	| => ch -> do
@@ -110,6 +113,10 @@ proc client :: | => Put(Int | Get( [Char] | TopBot)) =
 		get msg on ch    -- receive a message 
 		halt ch          -- close channel and halt process
 \end{lstlisting}
+\caption{Basic client process}
+\label{Fig: Basic client}
+\end{figure}
+
 % Explain type versus polarity.
 \lstinline$Put$, \lstinline$Get$, and \lstinline$TopBot$ are in-built concurrent types for channels. The \lstinline$Put$ and \lstinline$Get$ types is used to exchange messages, while the \lstinline$TopBot$ type is used to end communication.
 \begin{itemize}
@@ -123,6 +130,7 @@ proc client :: | => Put(Int | Get( [Char] | TopBot)) =
 It will become clear in a moment the role played by polarities in communication, when we code the server process. But, for now, it must be clear that a process may both send and receive over an output polarity channel.
 
 Let us design the server process:
+\begin{figure}[h]
 \begin{lstlisting}
 proc server :: | Put(Int | Get( [Char] | TopBot)) => =
 	| ch => -> do
@@ -131,6 +139,10 @@ proc server :: | Put(Int | Get( [Char] | TopBot)) => =
 		put outmsg on ch    -- send message 
 		halt ch             -- close channel and halt process
 \end{lstlisting}
+\caption{Basic server process}
+\label{Fig: Basic server}
+\end{figure}
+
 \begin{itemize}
 \item Line 1 gives the type signature of \lstinline$proc$ {\tt server}. The {\tt server} process has an input polarity channel of compound type \lstinline$Put(Int | Get( [Char] | TopBot))$. 
 \item Line 2 assigns variable name {\tt ch} to the input polarity channel. 
@@ -145,7 +157,40 @@ Given a channel of type \lstinline$Put$, the process which has the {\bf output p
 \note{@Xanna, I think you are best suited to write the following paragraph :)}
 The notion polarities arise from the underlying mathematics of linear actegories. The linear actegories are equipped with an adjunction parametrized by the sequential datatypes. The following four sequent rules encode the usage of {\tt(put,get)} process commands over \lstinline$Put$ and \lstinline$Get$ types.
 
-\section{Concurrent type system: Handling multiple sequential queries}
+\section{Concurrent type system: Handling multiple sequential messages}
+
+\colorbox{green!40}{Keywords:} {\tt protocol} keyword 
+
+\noindent \colorbox{green!40}{Concepts:} Coding custom channel types using protocols.
+
+The server and client processes discussed in the last section are capable to sending one message and receiving one message. For example, the client process begins with an output polarity channel of type \lstinline$Put(Int | Get( [Char] | TopBot))$ which allows a message to be sent over the channel. Once the message is sent, the channel proceeds with type \lstinline$Get( [Char] | TopBot)$ allowing the process to receive a message. Once a message is received, the channel proceeds with type \lstinline$TopBot$ allowing it to be closed. Let us equip the client process to perform arbitrary number of send-receive pairs until it {\em wants to} close the communication channel.
+
+In CaMPL this is achieved using (co)protocols. For simplicity purposes we will focus on protocols. 
+
+The following code snippet shows a protocol which the client and the server processes may use for communicating arbitrary number of messages with one another.
+
+\begin{figure}[h]
+\begin{lstlisting}
+protocol Echo => S =
+    EchoSend :: Put(Int | Get( [Char] | S)) => S
+    EchoClose :: TopBot => S
+\end{lstlisting}
+\caption{Protocol Echo}
+\label{Fig: Protocol Echo}
+\end{figure}
+
+\begin{itemize}
+	\item Line 1 declares a \lstinline$protocol$ named \lstinline$Echo$ that has an output concurrent type \lstinline$S$, and no input sequential and concurrent types.
+	\item Line 2 declares a protocol handle named \lstinline$EchoSend$ which when {\em placed} on a channel of type \lstinline$Echo$, allows a process to do  \lstinline$put$-\lstinline$get$, or  \lstinline$get$-\lstinline$put$ over it depending on the polarity. 
+	
+	Compare the types in the Line 2 of the above code  and line 1 in Figure \ref{Fig: Basic client}. With the \lstinline$EchoSend$ handle, the channel will proceed with type \lstinline$S$ once a send-receive operation is completed. Thereby, the same handle can be placed once more on the channel to perform another round of send-receive operation.
+	
+	\item Line 3 declares a protocol handle named \lstinline$EchoClose$ which when {\em placed} on a channel of type \lstinline$Echo$, allows a process to end communication using \lstinline$close$ or \lstinline$halt$ commands. 
+\end{itemize}
+
+Protocols handles are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel.
+
+More to come.. How to use this protocol with client, server and run process.
 
 \section{Split and Fork: Asynchronous querying and response}
 
