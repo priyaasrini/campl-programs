@@ -105,7 +105,9 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \lstset{defaultdialect=[2026]CaMPL,style=CaMPLstyle}%
 
 \usepackage{todonotes}
-\newcommand{\knote}[1]{\todo[inline, inlinewidth=\textwidth, color=lightgray2]{#1}}
+%\newcommand{\knote}[1]{\todo[inline, inlinewidth=\textwidth, color=lightgray2]{#1}}
+\newcommand{\knote}[1]{\par \noindent \colorbox{green!40}{Keywords:} #1} 
+\newcommand{\concept}[1]{\par \noindent \colorbox{green!40}{Concepts:} #1}
 
 \definecolor{darkMagenta}{HTML}{DE3163}
 \newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}

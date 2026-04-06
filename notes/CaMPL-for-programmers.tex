@@ -33,7 +33,7 @@ Here is a good place to put your selling points.}
 
 %\addcontentsline{toc}{section}{References}
 
-\tableofcontents
+%\tableofcontents
 
 \section{Introduction}
 
@@ -79,9 +79,10 @@ The channel to the console can only be created by the main process.
 % Describe process command - plug
 % Describe channel polarities and their roles
 % A drop of mathematics and logic
-\colorbox{green!40}{Keywords:} {\tt plug, put, get} commands, {\tt Put, Get, TopBot} types.
 
-\noindent \colorbox{green!40}{Concepts:} Connecting processes via a channel, one-shot send and receive, closing communication. 
+\knote{Commands \lstinline$plug$, \lstinline$put$, \lstinline$get$. Types \lstinline$Put$, \lstinline$Get$, \lstinline$TopBot$.} 
+
+\concept{Connecting processes via a channel, one-shot send and receive, closing communication.}
 
 As we become more familiar with CaMPL, let us begin by designing a simple echo server in which a client and a server will exchange one message each. 
 
@@ -106,9 +107,8 @@ Thus, it must be obvious now that CaMPL allows processes to be plugged together 
 Let us now to code the client process:
 \begin{figure}[h]
 \begin{lstlisting}
-proc client :: | => Put(Int | Get( [Char] | TopBot)) =
-	| => ch -> do
-		-- Do something --
+proc client :: Int | => Put(Int | Get( [Char] | TopBot)) =
+	val | => ch -> do
 		put val on ch    -- send a message
 		get msg on ch    -- receive a message 
 		halt ch          -- close channel and halt process
@@ -132,11 +132,10 @@ It will become clear in a moment the role played by polarities in communication,
 Let us design the server process:
 \begin{figure}[h]
 \begin{lstlisting}
-proc server :: | Put(Int | Get( [Char] | TopBot)) => =
-	| ch => -> do
+proc server :: [Char] | Put(Int | Get( [Char] | TopBot)) => =
+	msg | ch => -> do
 		get inval on ch     -- receive message
-		-- Do something with the input  
-		put outmsg on ch    -- send message 
+		put msg on ch       -- send message 
 		halt ch             -- close channel and halt process
 \end{lstlisting}
 \caption{Basic server process}
@@ -146,13 +145,15 @@ proc server :: | Put(Int | Get( [Char] | TopBot)) => =
 \begin{itemize}
 \item Line 1 gives the type signature of \lstinline$proc$ {\tt server}. The {\tt server} process has an input polarity channel of compound type \lstinline$Put(Int | Get( [Char] | TopBot))$. 
 \item Line 2 assigns variable name {\tt ch} to the input polarity channel. 
-\item Line 4 receives an integer value over channel {\tt ch} which is of type \lstinline$Put(Int | Get( [Char] | TopBot))$, and binds it to the variable {\tt inval}. On completion, the {\tt ch} proceeds with type \lstinline$Get( [Char] | TopBot)$.
-\item Line 5 sends a string over channel {\tt ch} which is now of type \lstinline$Get( [Char] | TopBot)$. On completion, the {\tt ch} proceeds with type \lstinline$TopBot)$. 
+\item Line 3 receives an integer value over channel {\tt ch} which is of type \lstinline$Put(Int | Get( [Char] | TopBot))$, and binds it to the variable {\tt inval}. On completion, the {\tt ch} proceeds with type \lstinline$Get( [Char] | TopBot)$.
+\item Line 4 sends a string over channel {\tt ch} which is now of type \lstinline$Get( [Char] | TopBot)$. On completion, the {\tt ch} proceeds with type \lstinline$TopBot)$. 
 \end{itemize}
 
 Note that, when the process command `\lstinline$put val on ch$' of the {\tt client} process (Line 4) is matched by the process command `\lstinline$get inval on ch$' in the {\tt server} process. This command pair allows communication of a single message. We call the pair {\tt (put, get)} as a \tc{complementary pair} -- meaning the commands are used in pairs one at each end of the same channel. This arises a question, given a complementary pair, which command should be used at which end of the channel? This is where polarities come into play.
 
-Given a channel of type \lstinline$Put$, the process which has the {\bf output polarity} end may \lstinline$put$ a message on the channel, and correspondingly, the process which has the {\bf input polarity} end may \lstinline$get$ a message over the channel, and not vice versa. Given a channel of type \lstinline$Get$, the process which has the {\bf input polarity} end may \lstinline$put$ a message on the channel, and correspondingly, the process which has the {\bf output polarity} end may \lstinline$get$ a message over the channel, and not vice versa. Thus, given either a \lstinline$Put$ or a \lstinline$Get$ type, the polarities allow unambiguous distinction of the role of a process (if it is a sender or a receiver). 
+Given a channel of type \lstinline$Put$, the process which has the {\bf output polarity} end may \lstinline$put$ a message on the channel, and correspondingly, the process which has the {\bf input polarity} end may \lstinline$get$ a message over the channel. The roles cannot be switched. Given a channel of type \lstinline$Get$, the process which has the {\bf input polarity} end may \lstinline$put$ a message on the channel, and correspondingly, the process which has the {\bf output polarity} end may \lstinline$get$ a message over the channel, and not vice versa. Thus, given either a \lstinline$Put$ or a \lstinline$Get$ type, the polarities allow unambiguous distinction of the role of a process (if it is a sender or a receiver). 
+
+\comment{Hashimoto's suggestion: Lead into the next section with type-inferencing.}
 
 \note{@Xanna, I think you are best suited to write the following paragraph :)}
 The notion polarities arise from the underlying mathematics of linear actegories. The linear actegories are equipped with an adjunction parametrized by the sequential datatypes. The following four sequent rules encode the usage of {\tt(put,get)} process commands over \lstinline$Put$ and \lstinline$Get$ types.
@@ -198,15 +199,6 @@ More to come.. How to use this protocol with client, server and run process.
 
 \section{Races: Handling multiple concurrent queries}
 
-\section{Higher-order message passing: Dyanmic database}
-
-\section{Mathematical underpinning}
-
 \section{Discussion and future work}
-
-
-\begin{appendix}
-\section{Examples: Complete programs}
-\end{appendix}
 
 \end{document}
