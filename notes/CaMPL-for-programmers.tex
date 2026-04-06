@@ -6,7 +6,7 @@
 
 \title{Categorical Message Passing Language (CaMPL)}
 \author{
-    Robin Cockett\thanks{University of Calgary} \and Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little* \and Melika Norouzbeygi* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}  \and \ldots}
+    Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little\thanks{University of Calgary} \and \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology. The author was funded by...}}
 %\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
 \date{\today}
 
@@ -15,13 +15,20 @@
 \maketitle
 
 \begin{abstract}
-This document is a simple introduction to  a novel concurrent programming language called the 
+This document is a preliminary introduction to  a novel concurrent programming language called the 
 categorical message passing language built on the mathematics of linear actegories. 
 Categorical Message Passing Language, to the best of our knowledge, 
 the only\footnote{Is this true?} concurrent programming language with mathematical underpinnings. 
-It is a functional-style programming language with the abstract machine built on Haskell. 
+It is a functional-style programming language with the abstract machine implemented in Haskell. 
 The current version of CaMPL compiler is to be considered a proto-alpha, a proof-of-concept 
-of a programming language built from the mathematics of linear actegories.
+of a programming language built from the mathematics of linear actegories. \textcolor{blue}{Hashimoto's comment:Does this have to be on the abstract?
+(It repeats "linear actagories")
+I would rather put something cool like:
+no deadlocks,
+type system made for designing protocols,
+message passing (erlang-like actors),
+... .
+Here is a good place to put your selling points.}
 \end{abstract}
 
 %\addcontentsline{toc}{section}{References}
@@ -30,11 +37,19 @@ of a programming language built from the mathematics of linear actegories.
 
 \section{Introduction}
 
-Explain current state of concurrency and why CaMPL is novel (Curry-Howard-Lambek-like correspondence), and its history.
+A paragraph on why CaMPL (Curry-Howard-Lambek-like correspondence). 
+
+In this article, we have adopted a narrative-style of writing instead of a programming manual for CaMPL. To make it easy for the reader, the main CaMPL ideas of each section are summarized as {\bf Keywords:} at the beginning of the section.
 
 \note{Xanna note:
 i am assuming introduction will establish justification for why we have submitted this paper to this venue.
 and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
+
+\subsection{A brief overview of CaMPL}
+
+\colorbox{green!40}{Keywords:} Processes, protocols and co-protocols, and channels.
+
+\vspace{0.25em}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program. The ``Hello World!'' example demonstrates communication between a process and the outside world using the {\tt Console} channel type. 
 
@@ -48,7 +63,7 @@ proc helloworld :: | Console => =
 		hput ConsoleClose on console
 		halt console                     -- closes console channel and halts
 \end{lstlisting}
-The \tc{process} \lstinline$helloworld$ communicates to an in-built printing process via a channel of type \lstinline*Console*. In CaMPL, concurrent types are \tc{(co)protocols}, the instantiations of which are called as \tc{channels}. The \tc{process command} \lstinline$hput$ may seem strange at the first sight --- read as `handle put',  it initiates a channel for a  communication session. \tc{Protocol handles} are analogous to session types. As indicated by their names, the \lstinline$put$ process command sends a message, and the \lstinline$halt$ process command halts the calling process.
+The \tc{process} \lstinline$helloworld$ communicates to an built-in printing process via a channel of type \lstinline*Console*. In CaMPL, concurrent types are \tc{(co)protocols}, the instantiations of which are called as \tc{channels}. The \tc{process command} \lstinline$hput$ may seem strange at the first sight --- read as `handle put',  it initiates a channel for a  communication session. \tc{Protocol handles} are analogous to session types. As indicated by their names, the \lstinline$put$ process command sends a message, and the \lstinline$halt$ process command halts the calling process.
 
 The {\tt helloworld} process can be invoked by calling it in the main process, {\tt run}, and giving it the {\tt console} channel as follows:
 \begin{lstlisting}
@@ -59,13 +74,14 @@ The {\tt helloworld} process can be invoked by calling it in the main process, {
 
 The channel to the console can only be created by the main process.
 
-\section{Designing a simple database server}
+\section{Designing a simple Echo server}
 % Describe in-built channel types - Put, Get, TopBot
 % Describe process command - plug
 % Describe channel polarities and their roles
 % A drop of mathematics and logic
+Keywords: {\tt plug} command, 
 
-As we become more familiar with CaMPL, let us begin by designing a simple database server in which a client and a server will exchange one message each. 
+As we become more familiar with CaMPL, let us begin by designing a simple echo server in which a client and a server will exchange one message each. 
 
 In order to arrange such a communication to proceed, we need to connect the client and the server, which is facilitated by the \lstinline$plug$ process command. 
 \begin{lstlisting}
@@ -81,6 +97,7 @@ The above {\tt run} process, in Line 3, creates a {\tt client} and a {\tt server
 It may be noticed that, in line 4, that {\tt ch} is placed after "\lstinline$=>$" for the client, and in line 5, that, {\tt ch} is placed before "\lstinline$=>$" for the server. Whether {\tt ch} occurs before or after the arrow determines its \tc{channel polarity} --- the different polarities signifies different ends of the channel. In this case, {\tt ch} is of \tc{output polarity}, also written as \ttc{(+)} for the {\tt client}. Dually, {\tt ch} is of \tc{input polarity}, also written as \ttc{(-)} for the {\tt server}. 
 
 Note: The choice of terminology -- input and output -- polarities is best understood by imagining a process as a box, with wires entering it and wires leaving it (with respect to the direction of gravity). We call incoming wires as input polarity, and outgoing as output polarity. 
+\comment{from Hashimoto: Figure, please.}
 
 Thus, it must be obvious now that CaMPL allows processes to be plugged together only along channels of same type and opposite polarities. 
 

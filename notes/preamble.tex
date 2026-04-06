@@ -44,6 +44,7 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \usepackage{varwidth}
 \usepackage{fancyvrb}
 \usepackage{xcolor}
+
 \usepackage{listings}
 \lstdefinelanguage[2026]{CaMPL}{%
   keywords={},%
@@ -103,11 +104,16 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 }%
 \lstset{defaultdialect=[2026]CaMPL,style=CaMPLstyle}%
 
+\usepackage{todonotes}
+\newcommand{\knote}[1]{\todo[inline, inlinewidth=\textwidth, color=lightgray2]{#1}}
+
 \definecolor{darkMagenta}{HTML}{DE3163}
 \newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}
 \newcommand{\ttc}[1]{\textcolor{darkMagenta}{\texttt{#1}}}
 
 \newcommand{\note}[1]{\textcolor{blue}{#1}}
+\newcommand{\comment}[1]{\textcolor{blue}{#1}}
+
 
 %\newtheorem{observation}{dummy}[section]
 \newcounter{dummy} 
