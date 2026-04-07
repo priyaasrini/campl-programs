@@ -7,198 +7,544 @@
 \title{Categorical Message Passing Language (CaMPL)}
 \author{
     Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little\thanks{University of Calgary} \and \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology. The author was funded by...}}
-%\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
-\date{\today}
 
 \begin{document}
 
 \maketitle
 
-\begin{abstract}
-These notes are a compact introduction to  a novel concurrent programming language called the 
-categorical message passing language built on the mathematics of linear actegories. 
-Categorical Message Passing Language, to the best of our knowledge, 
-the only\footnote{Is this true?} concurrent programming language with mathematical underpinnings. 
-It is a functional-style programming language with the abstract machine implemented in Haskell. 
-The current version of CaMPL compiler is to be considered a proto-alpha, a proof-of-concept 
-of a programming language built from the mathematics of linear actegories. \textcolor{blue}{Hashimoto's comment:Does this have to be on the abstract?
-(It repeats "linear actagories")
-I would rather put something cool like:
-no deadlocks,
-type system made for designing protocols,
-message passing (erlang-like actors),
-... .
-Here is a good place to put your selling points.}
+\begin{abstract} In transit... (Should we reuse elements of the talk abstract?)
 \end{abstract}
-
-%\addcontentsline{toc}{section}{References}
-
-%\tableofcontents
 
 \section{Introduction}
 
-A paragraph on why CaMPL (Curry-Howard-Lambek-like correspondence). 
+The Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing. The type system of CaMPL originates from Cockett and Pastro’s paper “The Logic of Message Passing” in which the primary motivation was to define a concurrent analogue of the Curry-Howard-Lambek correspondence for functional programming \cite{CoP07}. 
 
-In this article, we have adopted a narrative-style of writing instead of a programming manual for CaMPL. To make it easy for the reader, the main CaMPL ideas of each section are summarized as {\bf Keywords:} at the beginning of the section.
+Cockett and Pastro described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a 
+concurrent part, called the message-passing logic, in which concurrent processes pass messages
+of sequential data back and forth along communication channels. The categorical semantics of the message-passing logic is
+given by a linear actegory in which the category of messages and sequential functions acts
+on the category of communication channels and concurrent processes in two directions. 
+
+\comment{Write a little paragraph how the language implementation started.}
+
+CaMPL programs are composed of multiple concurrent processes which communicate
+with each other by passing messages along communication channels. At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of processes which are nodes of the graph and channels which are the edges of the graph. 
+The property of acyclicity at run-time is guaranteed by CaMPL's type system.
+The current implementation of the CaMPL compiler performs both a type inference and type check at compile-time to ensure the compiled program follows the type system and will not deadlock or livelock. In this article, we introduce the features of CaMPL that constitute its concurrent type system and ensure that this guarantee can be made.
 
 \note{Xanna note:
 i am assuming introduction will establish justification for why we have submitted this paper to this venue.
 and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
 
+{\bf Notation and style:}
+
 \subsection{A brief overview of CaMPL}
 
-\colorbox{green!40}{Keywords:} Processes, protocols and co-protocols, and channels.
+As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
+We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$. 
+The \lstinline$console$ channel has the type \lstinline$Console$ which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
+\begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
 
-\vspace{0.25em}
-
-As is tradition, we will introduce CaMPL with a ``Hello World!'' example program. The ``Hello World!'' example demonstrates communication between a process and the outside world using the {\tt Console} channel type. 
-
-The following code snippet shows a CaMPL process named {\tt helloworld} printing {\tt ``Hello World!''} by sending the string as a message on a channel named {\tt console}. 
-The {\tt console} channel has the type {\tt Console} which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
-\begin{lstlisting}
-proc helloworld :: | Console => =
+proc helloworld :: | Console => = 
 	| console => -> do
 		hput ConsolePut on console
-		put "Hello World!" on console    -- sends message to the console
+		put "Hello World!" on console    -- sends message to the console        
 		hput ConsoleClose on console
-		halt console                     -- closes console channel and halts
+		halt console                     -- closes console channel and halts               
 \end{lstlisting}
-The \tc{process} \lstinline$helloworld$ communicates to an built-in printing process via a channel of type \lstinline*Console*. In CaMPL, concurrent types are \tc{(co)protocols}, the instantiations of which are called as \tc{channels}. The \tc{process command} \lstinline$hput$ may seem strange at the first sight --- read as `handle put',  it initiates a channel for a  communication session. \tc{Protocol handles} are analogous to session types. As indicated by their names, the \lstinline$put$ process command sends a message, and the \lstinline$halt$ process command halts the calling process.
-
-The {\tt helloworld} process can be invoked by calling it in the main process, {\tt run}, and giving it the {\tt console} channel as follows:
-\begin{lstlisting}
- proc run = 
-	| console => -> 
-		helloworld( | console => )  -- creates helloworld process
-\end{lstlisting}
-
-The channel to the console can only be created by the main process.
-
-\section{Designing a simple Echo server}
-% Describe in-built channel types - Put, Get, TopBot
-% Describe process command - plug
-% Describe channel polarities and their roles
-% A drop of mathematics and logic
-
-\knote{Commands \lstinline$plug$, \lstinline$put$, \lstinline$get$. Types \lstinline$Put$, \lstinline$Get$, \lstinline$TopBot$.} 
-
-\concept{Connecting processes via a channel, one-shot send and receive, closing communication.}
-
-As we become more familiar with CaMPL, let us begin by designing a simple echo server in which a client and a server will exchange one message each. 
-
-In order to arrange such a communication to proceed, we need to connect the client and the server, which is facilitated by the \lstinline$plug$ process command. 
+The \lstinline$helloworld$ process can be invoked by calling it in the main process, \lstinline$run$, and giving it the \lstinline$console$ channel as follows:
 \begin{lstlisting}
 proc run = 
-	| => -> 
-		plug 
-			client( | => ch )
-			server( | ch => )
+	| console => -> helloworld( | console => )  -- creates helloworld process
 \end{lstlisting}
 
-The above {\tt run} process, in Line 3, creates a {\tt client} and a {\tt server} process, and plugs them together via a named {\tt ch}. The CaMPL compiler has type-inference ability and will resolve the type of the channel {\tt ch}. 
+In Example \ref{ex:serverecho}, we will demonstrate communication between two user-defined processes: a client and a server. 
+The client will send a string to the server, and the server will receive the string and echo it back.
+%When the client is finished sending messages to the server, the client and server will halt.
 
-It may be noticed that, in line 4, that {\tt ch} is placed after "\lstinline$=>$" for the client, and in line 5, that, {\tt ch} is placed before "\lstinline$=>$" for the server. Whether the channel {\tt ch} occurs before or after the arrow determines its \tc{channel polarity} --- the different polarities signifies different ends of the channel. In this case, {\tt ch} is of \tc{output polarity}, also written as \ttc{(+)}, for the {\tt client}. Dually, {\tt ch} is of \tc{input polarity}, also written as \ttc{(-)}, for the {\tt server}. 
+%The processes will use a custom channel type called \texttt{Echo} for this interaction which is defined as follows:
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			1. protocol Echo => S =
+%			2.    EchoSend :: Put([Char] | Get([Char] | S)) => S
+%			3.    EchoClose :: TopBot => S
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center}
+%It provides a handle \texttt{EchoSend} which sets the channel type to indicate that, first, client will send and server will receive, second, server will send and client will receive, and finally, the channel will reset for another handle to be selected.
+%The handle \texttt{EchoClose} is used to indicate the client is finished sending messages and the channel should be closed. 
 
-Note: The choice of terminology -- input and output -- polarities is best understood by imagining a process as a box, with wires entering it and wires leaving it (with respect to the direction of gravity). We call incoming wires as input polarity, and outgoing as output polarity. 
-\comment{from Hashimoto: Figure, please.}
+The main process will create \lstinline$client$ and \lstinline$server$ processes and uses the \tc{process command} called \lstinline$plug$ to connect them by a channel named \lstinline$ch$ as follows:
+\begin{lstlisting}[label=ex:serverecho, caption=Server echos Client's message]
+ proc run = 
+ 	| => -> plug				-- connects processes by shared channel ch
+ 		client( | => ch )	-- creates client process
+ 		server( | ch => )	-- creates server process
+\end{lstlisting}
+The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions.
+%We can express the program structure in a diagram as follows:
+%\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
-Thus, it must be obvious now that CaMPL allows processes to be plugged together only along channels of same type and opposite polarities. 
-
-Let us now to code the client process:
-\begin{figure}[h]
+We can define the  \lstinline$client$ process as follows:
 \begin{lstlisting}
-proc client :: Int | => Put(Int | Get( [Char] | TopBot)) =
-	val | => ch -> do
-		put val on ch    -- send a message
-		get msg on ch    -- receive a message 
-		halt ch          -- close channel and halt process
+proc client = 
+	| => ch ->
+		on ch do 
+			put "Hello Server!"	-- sends message to the server      
+			get echo						-- receives server's echo  
+			halt
 \end{lstlisting}
-\caption{Basic client process}
-\label{Fig: Basic client}
-\end{figure}
+The client process has an output channel \lstinline$ch$ which connects it to the server.
+It sends its message with \lstinline$put$, and it receives the server's echo with \lstinline$get$.
+Then, it uses \lstinline$halt$ to close the channel with the server and halt.
+%For each message it sends to the server, it will first \texttt{hput} the \texttt{EchoSend} handle to indicate it has another message, then \texttt{put} its message to send it, and finally {\tt get} the server's echo. 
+%After it sends all its messages, it will send the \texttt{EchoClose} handle and halt.
 
-% Explain type versus polarity.
-\lstinline$Put$, \lstinline$Get$, and \lstinline$TopBot$ are in-built concurrent types for channels. The \lstinline$Put$ and \lstinline$Get$ types is used to exchange messages, while the \lstinline$TopBot$ type is used to end communication.
-\begin{itemize}
-\item Line 1 of \lstinline$proc$ {\tt client} clarifies that the {\tt client} process has an output polarity channel of compound type \lstinline$Put(Int | Get( [Char] | TopBot))$. 
-\item Line 2 assigns variable name {\tt ch} to the output polarity channel. 
-\item Line 4 sends the integer value of {\tt val} over {\tt ch} which is of type \lstinline$Put(Int | Get( [Char] | TopBot))$. On completion, the {\tt ch} proceeds with type \lstinline$Get( [Char] | TopBot)$.
-\item Line 5 receives a string over {\tt ch} which is now of type \lstinline$Get( [Char] | TopBot)$, and binds the string value to the variable {\tt msg}. On completion, the {\tt ch} proceeds with type \lstinline$TopBot)$.
-\item Line 6 closes {\tt ch} which is now of type {\tt TopBot} (hence, no more communication over {\tt ch}) and halts the {\tt client} process.
-\end{itemize}
-
-It will become clear in a moment the role played by polarities in communication, when we code the server process. But, for now, it must be clear that a process may both send and receive over an output polarity channel.
-
-Let us design the server process:
-\begin{figure}[h]
+We can define the  \lstinline$server$ process as follows:
 \begin{lstlisting}
-proc server :: [Char] | Put(Int | Get( [Char] | TopBot)) => =
-	msg | ch => -> do
-		get inval on ch     -- receive message
-		put msg on ch       -- send message 
-		halt ch             -- close channel and halt process
+proc server =  
+	| ch => ->
+		on ch do
+			get msg					-- receives client's message
+			put msg					-- sends message back
+			halt
+\end{lstlisting}	
+The server process has an input channel \lstinline$ch$ which connects it to the client. 
+It listens to the client and receives the client's message with \lstinline$get$, echos the message back with \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
+%Since the server doesn't know how many messages the client is going to send, it calls itself recursively to receive the next handle. 
+%If the handle received is \texttt{EchoClose}, the client is finished sending messages, so it halts. 
+
+These are simple programs that exemplify how CaMPL programs are written.
+In fact, running the second program does not produce any observable effects since none of the processes are connected to the outside world.
+%An alternate version of the program, which takes user input and echos it to the console rather than back to the client, is available in Appendix \ref{prog:echo}. 
+A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?'' 
+We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
+
+\section{Concurrent type system}
+
+
+\subsection{Processes}
+\label{Sec:Processes}
+
+Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
+A CaMPL process is specified by the keyword \lstinline$proc$ followed by a process name, an optional type signature, and lists of the variables and channels used by the process.
+
+In Example \ref{ex:helloworld}, the type signature of process \lstinline$helloworld$ was \lstinline$ :: | Console => $ which indicates that it only has access to one channel of type \lstinline$Console$ and this channel is given the name \lstinline$console$ indicated by \lstinline$ = | console => $ on the next line.
+We will discuss type signatures in more detail in Section~\ref{Sec:Channels} on channel types.
+
+A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. This process is the main process and the only process which can create \tc{service channels} such as the \lstinline$Console$ for communication with the outside world.
+
+For now, we will consider the definition of process \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
+% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
+\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
+
+proc broadcast = 
+	confirmation_msg | source, dest1 => dest2, dest3 -> do
+		get msg on source								-- receive message from source
+		put msg on dest1								-- broadcast message to other process
+		put msg on dest2
+		put msg on dest3
+		put confirmation_msg on source	-- send confirmation message to source
+		close source										-- close all channels and halt
+		close dest1
+		close dest2
+		halt dest3       
 \end{lstlisting}
-\caption{Basic server process}
-\label{Fig: Basic server}
-\end{figure}
+Observe that line 2 in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2, dest3$.
 
-\begin{itemize}
-\item Line 1 gives the type signature of \lstinline$proc$ {\tt server}. The {\tt server} process has an input polarity channel of compound type \lstinline$Put(Int | Get( [Char] | TopBot))$. 
-\item Line 2 assigns variable name {\tt ch} to the input polarity channel. 
-\item Line 3 receives an integer value over channel {\tt ch} which is of type \lstinline$Put(Int | Get( [Char] | TopBot))$, and binds it to the variable {\tt inval}. On completion, the {\tt ch} proceeds with type \lstinline$Get( [Char] | TopBot)$.
-\item Line 4 sends a string over channel {\tt ch} which is now of type \lstinline$Get( [Char] | TopBot)$. On completion, the {\tt ch} proceeds with type \lstinline$TopBot)$. 
-\end{itemize}
+The \tc{variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
+The channels on the left of \lstinline$ =>$ are called \tc{input polarity} channels. 
+The channels on the right of \lstinline$ =>$ are called {\em output polarity} channels. 
+Lines 3 - 11 constitute the \tc{process body}.
+We say that the channels listed in line 2 are ``in scope'' of the process body which means that the process can perform operations, called \tc{process commands}, on these channels.
 
-Note that, when the process command `\lstinline$put val on ch$' of the {\tt client} process (Line 4) is matched by the process command `\lstinline$get inval on ch$' in the {\tt server} process. This command pair allows communication of a single message. We call the pair {\tt (put, get)} as a \tc{complementary pair} -- meaning the commands are used in pairs one at each end of the same channel. This arises a question, given a complementary pair, which command should be used at which end of the channel? This is where polarities come into play.
+The process body may be a single process command, as shown in the \lstinline$run$ processes in Examples~\ref{ex:helloworld} and~\ref{ex:serverecho}, or a \lstinline$do$ block of process commands, as shown in \lstinline$broadcast$.
+Process commands performed on the same channel can be grouped together as in Example~\ref{ex:serverecho} on line 3 when we had ``\lstinline$on ch do$''.
+This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
+Certain process commands may only be used as the last process command in a \lstinline$do$ block, for example an invocation of another process. 
 
-Given a channel of type \lstinline$Put$, the process which has the {\bf output polarity} end may \lstinline$put$ a message on the channel, and correspondingly, the process which has the {\bf input polarity} end may \lstinline$get$ a message over the channel. The roles cannot be switched. Given a channel of type \lstinline$Get$, the process which has the {\bf input polarity} end may \lstinline$put$ a message on the channel, and correspondingly, the process which has the {\bf output polarity} end may \lstinline$get$ a message over the channel, and not vice versa. Thus, given either a \lstinline$Put$ or a \lstinline$Get$ type, the polarities allow unambiguous distinction of the role of a process (if it is a sender or a receiver). 
+A process definition may pattern match on instances of sequential types with different process body definitions. 
 
-\comment{Hashimoto's suggestion: Lead into the next section with type-inferencing.}
+Two processes can be connected by a channel if their process definitions both have a channel with the same type but opposite polarities. We explain channel types and polarities and the reason behind this design decision in Section. \ref{Sec:Channels}. 
 
-\note{@Xanna, I think you are best suited to write the following paragraph :)}
-The notion polarities arise from the underlying mathematics of linear actegories. The linear actegories are equipped with an adjunction parametrized by the sequential datatypes. The following four sequent rules encode the usage of {\tt(put,get)} process commands over \lstinline$Put$ and \lstinline$Get$ types.
 
-\section{Concurrent type system: Handling multiple sequential messages}
+\subsection{Channels}
+\label{Sec:Channels}
 
-\colorbox{green!40}{Keywords:} {\tt protocol} keyword 
+CaMPL processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity channels. Different polarities refer to different ends of a channel. The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
-\noindent \colorbox{green!40}{Concepts:} Coding custom channel types using protocols.
+\subsubsection{On Channel polarities}
+\label{Sec:polarities}
 
-The server and client processes discussed in the last section are capable to sending one message and receiving one message. For example, the client process begins with an output polarity channel of type \lstinline$Put(Int | Get( [Char] | TopBot))$ which allows a message to be sent over the channel. Once the message is sent, the channel proceeds with type \lstinline$Get( [Char] | TopBot)$ allowing the process to receive a message. Once a message is received, the channel proceeds with type \lstinline$TopBot$ allowing it to be closed. Let us equip the client process to perform arbitrary number of send-receive pairs until it {\em wants to} close the communication channel.
+A process {\em uses} a channel to interact with another process on the other end of the channel.
+The process commands that a process can use on a channel depend on both the channel's type and polarity.
 
-In CaMPL this is achieved using (co)protocols. For simplicity purposes we will focus on protocols. 
+The type of the channel defines the interaction that the processes will have on it.
+Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline$ch$.
+Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (on the right end):
 
-The following code snippet shows a protocol which the client and the server processes may use for communicating arbitrary number of messages with one another.
+%, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
+In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
 
-\begin{figure}[h]
+The polarity of the channel that each process has access to defines that process's role in the interaction.
+%, i.e. sending the message or receiving the message.
+In this case, messages travelling from left to right means the process on the left end (\lstinline$client$) must use the \lstinline$put$ command and the process on the right end (\lstinline$server$) must use the \lstinline$get$ command.
+
+Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
+For example, suppose we do not consider polarity and rewrite our code as follows:
+\begin{lstlisting}[label=ex:ambiguityce, caption=Code without channel polarity (this code will not compile)] 
+ proc run = 
+ 	| => -> plug				-- connects processes by shared channel ch
+ 		client( | ch )		-- client process has channel ch (no defined polarity)
+ 		server( | ch )		-- server process has channel ch (no defined polarity)
+\end{lstlisting}
+We know that we want \lstinline$ch$ to have a type indicating that a message should be sent and received on it.
+%The processes know the type of the channel, but they can't definitively know whether they should be the one to send or receive the message.
+However, if both processes are defined to first receive a message and then reply, they will both become stuck waiting for a message to be sent by the other:
 \begin{lstlisting}
-protocol Echo => S =
-    EchoSend :: Put(Int | Get( [Char] | S)) => S
-    EchoClose :: TopBot => S
+proc client = 
+	| ch ->
+		on ch do 
+			get msg							-- receives server's message  
+			put "Hello Server!"	-- sends message to the server      
+			halt
+
+proc server =  
+	| ch ->
+		on ch do
+			get msg							-- receives client's message
+			put "Hello Client!"	-- sends message to client
+			halt
 \end{lstlisting}
-\caption{Protocol Echo}
-\label{Fig: Protocol Echo}
-\end{figure}
+This is precisely what a deadlock is.
+In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
+Each built-in channel type in CaMPL specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
 
-\begin{itemize}
-	\item Line 1 declares a \lstinline$protocol$ named \lstinline$Echo$ that has an output concurrent type \lstinline$S$, and no input sequential and concurrent types.
-	\item Line 2 declares a protocol handle named \lstinline$EchoSend$ which when {\em placed} on a channel of type \lstinline$Echo$, allows a process to do  \lstinline$put$-\lstinline$get$, or  \lstinline$get$-\lstinline$put$ over it depending on the polarity. 
-	
-	Compare the types in the Line 2 of the above code  and line 1 in Figure \ref{Fig: Basic client}. With the \lstinline$EchoSend$ handle, the channel will proceed with type \lstinline$S$ once a send-receive operation is completed. Thereby, the same handle can be placed once more on the channel to perform another round of send-receive operation.
-	
-	\item Line 3 declares a protocol handle named \lstinline$EchoClose$ which when {\em placed} on a channel of type \lstinline$Echo$, allows a process to end communication using \lstinline$close$ or \lstinline$halt$ commands. 
-\end{itemize}
+%
+%If we have polarities and types and we enforce that processes can only be connected if they use channels with the same type and opposite polarity, we can specify that \(p\) uses \(c\) with output polarity, \(q\) uses \(c\) with input polarity, and \(c\) has a type indicating that messages travel from input to output polarity.
+%This means that information flows from the process on the right end to the process on the left end (right to left).
+%Then, both processes' roles in the interaction are unambiguous:  \(q\) knows that it should send a message and \(p\) knows that it should receive a message.
+%Each built-in channel type in CaMPL similarly specifies the complementary roles of the processes on each end of the channel.
+%
 
-Protocols handles are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel.
 
-More to come.. How to use this protocol with client, server and run process.
+\subsubsection{Built-in Channel types}
+\label{Sec:channeltypes}
 
-\section{Split and Fork: Asynchronous querying and response}
+The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 
-% This is a good place to talk about deadlocks.
+As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type signature that indicates the types of the variables and channels it uses.
+We will modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
+We will define \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to the client instead of echoing the message:
+\begin{lstlisting}[label=ex:serverid, caption=Server replies to Client with server id] 
+proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
+	| => ch ->
+		on ch do 
+			put "Hello Server!"	
+			get int					
+			halt
 
-\section{Races: Handling multiple concurrent queries}
+proc server :: Int | Put([Char]|Get(Int|TopBot)) => = 	-- type signature
+	server_id | ch => ->				-- new server_id variable
+		on ch do
+			get msg							
+			put server_id						-- sends server_id back
+			halt
+			
+ proc run :: | => = 					-- type signature
+ 	| => -> plug					
+ 		client( | => ch )		
+ 		server( 1234 | ch => )		-- server process created with server_id
+\end{lstlisting}
+Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
+The names of the variables and channels are bound to the types in the order they appear.
+We can observe that the type signature of \lstinline$run$ does not contain any types because it is not using any variables or any channels to interact with other processes.
+%It creates the channel \lstinline$ch$ in \lstinline$plug$ command to connect the processes.
+
+We can also observe that the type of \lstinline$ch$ is \lstinline$Put([Char]|  Get(Int| TopBot))$.
+Recall that the type of the channel defines the interaction that the processes will have on it.
+%, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
+In this case, the interaction is that, first, a message of type \lstinline$[Char]$, i.e. a string, will travel from left to right (\lstinline$client$ to \lstinline$server$), second, a message of type  \lstinline$Int$ will travel from right to left (\lstinline$server$ to \lstinline$client$), and finally, the channel will be closed when the processes \lstinline$halt$.
+From this we can see that a channel of type \lstinline$Put$ indicates messages will travel from left to right, type \lstinline$Get$ indicates messages will travel from right to left, and type \lstinline$TopBot$ indicates the interaction is over and the channel will be closed.
+
+We can also notice that channel types are constructed inductively.
+The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
+The base case is the \lstinline$TopBot$ type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
+
+In our next example, we will consider a channel type that {\em bundles} two other channels together.
+The bundled channel types \lstinline$(*)$, called ``{\em tensor},'' and \lstinline$(+)$, called ``{\em par},'' come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+By unbundling the channels, two new channels are created and passed into two new processes.
+
+We will again modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
+We will define another process \lstinline$two_clients$ that unbundles a channel and forks into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process:
+\begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes] 
+proc client :: | => Put([Char]|TopBot) = 		
+	| => ch ->
+		on ch do 
+			put "Hello Server!"				  -- client sends string
+			halt
+
+proc two_clients :: | => Put([Char]|TopBot) (*) Put([Char]|TopBot) =
+	| => two_ch ->
+		fork two_ch as								-- unbundles channels ch1 and ch2
+			ch1 -> client( | => ch1)		-- creates two new client processes
+			ch2 -> client( | => ch2)		-- that each get one channel
+
+proc server :: | Put([Char]|TopBot) (*) Put([Char]|TopBot)) => =  
+	| two_ch => -> do
+		split two_ch into ch1, ch2		-- unbundles channels ch1 and ch2
+		on ch1 do											-- interacts with first client
+			get msg						
+			close
+		on ch2 do											-- interacts with second client
+			get msg						
+			halt
+			
+proc run :: | => = 
+ 	| => -> plug						
+ 		two_clients( | => two_ch )		-- creates a single two_clients process
+ 		server( | two_ch => )				
+\end{lstlisting}
+Observe that \lstinline$two_ch$ has type \lstinline$Put([Char]|TopBot) (*) Put([Char]|TopBot)$.
+This is quite intimidating, but we have already discussed the \lstinline$Put([Char]|TopBot)$ type.
+Let us use \lstinline$X$ as a shorthand for that channel type.
+Then, we can consider the bundled channel type \lstinline$X(*)X$, pronounced ``{X \em tensor X}.''
+The interaction this type defines is that the bundled channel will be replaced by two new channels, the process on the left (\lstinline$two_clients$) will be replaced by two new processes that each use one channel, and the process on the right (\lstinline$server$) will use both new channels to interact with each of the new processes according to type \lstinline$X$.
+We could also write a program that has different interactions with the two new processes, and this would need a type that bundles two channels of different types like \lstinline$X(*)Y$.
+
+We can see that a channel of type \lstinline$(*)$ indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
+What if we wanted the process on the right to be replaced by two new processes instead?
+Then, we would use the other bundled channel type, \lstinline$(+)$, which is dual to the \lstinline$(*)$ type.
+More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
+
+Finally, we have the \lstinline$Neg$ channel type which negates a given channel type.
+This means that the ``direction'' of the interaction is reversed.
+A \lstinline$Neg(Put)$ channel can be used like a \lstinline$Get$ channel (and vice versa), and a \lstinline$Neg((*))$ channel can be used like a \lstinline$(+)$ channel (and vice versa).
+
+Recall the process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
+We can write the type signature of \lstinline$broadcast$ as follows:
+\begin{lstlisting}
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source, dest1 => dest2, dest3 ->
+\end{lstlisting}
+Observe that the type of \lstinline$dest1$ is \lstinline$Get([Char]|TopBot)$ which is dual to the type of \lstinline$dest2$ and \lstinline$dest3$ which is \lstinline$Put([Char]|TopBot)$.
+We will refer to the process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
+Notice that \lstinline$proc1$ uses \lstinline$dest1$ with output polarity.
+
+Suppose we want the type and polarity of all of the destination channels in \lstinline$broadcast$ to be the same, i.e. we want the type signature of  \lstinline$broadcast$ to be:
+\begin{lstlisting}
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2, dest3 ->
+\end{lstlisting}
+However, we still want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
+Instead of connecting \lstinline$broadcast$ with \lstinline$proc1$ directly, we can write another process, \lstinline$send_to_dest1$, that connects to  \lstinline$proc1$ with a \lstinline$Neg(Put)$ channel.
+Our \lstinline$run$ process would be defined as follows:
+\begin{lstlisting}
+proc run =
+    | => -> plug
+        sender( | => source)
+        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
+        send_to_dest1( | dest1, neg_dest1 => )
+        proc1( | => neg_dest1)				-- neg_dest1 has Neg(Put) type 
+        proc2( | dest2 =>)
+        proc3( | dest3 =>)
+\end{lstlisting}	
+We can define process \lstinline$send_to_dest1$ as follows:
+\begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
+proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
+	| source, neg_dest1 => -> do
+		on source do								-- receive message from source via broadcast
+			get msg
+			close
+		plug
+			neg_dest1, dest1 => -> 
+				neg_dest1 |=| neg dest1 -- negate and identify channels
+			=> dest1 -> 							-- use like Get channel in original broadcast
+				on dest1 do							-- forward message to proc1
+					put msg
+					halt
+\end{lstlisting}
+To connect to this process, \lstinline$proc1$ would also need to be modified to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
+Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 9 to be able to use the \lstinline$Neg(Put)$ channel.
+The \lstinline$neg$ and identification \lstinline$|=|$ process commands are described in more detail in Section~\ref{sec:neg}. 
+
+
+
+%
+%We can again modify Example~\ref{ex:serverecho} to use a \lstinline$Neg(Get)$ channel instead of a \lstinline$Put$ channel:
+%\begin{lstlisting} [label=ex:negclient, caption=Client uses a Neg(Get) channel instead of a Put channel] 
+%proc client :: | => Neg(Get([Char] | TopBot)) = 		-- Neg(Get) = Put
+%    | => neg_ch ->                                    
+%        plug
+%            ch => ->                                -- create a new non-neg channel
+%                on ch do                            -- use like Put channel in original client
+%                    put "Hello Server!"	
+%                    get echo	
+%                    halt                 
+%            => ch, neg_ch -> neg_ch |=| neg ch          -- negate and identify with original
+%\end{lstlisting}
+%The \lstinline$server$ process would also need to be modified in the same way to be connected to this \lstinline$client$ because the \lstinline$Neg(Get)$ type is not the same as the \lstinline$Put$ type, but they can act in the same way.
+%The \lstinline$neg$ and identification \lstinline$|=|$  process commands are described in Section \ref{sec:neg}. 
+
+%In CaMPL, processes send and receive messages from one another via channels. 
+%CaMPL provides built-in channel types from which one may build custom channel types. 
+%Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
+
+%The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
+The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
+We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
+Channel types that take another channel type as an argument are recursive cases. 
+The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
+
+\begin{tabular}{r l}
+\lstinline$TopBot$ & end communication on the channel (this is the base case). \\
+\lstinline$Neg(Ch)$ & negate the channel type (interaction is the dual of \lstinline$Ch$). \\ 
+\lstinline$Put (A|Ch)$ & a message of type \lstinline$A$ travels from left to right (output to input polarity). \\ 
+\lstinline$Get (A|Ch)$ & a message of type \lstinline$A$ travels from right to left (input to output polarity). \\
+\lstinline$Ch1(*) Ch2$ & process on the left becomes two processes both connected to process on the right. \\
+\lstinline$Ch1(+) Ch2$ & process on the right becomes two processes both connected to process on the left. \\
+~ & ~
+\end{tabular}
+
+\noindent 
+%The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
+%The {\tt TopBot} type is used to end communication on a channel, and its corresponding operations are given in Section \ref{sec:close}. 
+%The {\tt Neg} type swaps the polarity of a channel so two channels of the same polarity can be identified as the same channel, and the corresponding operations are given in Section \ref{sec:neg}. 
+%The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
+%The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
+
+\subsubsection{Constructing custom channel types}
+\label{Sec:protocols}
+
+We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
+Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
+% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
+\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels] 
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2, dest3 -> do
+		get msg on source								-- receive message from source
+		put msg on dest1								-- broadcast message to other process
+		put msg on dest2
+		put msg on dest3
+		put confirmation_msg on source	-- send confirmation message to source
+		close source										-- close all channels and halt
+		close dest1
+		close dest2
+		halt dest3       
+\end{lstlisting}
+This process is only able to broadcast a single message from the source.
+To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ to \lstinline$TopBot$.
+This can be achieved by defining custom channel types, called {\em protocols} and {\em coprotocols}, which can be recursively defined.
+
+Let us consider the following example of a protocol called \lstinline$PassMessages$:  
+\begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages] 
+protocol PassMessages (A| ) => S =			-- passes messages of type A
+    SendMsg :: Put(A|S) => S 						-- handle to send another message
+    CloseCh :: TopBot => S 							-- handle to finish sending messages
+\end{lstlisting}
+This protocol allows an arbitrary number of messages of type \lstinline$A$ to be passed on a \lstinline$Put$ channel.
+The two {\em handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the type of the channel to be set to either \lstinline$Put$ or \lstinline$TopBot$.
+In general, handles represent the set of valid interactions that may take place on a channel.
+They can be thought of as session types.
+
+When we use \lstinline$PassMessages$ as a channel type, we will be able to instantiate the sequential type variable \lstinline$A$.
+In the case of  \lstinline$broadcast$, we want to pass strings, so we will use the channel type \lstinline$PassMessages([Char]| )$.
+Alternatively, we could have enforced that \lstinline$PassMessages$ only passes messages of strings by omitting the type variable \lstinline$A$ and setting the channel type to \lstinline$Put([Char]|S)$ on line 2 instead.
+In that case, we would have the channel type \lstinline$PassMessages(|)$.
+
+This protocol does not use any concurrent type variables, but if it did, the list of the concurrent type variables would be on the right of the bar next to \lstinline$A$.
+For example, if it took a concurrent type variable \lstinline$X$, we would have \lstinline$PassMessages(A| X)$.
+
+The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character. 
+
+Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
+The only difference between protocols and coprotocols is the direction that handles travel on the channel.
+For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
+This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
+
+We can further modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ protocol as follows:
+\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)] %can we change listing so that it says Example insted of Listing in the caption?
+
+proc broadcast :: [Char] | PassMessages([Char]| ) 
+	=> PassMessages([Char]| ), PassMessages([Char]| ), PassMessages([Char]| ) = 
+	confirmation_msg | source => dest1, dest2, dest3 -> do
+		hcase source of					-- check whether there is another message
+			SendMsg -> do
+				get msg on source		-- receive message
+				on dest1 do					-- broadcast message to other processes
+					hput SendMsg			-- indicate there is another message
+					put msg						-- send that message
+				on dest2 do
+					hput SendMsg
+					put msg
+				on dest3 do
+					hput SendMsg
+					put msg
+				broadcast(confirmation_msg | source => dest1, dest2, dest3) -- recurse
+			CloseCh -> do					-- close all channels and halt
+				close source							
+				on dest1 do						
+					hput CloseCh			-- indicate source is finished
+					close							-- close channel
+				on dest2 do
+					hput CloseCh		
+					close	
+				on dest3 do
+					hput CloseCh		
+					halt	
+\end{lstlisting}
+Since protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, \lstinline$broadcast$ is receiving handles on \lstinline$source$ and sending handles on its destination channels.
+A handle is sent on a channel using \lstinline$hput$ which {\em activates} the channel and sets its type as specified by the handle.
+A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
+More details on these process commands are given in Section~\ref{subsec:pairs}.
+
+If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
+ \begin{lstlisting}
+protocol PassMsgsWithConf (A| ) => S =
+    SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
+    CloseConfCh :: TopBot => S 		
+\end{lstlisting}
+We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
+
+We can imagine that \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that is connected to \lstinline$proc1$ by a \lstinline$Neg(PassMessages([Char]| ))$ channel.
+Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline$PassMessages$ instead.
+We can define a coprotocol \lstinline$CoPassMessages$ as follows:
+ \begin{lstlisting}
+coprotocol S => CoPassMessages (A| ) =
+    CoSendMsg ::  S => Get(A|S)
+    CoCloseCh :: S => TopBot
+\end{lstlisting}
+Notice that the state variable \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side like in the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ definitions.
+
+We can write \lstinline$send_to_dest1$ as follows:
+\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
+proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest1 => -> 
+		hcase source of					-- check whether there is another message
+			SendMsg -> do
+				get msg on source 		
+				on dest1 do
+					hput CoSendMsg		-- use coprotocol handle
+					put msg
+				send_to_dest1( | source, dest1 => ) -- recurse
+			CloseCh -> do
+				close source
+				on dest1 do
+					hput CoCloseCh
+					halt
+				
+ \end{lstlisting}
+ From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
+
 
 \section{Discussion and future work}
+
+Races, Higher order message passing
+
+\printbibliography
 
 \end{document}
