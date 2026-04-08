@@ -141,18 +141,16 @@ For now, we will consider the definition of process \lstinline$broadcast$ in Exa
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc broadcast = 
-	confirmation_msg | source, dest1 => dest2, dest3 -> do
+	confirmation_msg | source, dest1 => dest2 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- send message to other processes
 		put msg on dest2
-		put msg on dest3
 		put confirmation_msg on source	-- send confirmation message to source
 		close source									  -- close all channels and halt
 		close dest1
-		close dest2
-		halt dest3  -- the last channel is closed with halt command
+		halt dest2  -- the last channel is closed with halt command
 \end{lstlisting}
-Observe that line 2 of Example \ref{ex:broadcastmsg} in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2, dest3$.
+Observe that line 2 of Example \ref{ex:broadcastmsg} in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2$.
 
 The \tc{variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
 The channels on the left of \lstinline$ =>$ are called \tc{input polarity} channels. 
@@ -443,21 +441,18 @@ The outer most layer is the first interaction that will take place, and after th
 \label{Sec:protocols}
 
 We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
-Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
+Consider a modified version of \lstinline$broadcast$ from Example \ref{ex:broadcastmsg} in which the destination channels all have the same polarity and type:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels] 
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels (without confirmation)] 
+proc broadcast :: | Put([Char]|TopBot) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	 | source => dest1, dest2 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- broadcast message to other process
 		put msg on dest2
-		put msg on dest3
-		put confirmation_msg on source	-- send confirmation message to source
 		close source										-- close all channels and halt
 		close dest1
-		close dest2
-		halt dest3       
+		halt dest2    
 \end{lstlisting}
 This process is only able to broadcast a single message from the source.
 To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ to \lstinline$TopBot$.
@@ -492,9 +487,9 @@ This means that a coprotocol is essentially a negated protocol, which is not tru
 We can further modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ protocol as follows:
 \begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)] %can we change listing so that it says Example insted of Listing in the caption?
 
-proc broadcast :: [Char] | PassMessages([Char]| ) 
-	=> PassMessages([Char]| ), PassMessages([Char]| ), PassMessages([Char]| ) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+proc broadcast :: | PassMessages([Char]| ) 
+	=> PassMessages([Char]| ), PassMessages([Char]| ) = 
+	 | source => dest1, dest2 -> do
 		hcase source of					-- check whether there is another message
 			SendMsg -> do
 				get msg on source		-- receive message
@@ -504,19 +499,13 @@ proc broadcast :: [Char] | PassMessages([Char]| )
 				on dest2 do
 					hput SendMsg
 					put msg
-				on dest3 do
-					hput SendMsg
-					put msg
-				broadcast(confirmation_msg | source => dest1, dest2, dest3) -- recurse
+				broadcast( | source => dest1, dest2) -- recurse
 			CloseCh -> do					-- close all channels and halt
 				close source							
 				on dest1 do						
 					hput CloseCh			-- indicate source is finished
 					close							-- close channel
 				on dest2 do
-					hput CloseCh		
-					close	
-				on dest3 do
 					hput CloseCh		
 					halt	
 \end{lstlisting}
