@@ -190,7 +190,7 @@ In this case, the interaction is that messages will travel from left to right (\
 
 While the type of a channel defines the interaction that a process may have on it, the polarity of the channel the process's role in the interaction. To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
 %, i.e. sending the message or receiving the message.
-In case of \lstinline{Put} type, the process with the output polarity channel must use the \lstinline$put$ command and the process with the input polarity channel must use the \lstinline$get$ command. We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
+In case of \lstinline{Put} type, the process with the output polarity channel (at the left end) must use the \lstinline$put$ command and the process with the input polarity channel (at the right end) must use the \lstinline$get$ command. We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
 
 Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
 For example, suppose we do not consider polarity and rewrite our code as follows:
@@ -241,6 +241,8 @@ The type of a channel can either be explicitly defined in the type signature of 
 
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 
+\highlight{\lstinline$Put$ and \lstinline$Get$ types:}
+
 As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type 
 signature that indicates the types of the variables and channels it uses.
 We will modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
@@ -280,11 +282,13 @@ We can also notice that channel types are constructed inductively.
 The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
 The base case is the \lstinline$TopBot$ type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
 
+\highlight{Tensor and Par types}
+
 In our next example, we will consider a channel type that {\em bundles} two other channels together.
-The bundled channel types \lstinline$(*)$, called ``{\em tensor},'' and \lstinline$(+)$, called ``{\em par},'' come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+The bundled channel types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
 By unbundling the channels, two new channels are created and passed into two new processes.
 
-We will again modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
+We will again modify Example~\ref{ex:serverecho} to demonstrate the bundling and unbundling of channels.
 We will define another process \lstinline$two_clients$ that unbundles a channel and forks into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process:
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes] 
 proc client :: | => Put([Char]|TopBot) = 		
