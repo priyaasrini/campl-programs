@@ -194,11 +194,12 @@ Recall Example~\ref{ex:serverecho} in which two processes are connected along a 
 Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (on the right end).
 %, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
 In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
-
-\comment{if we are saying this, we need to introduce this}
-While the type of a channel defines the interaction that a process may have on it, the polarity of the channel the process's role in the interaction. To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
-%, i.e. sending the message or receiving the message.
-In case of \lstinline{Put} type, the process with the output polarity channel (at the left end) must use the \lstinline$put$ command and the process with the input polarity channel (at the right end) must use the \lstinline$get$ command. We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
+%\comment{actually i think the discussion about types should not be here. we have not seen the Put or Get types yet.}
+The polarity of the channel defines the process's role in the interaction. 
+%To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
+%%, i.e. sending the message or receiving the message.
+In this case, the process with the output polarity channel (on the left end) must use \lstinline$put$ and then \lstinline$get$, and the process with the input polarity channel (at the right end) must use \lstinline$get$ and then \lstinline$put$. 
+%We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
 
 Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
 For example, suppose we do not consider polarity and rewrite our code as follows:
