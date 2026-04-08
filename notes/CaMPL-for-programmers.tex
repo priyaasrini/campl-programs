@@ -291,7 +291,8 @@ From this we can see that a channel of type \lstinline$Put$ indicates messages w
 
 We can also notice that channel types are constructed inductively.
 The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
-The base case is the \lstinline$TopBot$ type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
+The base case is the \lstinline$TopBot$ type because it is always the final step to  \lstinline$close$ a channel or to \lstinline$halt$ by closing the final open channel.
+The other types are inductive cases that each specify one step of the overall interaction.
 
 \subsubsection{Tensor and Par types}
 
@@ -339,11 +340,12 @@ We could also write a program that has different interactions with the two new p
 We can see that a channel of type \lstinline$(*)$ indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
 Then, we would use the other bundled channel type, \lstinline$(+)$, which is dual to the \lstinline$(*)$ type.
-More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
+%More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
 
-\subsubsection{\lstinline{TopBot} type}
-
-\comment{TODO: take small part of Close and Halt section discussion from other document??}
+% i don't think we need this actually because we discuss this in the Put and Get section.
+%\subsubsection{\lstinline{TopBot} type}
+%
+%\comment{TODO: take small part of Close and Halt section discussion from other document??}
 
 \subsubsection{\lstinline$Neg$ type}
 
