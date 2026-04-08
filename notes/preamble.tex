@@ -46,6 +46,7 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \usepackage{xcolor}
 
 \usepackage{listings}
+\renewcommand{\lstlistingname}{Example}
 \lstdefinelanguage[2026]{CaMPL}{%
   keywords={},%
   % Use otherkeywords for symbols
@@ -59,7 +60,7 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
   % Use keywords [2] for types
   morekeywords={[2]Console,},
   morekeywords={[3]Put,Get,TopBot},
-  morekeywords={[4]hput,hcase,put,get,halt,plug,close},
+  morekeywords={[4]hput,hcase,put,get,halt,plug,close,fork,split},
   sensitive,%
   morecomment=[l]--,%
   morecomment=[n]{\{-}{-\}},%
