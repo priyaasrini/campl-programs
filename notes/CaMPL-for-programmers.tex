@@ -40,7 +40,7 @@ and that we will mention things like there is a beautiful type system and that w
 
 {\bf Notation and style:} We use font with \tc{this style} whenever we introduce a CaMPL terminology. 
 
-\subsection{A brief overview of CaMPL}
+\section{A brief overview of CaMPL}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$. 
@@ -122,10 +122,10 @@ In fact, running the second program does not produce any observable effects sinc
 A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?'' 
 We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
 
-\section{Concurrent type system}
+%\section{Concurrent type system}
 
 
-\subsection{Processes}
+\section{Processes}
 \label{Sec:Processes}
 
 Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
@@ -141,18 +141,16 @@ For now, we will consider the definition of process \lstinline$broadcast$ in Exa
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc broadcast = 
-	confirmation_msg | source, dest1 => dest2, dest3 -> do
+	confirmation_msg | source, dest1 => dest2 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- send message to other processes
 		put msg on dest2
-		put msg on dest3
 		put confirmation_msg on source	-- send confirmation message to source
 		close source									  -- close all channels and halt
 		close dest1
-		close dest2
-		halt dest3  -- the last channel is closed with halt command
+		halt dest2  -- the last channel is closed with halt command
 \end{lstlisting}
-Observe that line 2 of Example \ref{ex:broadcastmsg} in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2, dest3$.
+Observe that line 2 of Example \ref{ex:broadcastmsg} in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2$.
 
 The \tc{variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
 The channels on the left of \lstinline$ =>$ are called \tc{input polarity} channels. 
@@ -170,14 +168,14 @@ Certain process commands may only be used as the last process command in a \lsti
 Two processes can be connected by a channel if they both have a channel with the same type but opposite polarities. We explain channel types and polarities, and the reasoning behind this design to connect processes in Section\ref{Sec:Channels}. 
 
 
-\subsection{Channels}
+\section{Channels}
 \label{Sec:Channels}
 
 A process \tc{uses} a channel to interact with another process connected to the other end of the channel. Recall that, 
 processes are connected using the \lstinline$plug$ command.
 The process commands that a process can use on a channel depend on both the channel's type and polarity.
 
-\subsubsection{On Channel polarities}
+\subsection{Channel polarities}
 \label{Sec:polarities}
 
 CaMPL processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity 
@@ -188,6 +186,7 @@ Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the
 %, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
 In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
 
+\comment{if we are saying this, we need to introduce this}
 While the type of a channel defines the interaction that a process may have on it, the polarity of the channel the process's role in the interaction. To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
 %, i.e. sending the message or receiving the message.
 In case of \lstinline{Put} type, the process with the output polarity channel (at the left end) must use the \lstinline$put$ command and the process with the input polarity channel (at the right end) must use the \lstinline$get$ command. We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
@@ -230,18 +229,18 @@ Each built-in channel type in CaMPL that allows interaction specifies the comple
 %
 
 \subsection{Channel types}
-
+\comment{this can be moved to the intro for the whole channels section instead}
 Each channel also has a type associated to it. 
 The type of a channel defines the interaction that the processes will have on it. 
 The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
-\subsubsection{Built-in Channel types}
+\subsection{Built-in channel types}
 \label{Sec:channeltypes}
 
 
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 
-\highlightlabel{\lstinline$Put$ and \lstinline$Get$ types:}
+\subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 
 As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type 
 signature that indicates the types of the variables and channels it uses.
@@ -282,7 +281,7 @@ We can also notice that channel types are constructed inductively.
 The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
 The base case is the \lstinline$TopBot$ type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
 
-\highlight{Tensor and Par types}
+\subsubsection{Tensor and Par types}
 
 In our next example, we will consider a channel type that {\em bundles} two other channels together.
 The bundled channel types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
@@ -330,58 +329,67 @@ What if we wanted the process on the right to be replaced by two new processes i
 Then, we would use the other bundled channel type, \lstinline$(+)$, which is dual to the \lstinline$(*)$ type.
 More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
 
+\subsubsection{\lstinline{TopBot} type}
+
+\comment{TODO: take small part of Close and Halt section discussion from other document??}
+
+\subsubsection{\lstinline$Neg$ type}
+
 Finally, we have the \lstinline$Neg$ channel type which negates a given channel type.
 This means that the ``direction'' of the interaction is reversed.
 A \lstinline$Neg(Put)$ channel can be used like a \lstinline$Get$ channel (and vice versa), and a \lstinline$Neg((*))$ channel can be used like a \lstinline$(+)$ channel (and vice versa).
+Given a \lstinline$Put$ channel, the \lstinline$neg$ process command can be used to turn it into a \lstinline$Neg(Put)$ channel.
+This channel can be connected to another process with a \lstinline$Neg(Put)$ channel that also negates a \lstinline$Put$ channel with \lstinline$neg$.
+A process using a \lstinline$Neg(Put)$ channel cannot be connected to a process using a \lstinline$Get$ channel because they are not actually the {\em same} type.
 
-Recall the process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
-We can write the type signature of \lstinline$broadcast$ as follows:
-\begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source, dest1 => dest2, dest3 ->
-\end{lstlisting}
-Observe that the type of \lstinline$dest1$ is \lstinline$Get([Char]|TopBot)$ which is dual to the type of \lstinline$dest2$ and \lstinline$dest3$ which is \lstinline$Put([Char]|TopBot)$.
-We will refer to the process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
-Notice that \lstinline$proc1$ uses \lstinline$dest1$ with output polarity.
-
-Suppose we want the type and polarity of all of the destination channels in \lstinline$broadcast$ to be the same, i.e. we want the type signature of  \lstinline$broadcast$ to be:
-\begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 ->
-\end{lstlisting}
-However, we still want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
-Instead of connecting \lstinline$broadcast$ with \lstinline$proc1$ directly, we can write another process, \lstinline$send_to_dest1$, that connects to  \lstinline$proc1$ with a \lstinline$Neg(Put)$ channel.
-Our \lstinline$run$ process would be defined as follows:
-\begin{lstlisting}
-proc run =
-    | => -> plug
-        sender( | => source)
-        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
-        send_to_dest1( | dest1, neg_dest1 => )
-        proc1( | => neg_dest1)				-- neg_dest1 has Neg(Put) type 
-        proc2( | dest2 =>)
-        proc3( | dest3 =>)
-\end{lstlisting}	
-We can define process \lstinline$send_to_dest1$ as follows:
-\begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
-proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
-	| source, neg_dest1 => -> do
-		on source do								-- receive message from source via broadcast
-			get msg
-			close
-		plug
-			neg_dest1, dest1 => -> 
-				neg_dest1 |=| neg dest1 -- negate and identify channels
-			=> dest1 -> 							-- use like Get channel in original broadcast
-				on dest1 do							-- forward message to proc1
-					put msg
-					halt
-\end{lstlisting}
-To connect to this process, \lstinline$proc1$ would also need to be modified to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
-Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 9 to be able to use the \lstinline$Neg(Put)$ channel.
-The \lstinline$neg$ and identification \lstinline$|=|$ process commands are described in more detail in Section~\ref{sec:neg}. 
+%Recall the process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
+%We can write the type signature of \lstinline$broadcast$ as follows:
+%\begin{lstlisting}
+%proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) 
+%	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+%	confirmation_msg | source, dest1 => dest2, dest3 ->
+%\end{lstlisting}
+%Observe that the type of \lstinline$dest1$ is \lstinline$Get([Char]|TopBot)$ which is dual to the type of \lstinline$dest2$ and \lstinline$dest3$ which is \lstinline$Put([Char]|TopBot)$.
+%We will refer to the process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
+%Notice that \lstinline$proc1$ uses \lstinline$dest1$ with output polarity.
+%
+%Suppose we want the type and polarity of all of the destination channels in \lstinline$broadcast$ to be the same, i.e. we want the type signature of  \lstinline$broadcast$ to be:
+%\begin{lstlisting}
+%proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
+%	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
+%	confirmation_msg | source => dest1, dest2, dest3 ->
+%\end{lstlisting}
+%However, we still want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
+%Instead of connecting \lstinline$broadcast$ with \lstinline$proc1$ directly, we can write another process, \lstinline$send_to_dest1$, that connects to  \lstinline$proc1$ with a \lstinline$Neg(Put)$ channel.
+%Our \lstinline$run$ process would be defined as follows:
+%\begin{lstlisting}
+%proc run =
+%    | => -> plug
+%        sender( | => source)
+%        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
+%        send_to_dest1( | dest1, neg_dest1 => )
+%        proc1( | => neg_dest1)				-- neg_dest1 has Neg(Put) type 
+%        proc2( | dest2 =>)
+%        proc3( | dest3 =>)
+%\end{lstlisting}	
+%We can define process \lstinline$send_to_dest1$ as follows:
+%\begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
+%proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
+%	| source, neg_dest1 => -> do
+%		on source do								-- receive message from source via broadcast
+%			get msg
+%			close
+%		plug
+%			neg_dest1, dest1 => -> 
+%				neg_dest1 |=| neg dest1 -- negate and identify channels
+%			=> dest1 -> 							-- use like Get channel in original broadcast
+%				on dest1 do							-- forward message to proc1
+%					put msg
+%					halt
+%\end{lstlisting}
+%To connect to this process, \lstinline$proc1$ would also need to be modified to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
+%Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 9 to be able to use the \lstinline$Neg(Put)$ channel.
+%The \lstinline$neg$ and identification \lstinline$|=|$ process commands are described in more detail in Section~\ref{sec:neg}. 
 
 
 
@@ -405,6 +413,7 @@ The \lstinline$neg$ and identification \lstinline$|=|$ process commands are desc
 %CaMPL provides built-in channel types from which one may build custom channel types. 
 %Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
 
+\subsubsection{Summary of built-in types}
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
 We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
@@ -428,25 +437,22 @@ The outer most layer is the first interaction that will take place, and after th
 %The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
 %The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
-\subsubsection{Constructing custom channel types}
+\subsection{Custom channel types}
 \label{Sec:protocols}
 
 We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
-Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
+Consider a modified version of \lstinline$broadcast$ from Example \ref{ex:broadcastmsg} in which the destination channels all have the same polarity and type:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels] 
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels (without confirmation)] 
+proc broadcast :: | Put([Char]|TopBot) 
+	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	 | source => dest1, dest2 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- broadcast message to other process
 		put msg on dest2
-		put msg on dest3
-		put confirmation_msg on source	-- send confirmation message to source
 		close source										-- close all channels and halt
 		close dest1
-		close dest2
-		halt dest3       
+		halt dest2    
 \end{lstlisting}
 This process is only able to broadcast a single message from the source.
 To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ to \lstinline$TopBot$.
@@ -463,6 +469,7 @@ The two {\em handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the ty
 In general, handles represent the set of valid interactions that may take place on a channel.
 They can be thought of as session types.
 
+\comment{see if we can make this part more concise}
 When we use \lstinline$PassMessages$ as a channel type, we will be able to instantiate the sequential type variable \lstinline$A$.
 In the case of  \lstinline$broadcast$, we want to pass strings, so we will use the channel type \lstinline$PassMessages([Char]| )$.
 Alternatively, we could have enforced that \lstinline$PassMessages$ only passes messages of strings by omitting the type variable \lstinline$A$ and setting the channel type to \lstinline$Put([Char]|S)$ on line 2 instead.
@@ -481,9 +488,9 @@ This means that a coprotocol is essentially a negated protocol, which is not tru
 We can further modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ protocol as follows:
 \begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)] %can we change listing so that it says Example insted of Listing in the caption?
 
-proc broadcast :: [Char] | PassMessages([Char]| ) 
-	=> PassMessages([Char]| ), PassMessages([Char]| ), PassMessages([Char]| ) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+proc broadcast :: | PassMessages([Char]| ) 
+	=> PassMessages([Char]| ), PassMessages([Char]| ) = 
+	 | source => dest1, dest2 -> do
 		hcase source of					-- check whether there is another message
 			SendMsg -> do
 				get msg on source		-- receive message
@@ -493,10 +500,7 @@ proc broadcast :: [Char] | PassMessages([Char]| )
 				on dest2 do
 					hput SendMsg
 					put msg
-				on dest3 do
-					hput SendMsg
-					put msg
-				broadcast(confirmation_msg | source => dest1, dest2, dest3) -- recurse
+				broadcast( | source => dest1, dest2) -- recurse
 			CloseCh -> do					-- close all channels and halt
 				close source							
 				on dest1 do						
@@ -504,26 +508,26 @@ proc broadcast :: [Char] | PassMessages([Char]| )
 					close							-- close channel
 				on dest2 do
 					hput CloseCh		
-					close	
-				on dest3 do
-					hput CloseCh		
 					halt	
 \end{lstlisting}
 Since protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, \lstinline$broadcast$ is receiving handles on \lstinline$source$ and sending handles on its destination channels.
 A handle is sent on a channel using \lstinline$hput$ which {\em activates} the channel and sets its type as specified by the handle.
 A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
-More details on these process commands are given in Section~\ref{subsec:pairs}.
+%More details on these process commands are given in Section~\ref{subsec:pairs}.
 
-If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
- \begin{lstlisting}
-protocol PassMsgsWithConf (A| ) => S =
-    SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
-    CloseConfCh :: TopBot => S 		
-\end{lstlisting}
-We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
+%If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
+% \begin{lstlisting}
+%protocol PassMsgsWithConf (A| ) => S =
+%    SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
+%    CloseConfCh :: TopBot => S 		
+%\end{lstlisting}
+%We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
 
-We can imagine that \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that is connected to \lstinline$proc1$ by a \lstinline$Neg(PassMessages([Char]| ))$ channel.
-Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline$PassMessages$ instead.
+Since \lstinline$dest1$ was originally an input polarity channel, the process on the other end of the channel, which we will refer to as  \lstinline$proc1$, was using the output polarity end.
+Now, \lstinline$proc1$ will need to use the input polarity end.
+Suppose we do not want to change \lstinline$proc1$ to use the input polarity end.
+Then, we can imagine that this output channel \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that forwards messages to the final destination \lstinline$proc1$.
+Coprotocols are the dual of protocols, so \lstinline$send_to_dest1$ can use a coprotocol version of \lstinline$PassMessages$ to forward the messages to \lstinline$proc1$.
 We can define a coprotocol \lstinline$CoPassMessages$ as follows:
  \begin{lstlisting}
 coprotocol S => CoPassMessages (A| ) =
@@ -531,6 +535,7 @@ coprotocol S => CoPassMessages (A| ) =
     CoCloseCh :: S => TopBot
 \end{lstlisting}
 Notice that the state variable \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side like in the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ definitions.
+We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
 
 We can write \lstinline$send_to_dest1$ as follows:
 \begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
