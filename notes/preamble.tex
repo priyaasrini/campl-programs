@@ -60,7 +60,7 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
   % Use keywords [2] for types
   morekeywords={[2]Console,},
   morekeywords={[3]Put,Get,TopBot},
-  morekeywords={[4]hput,hcase,put,get,halt,plug,close,fork,split},
+  morekeywords={[4]hput,hcase,put,get,halt,plug,close,fork,split,(*),(+)},
   sensitive,%
   morecomment=[l]--,%
   morecomment=[n]{\{-}{-\}},%
@@ -109,6 +109,8 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 %\newcommand{\knote}[1]{\todo[inline, inlinewidth=\textwidth, color=lightgray2]{#1}}
 \newcommand{\knote}[1]{\par \noindent \colorbox{green!40}{Keywords:} #1} 
 \newcommand{\concept}[1]{\par \noindent \colorbox{green!40}{Concepts:} #1}
+\newcommand{\highlight}[1]{\par \noindent \colorbox{green!40}{#1}}
+
 
 \definecolor{darkMagenta}{HTML}{DE3163}
 \newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}
