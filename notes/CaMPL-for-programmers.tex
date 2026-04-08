@@ -40,7 +40,7 @@ and that we will mention things like there is a beautiful type system and that w
 
 {\bf Notation and style:} We use font with \tc{this style} whenever we introduce a CaMPL terminology. 
 
-\subsection{A brief overview of CaMPL}
+\section{A brief overview of CaMPL}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$. 
@@ -122,10 +122,10 @@ In fact, running the second program does not produce any observable effects sinc
 A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?'' 
 We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
 
-\section{Concurrent type system}
+%\section{Concurrent type system}
 
 
-\subsection{Processes}
+\section{Processes}
 \label{Sec:Processes}
 
 Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
@@ -170,14 +170,14 @@ Certain process commands may only be used as the last process command in a \lsti
 Two processes can be connected by a channel if they both have a channel with the same type but opposite polarities. We explain channel types and polarities, and the reasoning behind this design to connect processes in Section\ref{Sec:Channels}. 
 
 
-\subsection{Channels}
+\section{Channels}
 \label{Sec:Channels}
 
 A process \tc{uses} a channel to interact with another process connected to the other end of the channel. Recall that, 
 processes are connected using the \lstinline$plug$ command.
 The process commands that a process can use on a channel depend on both the channel's type and polarity.
 
-\subsubsection{On Channel polarities}
+\subsection{Channel polarities}
 \label{Sec:polarities}
 
 CaMPL processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity 
@@ -188,6 +188,7 @@ Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the
 %, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
 In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
 
+\comment{if we are saying this, we need to introduce this}
 While the type of a channel defines the interaction that a process may have on it, the polarity of the channel the process's role in the interaction. To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
 %, i.e. sending the message or receiving the message.
 In case of \lstinline{Put} type, the process with the output polarity channel (at the left end) must use the \lstinline$put$ command and the process with the input polarity channel (at the right end) must use the \lstinline$get$ command. We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
@@ -230,18 +231,18 @@ Each built-in channel type in CaMPL that allows interaction specifies the comple
 %
 
 \subsection{Channel types}
-
+\comment{this can be moved to the intro for the whole channels section instead}
 Each channel also has a type associated to it. 
 The type of a channel defines the interaction that the processes will have on it. 
 The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
-\subsubsection{Built-in Channel types}
+\subsection{Built-in channel types}
 \label{Sec:channeltypes}
 
 
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 
-\highlight{\lstinline$Put$ and \lstinline$Get$ types:}
+\subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 
 As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type 
 signature that indicates the types of the variables and channels it uses.
@@ -282,7 +283,7 @@ We can also notice that channel types are constructed inductively.
 The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
 The base case is the \lstinline$TopBot$ type because it is always the final step to close the channels and halt, and the other types are inductive cases that each specify one step of the overall interaction.
 
-\highlight{Tensor and Par types}
+\subsubsection{Tensor and Par types}
 
 In our next example, we will consider a channel type that {\em bundles} two other channels together.
 The bundled channel types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
@@ -329,6 +330,12 @@ We can see that a channel of type \lstinline$(*)$ indicates that one process on 
 What if we wanted the process on the right to be replaced by two new processes instead?
 Then, we would use the other bundled channel type, \lstinline$(+)$, which is dual to the \lstinline$(*)$ type.
 More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
+
+\subsubsection{\lstinline{TopBot} type}
+
+\comment{TODO: take small part of Close and Halt section discussion from other document??}
+
+\subsubsection{\lstinline$Neg$ type}
 
 Finally, we have the \lstinline$Neg$ channel type which negates a given channel type.
 This means that the ``direction'' of the interaction is reversed.
@@ -405,6 +412,7 @@ The \lstinline$neg$ and identification \lstinline$|=|$ process commands are desc
 %CaMPL provides built-in channel types from which one may build custom channel types. 
 %Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
 
+\subsubsection{Summary of built-in types}
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
 We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
@@ -428,7 +436,7 @@ The outer most layer is the first interaction that will take place, and after th
 %The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
 %The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
-\subsubsection{Constructing custom channel types}
+\subsection{Custom channel types}
 \label{Sec:protocols}
 
 We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
