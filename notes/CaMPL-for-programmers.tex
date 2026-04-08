@@ -32,23 +32,25 @@ with each other by passing messages along communication channels. At any instanc
 The property of acyclicity at run-time is guaranteed by CaMPL's type system.
 The current implementation of the CaMPL compiler performs both a type inference and type check at compile-time to ensure the compiled program follows the type system and will not deadlock or livelock. In this article, we introduce the features of CaMPL that constitute its concurrent type system and ensure that this guarantee can be made.
 
+How to run the program?
+
 \note{Xanna note:
 i am assuming introduction will establish justification for why we have submitted this paper to this venue.
 and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
 
-{\bf Notation and style:}
+{\bf Notation and style:} We use font with \tc{this style} whenever we introduce a CaMPL terminology. 
 
 \subsection{A brief overview of CaMPL}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$. 
-The \lstinline$console$ channel has the type \lstinline$Console$ which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
+The \lstinline$console$ channel is of type \lstinline$Console$ which is a special channel type hard-coded in the compiler to connect any CaMPL program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc helloworld :: | Console => = 
 	| console => -> do
 		hput ConsolePut on console
-		put "Hello World!" on console    -- sends message to the console        
+		put "Hello World!" on console    -- sends message to the console       
 		hput ConsoleClose on console
 		halt console                     -- closes console channel and halts               
 \end{lstlisting}
@@ -75,15 +77,14 @@ The client will send a string to the server, and the server will receive the str
 %It provides a handle \texttt{EchoSend} which sets the channel type to indicate that, first, client will send and server will receive, second, server will send and client will receive, and finally, the channel will reset for another handle to be selected.
 %The handle \texttt{EchoClose} is used to indicate the client is finished sending messages and the channel should be closed. 
 
-The main process will create \lstinline$client$ and \lstinline$server$ processes and uses the \tc{process command} called \lstinline$plug$ to connect them by a channel named \lstinline$ch$ as follows:
+The main process will create \lstinline$client$ and \lstinline$server$ processes. It then uses a \tc{process command} called \lstinline$plug$ to connect them by a channel named \lstinline$ch$ as follows:
 \begin{lstlisting}[label=ex:serverecho, caption=Server echos Client's message]
  proc run = 
  	| => -> plug				-- connects processes by shared channel ch
  		client( | => ch )	-- creates client process
  		server( | ch => )	-- creates server process
 \end{lstlisting}
-The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions.
-%We can express the program structure in a diagram as follows:
+The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions. We will discuss channel types in Section \ref{}.%We can express the program structure in a diagram as follows:
 %\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
 We can define the  \lstinline$client$ process as follows:
@@ -95,8 +96,8 @@ proc client =
 			get echo						-- receives server's echo  
 			halt
 \end{lstlisting}
-The client process has an output channel \lstinline$ch$ which connects it to the server.
-It sends its message with \lstinline$put$, and it receives the server's echo with \lstinline$get$.
+The client process has a (output) channel \lstinline$ch$ which connects it to the server.
+It sends its message using \lstinline$put$, and it receives the server's echo using \lstinline$get$.
 Then, it uses \lstinline$halt$ to close the channel with the server and halt.
 %For each message it sends to the server, it will first \texttt{hput} the \texttt{EchoSend} handle to indicate it has another message, then \texttt{put} its message to send it, and finally {\tt get} the server's echo. 
 %After it sends all its messages, it will send the \texttt{EchoClose} handle and halt.
@@ -110,8 +111,8 @@ proc server =
 			put msg					-- sends message back
 			halt
 \end{lstlisting}	
-The server process has an input channel \lstinline$ch$ which connects it to the client. 
-It listens to the client and receives the client's message with \lstinline$get$, echos the message back with \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
+The server process has a (input) channel \lstinline$ch$ which connects it to the client. 
+It listens to the client and receives the client's message using \lstinline$get$, echos the message back using \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
 %Since the server doesn't know how many messages the client is going to send, it calls itself recursively to receive the next handle. 
 %If the handle received is \texttt{EchoClose}, the client is finished sending messages, so it halts. 
 
@@ -130,7 +131,7 @@ We hope that these questions motivate the reader to continue on to the more comp
 Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
 A CaMPL process is specified by the keyword \lstinline$proc$ followed by a process name, an optional type signature, and lists of the variables and channels used by the process.
 
-In Example \ref{ex:helloworld}, the type signature of process \lstinline$helloworld$ was \lstinline$ :: | Console => $ which indicates that it only has access to one channel of type \lstinline$Console$ and this channel is given the name \lstinline$console$ indicated by \lstinline$ = | console => $ on the next line.
+In Example \ref{ex:helloworld}, the type signature of process \lstinline$helloworld$ was "\lstinline$ :: | Console => $" which indicates that it has access only to one channel of type \lstinline$Console$ and this channel is given the name \lstinline$console$ as indicated by "\lstinline$ = | console => $" on the next line.
 We will discuss type signatures in more detail in Section~\ref{Sec:Channels} on channel types.
 
 A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. This process is the main process and the only process which can create \tc{service channels} such as the \lstinline$Console$ for communication with the outside world.
@@ -142,54 +143,54 @@ For now, we will consider the definition of process \lstinline$broadcast$ in Exa
 proc broadcast = 
 	confirmation_msg | source, dest1 => dest2, dest3 -> do
 		get msg on source								-- receive message from source
-		put msg on dest1								-- broadcast message to other process
+		put msg on dest1								-- send message to other processes
 		put msg on dest2
 		put msg on dest3
 		put confirmation_msg on source	-- send confirmation message to source
-		close source										-- close all channels and halt
+		close source									  -- close all channels and halt
 		close dest1
 		close dest2
-		halt dest3       
+		halt dest3  -- the last channel is closed with halt command
 \end{lstlisting}
-Observe that line 2 in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2, dest3$.
+Observe that line 2 of Example \ref{ex:broadcastmsg} in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2, dest3$.
 
 The \tc{variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
 The channels on the left of \lstinline$ =>$ are called \tc{input polarity} channels. 
-The channels on the right of \lstinline$ =>$ are called {\em output polarity} channels. 
+The channels on the right of \lstinline$ =>$ are called \tc{output polarity} channels. 
 Lines 3 - 11 constitute the \tc{process body}.
 We say that the channels listed in line 2 are ``in scope'' of the process body which means that the process can perform operations, called \tc{process commands}, on these channels.
 
-The process body may be a single process command, as shown in the \lstinline$run$ processes in Examples~\ref{ex:helloworld} and~\ref{ex:serverecho}, or a \lstinline$do$ block of process commands, as shown in \lstinline$broadcast$.
-Process commands performed on the same channel can be grouped together as in Example~\ref{ex:serverecho} on line 3 when we had ``\lstinline$on ch do$''.
+The process body may be a single process command, as shown in the \lstinline$run$ processes in Examples~\ref{ex:helloworld} and~\ref{ex:serverecho}, or a \lstinline$do$ block of process commands, as shown in Example \ref{ex:broadcastmsg}. 
+Process commands performed on the same channel can be grouped together as in Example~\ref{ex:serverecho} on line 3 of the client process when we had ``\lstinline$on ch do$''.
 This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
-Certain process commands may only be used as the last process command in a \lstinline$do$ block, for example an invocation of another process. 
+Certain process commands may only be used as the last process command in a \lstinline$do$ block, for example an invocation of another process. \comment{Shall we say this later and list the commands too?}
 
-A process definition may pattern match on instances of sequential types with different process body definitions. 
+%A process definition may pattern match on instances of sequential types with different process body definitions. 
 
-Two processes can be connected by a channel if their process definitions both have a channel with the same type but opposite polarities. We explain channel types and polarities and the reason behind this design decision in Section. \ref{Sec:Channels}. 
+Two processes can be connected by a channel if they both have a channel with the same type but opposite polarities. We explain channel types and polarities, and the reasoning behind this design to connect processes in Section\ref{Sec:Channels}. 
 
 
 \subsection{Channels}
 \label{Sec:Channels}
 
-CaMPL processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity channels. Different polarities refer to different ends of a channel. The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
+A process \tc{uses} a channel to interact with another process connected to the other end of the channel. Recall that, 
+processes are connected using the \lstinline$plug$ command.
+The process commands that a process can use on a channel depend on both the channel's type and polarity.
 
 \subsubsection{On Channel polarities}
 \label{Sec:polarities}
 
-A process {\em uses} a channel to interact with another process on the other end of the channel.
-The process commands that a process can use on a channel depend on both the channel's type and polarity.
+CaMPL processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity 
+channels. Different polarities refer to different ends of a channel. 
 
-The type of the channel defines the interaction that the processes will have on it.
 Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline$ch$.
 Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (on the right end):
-
 %, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
 In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
 
-The polarity of the channel that each process has access to defines that process's role in the interaction.
+While the type of a channel defines the interaction that a process may have on it, the polarity of the channel the process's role in the interaction. To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
 %, i.e. sending the message or receiving the message.
-In this case, messages travelling from left to right means the process on the left end (\lstinline$client$) must use the \lstinline$put$ command and the process on the right end (\lstinline$server$) must use the \lstinline$get$ command.
+In case of \lstinline{Put} type, the process with the output polarity channel must use the \lstinline$put$ command and the process with the input polarity channel must use the \lstinline$get$ command. We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
 
 Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
 For example, suppose we do not consider polarity and rewrite our code as follows:
@@ -219,7 +220,7 @@ proc server =
 \end{lstlisting}
 This is precisely what a deadlock is.
 In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
-Each built-in channel type in CaMPL specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
+Each built-in channel type in CaMPL that allows interaction specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
 
 %
 %If we have polarities and types and we enforce that processes can only be connected if they use channels with the same type and opposite polarity, we can specify that \(p\) uses \(c\) with output polarity, \(q\) uses \(c\) with input polarity, and \(c\) has a type indicating that messages travel from input to output polarity.
@@ -228,13 +229,20 @@ Each built-in channel type in CaMPL specifies the complementary roles of the pro
 %Each built-in channel type in CaMPL similarly specifies the complementary roles of the processes on each end of the channel.
 %
 
+\subsection{Channel types}
+
+Each channel also has a type associated to it. 
+The type of a channel defines the interaction that the processes will have on it. 
+The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
 \subsubsection{Built-in Channel types}
 \label{Sec:channeltypes}
 
+
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
 
-As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type signature that indicates the types of the variables and channels it uses.
+As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type 
+signature that indicates the types of the variables and channels it uses.
 We will modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
 We will define \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to the client instead of echoing the message:
 \begin{lstlisting}[label=ex:serverid, caption=Server replies to Client with server id] 
