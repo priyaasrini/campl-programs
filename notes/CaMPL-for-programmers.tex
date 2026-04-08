@@ -618,6 +618,39 @@ The only difference between the two versions is the order in which the steps of 
 
 \section{Higher-order message passing}
 
+In sequential functional programming, higher-order functions take other functions as input or produce other functions as output.
+We consider a concurrent analogue: higher-order processes.
+
+Higher-order processes encode other processes as sequential data, pass an encoded process as a message, and/or decode and invoke an encoded process.
+For example, consider the following higher-order processes that pass an encoded \lstinline$helloworld$ process from Example~\ref{ex:helloworld}:
+\begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes] 
+proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
+    | => ch -> do
+        on ch do 
+            put store(helloworld) 	-- encode helloworld and send as a message
+            halt
+
+proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
+    | ch, console => -> do
+        on ch do
+            get stored_process 			-- receive message with encoded helloworld
+            close 
+        on console do 
+            hput ConsolePut 
+            put ("Server says: Running the stored process")
+        use(stored_process)( | console => )		-- decode and invoke helloworld
+\end{lstlisting}
+Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ typed channel.
+The sequential type \lstinline$Store$ indicates that a message containing an encoded process is being passed.
+The type signature of the encoded process is indicated within the \lstinline$Store$ type.
+In this case, it is the type signature of \lstinline$helloworld$.
+
+To encode a process, the built-in \lstinline$store$ function is used.
+This function takes either the name of a previously defined process, as in the above example on line 4, or it takes an anonymous process as an in-line process definition.
+
+To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
+To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the type signature in the \lstinline$Store$ type.
+
 
 \section{Discussion and future work}
 
