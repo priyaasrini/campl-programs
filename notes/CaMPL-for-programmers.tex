@@ -623,8 +623,8 @@ Races can be held for any number of channels on which the process is waiting for
 In the above example, the \lstinline$race$ on line 3 consists of channels \lstinline$ch1$ and \lstinline$ch2$ as indicated by lines 4 and 13, respectively.
 A process body is defined for each channel in the race, and the process will execute according to the winning channel's corresponding process body. 
 In the above example, the process body that will execute if \lstinline$ch1$ wins is defined on lines 4 - 12, and the process body for \lstinline$ch2$ is defined on lines 13 -21.
-Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
-The \lstinline$race$ command must be the last command in a process block.
+%Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
+%The \lstinline$race$ command must be the last command in a process block.
 
 The type signature of both versions of \lstinline$server$ would be the same because the interaction on  \lstinline$two_ch$ is the same.
 The only difference between the two versions is the order in which the steps of the interaction take place.
