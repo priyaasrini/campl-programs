@@ -75,6 +75,8 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \definecolor{lightgray2}{rgb}{.85,.85,.85}
 \definecolor{darkgray}{rgb}{.4,.4,.4}
 \definecolor{darkred}{rgb}{0.6,0,0}
+\definecolor{macyellow}{rgb}{0.980,0.804,0.353}
+
 \lstdefinestyle{CaMPLstyle}{%
   language=CaMPL,%
   %
@@ -109,7 +111,13 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 %\newcommand{\knote}[1]{\todo[inline, inlinewidth=\textwidth, color=lightgray2]{#1}}
 \newcommand{\knote}[1]{\par \noindent \colorbox{green!40}{Keywords:} #1} 
 \newcommand{\concept}[1]{\par \noindent \colorbox{green!40}{Concepts:} #1}
-\newcommand{\highlight}[1]{\par \noindent \colorbox{green!40}{#1}}
+\newcommand{\highlight}[1]{\par \noindent \colorbox{orange!40}{#1}}
+
+\newcommand{\highlightlabel}[1]{%
+  \vspace{0.25em}
+  \highlight{\quad #1 \quad}
+  \vspace{0.25em}
+}
 
 
 \definecolor{darkMagenta}{HTML}{DE3163}
