@@ -167,15 +167,22 @@ This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 
 %A process definition may pattern match on instances of sequential types with different process body definitions. 
 
-Two processes can be connected by a channel if they both have a channel with the same type but opposite polarities. We explain channel types and polarities, and the reasoning behind this design to connect processes in Section\ref{Sec:Channels}. 
+%Two processes can be connected by a channel if they both have a channel with the same type but opposite polarities. 
+%We explain channel types and polarities, and the reasoning behind this design to connect processes in Section\ref{Sec:Channels}. 
 
 
 \section{Channels}
 \label{Sec:Channels}
 
-A process \tc{uses} a channel to interact with another process connected to the other end of the channel. Recall that, 
-processes are connected using the \lstinline$plug$ command.
-The process commands that a process can use on a channel depend on both the channel's type and polarity.
+A process \tc{uses} a channel to interact with another process connected to the other end of the channel.
+The type of a channel defines the interaction that the processes will have on it, and the polarity of the channel defines each process's role in the interaction. 
+Thus, the process commands that a process can use on a channel depend on both the channel's type and polarity. 
+Furthermore, recall that processes are connected using the \lstinline$plug$ command.
+Two processes can be plugged if they both use a channel with the same type but opposite polarities. 
+We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.
+Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.
+Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
+
 
 \subsection{Channel polarities}
 \label{Sec:polarities}
@@ -230,17 +237,18 @@ Each built-in channel type in CaMPL that allows interaction specifies the comple
 %Each built-in channel type in CaMPL similarly specifies the complementary roles of the processes on each end of the channel.
 %
 
-\subsection{Channel types}
-\comment{this can be moved to the intro for the whole channels section instead}
-Each channel also has a type associated to it. 
-The type of a channel defines the interaction that the processes will have on it. 
-The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
+%\subsection{Channel types}
+%\comment{this can be moved to the intro for the whole channels section instead}
+%Each channel also has a type associated to it. 
+%The type of a channel defines the interaction that the processes will have on it. 
+%The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
 \subsection{Built-in channel types}
 \label{Sec:channeltypes}
 
 
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
+The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
 \subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 
