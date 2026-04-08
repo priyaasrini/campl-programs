@@ -523,8 +523,11 @@ A handle is received on a channel using \lstinline$hcase$ which allows a process
 %\end{lstlisting}
 %We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
 
-We can imagine that \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that is connected to \lstinline$proc1$ by a \lstinline$Neg(PassMessages([Char]| ))$ channel.
-Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline$PassMessages$ instead.
+Since \lstinline$dest1$ was originally an input polarity channel, the process on the other end of the channel, which we will refer to as  \lstinline$proc1$, was using the output polarity end.
+Now, \lstinline$proc1$ will need to use the input polarity end.
+Suppose we do not want to change \lstinline$proc1$ to use the input polarity end.
+Then, we can imagine that this output channel \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that forwards messages to the final destination \lstinline$proc1$.
+Coprotocols are the dual of protocols, so \lstinline$send_to_dest1$ can use a coprotocol version of \lstinline$PassMessages$ to forward the messages to \lstinline$proc1$.
 We can define a coprotocol \lstinline$CoPassMessages$ as follows:
  \begin{lstlisting}
 coprotocol S => CoPassMessages (A| ) =
