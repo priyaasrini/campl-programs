@@ -162,7 +162,8 @@ We say that the channels listed in line 2 are ``in scope'' of the process body w
 The process body may be a single process command, as shown in the \lstinline$run$ processes in Examples~\ref{ex:helloworld} and~\ref{ex:serverecho}, or a \lstinline$do$ block of process commands, as shown in Example \ref{ex:broadcastmsg}. 
 Process commands performed on the same channel can be grouped together with ``\lstinline$on ch do$'' as in Example~\ref{ex:serverecho} on line 3 of the client process.
 This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
-Certain process commands may only be used as the last process command in a \lstinline$do$ block, for example an invocation of another process. \comment{Shall we say this later and list the commands too?}
+
+%Certain process commands may only be used as the last process command in a \lstinline$do$ block, for example an invocation of another process. \comment{Shall we say this later and list the commands too? from xanna: this sentence made more sense when we had an entire section discussing process commands because it mentioned whether each process command needed to be the last one or not. maybe for this version we just take this out because i don't think we will be going in to that much detail}
 
 %A process definition may pattern match on instances of sequential types with different process body definitions. 
 
