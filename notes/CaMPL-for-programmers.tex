@@ -535,6 +535,7 @@ coprotocol S => CoPassMessages (A| ) =
     CoCloseCh :: S => TopBot
 \end{lstlisting}
 Notice that the state variable \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side like in the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ definitions.
+We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
 
 We can write \lstinline$send_to_dest1$ as follows:
 \begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
