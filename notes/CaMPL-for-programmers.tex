@@ -187,11 +187,11 @@ Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
 \subsection{Channel polarities}
 \label{Sec:polarities}
 
-CaMPL processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity 
+Recall that processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity 
 channels. Different polarities refer to different ends of a channel. 
 
 Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline$ch$.
-Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (on the right end):
+Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (on the right end).
 %, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
 In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
 
@@ -208,6 +208,7 @@ For example, suppose we do not consider polarity and rewrite our code as follows
  		client( | ch )		-- client process has channel ch (no defined polarity)
  		server( | ch )		-- server process has channel ch (no defined polarity)
 \end{lstlisting}
+
 We know that we want \lstinline$ch$ to have a type indicating that a message should be sent and received on it.
 %The processes know the type of the channel, but they can't definitively know whether they should be the one to send or receive the message.
 However, if both processes are defined to first receive a message and then reply, they will both become stuck waiting for a message to be sent by the other:
@@ -228,7 +229,7 @@ proc server =
 \end{lstlisting}
 This is precisely what a deadlock is.
 In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
-Each built-in channel type in CaMPL that allows interaction specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
+Each channel type specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
 
 %
 %If we have polarities and types and we enforce that processes can only be connected if they use channels with the same type and opposite polarity, we can specify that \(p\) uses \(c\) with output polarity, \(q\) uses \(c\) with input polarity, and \(c\) has a type indicating that messages travel from input to output polarity.
