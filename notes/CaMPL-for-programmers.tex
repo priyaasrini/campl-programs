@@ -558,6 +558,67 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
  From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
 
 
+\section{Controlled non-determinism}
+% priyaa suggested that we use the fork/split code and modify it for the discussion on races.
+Recall Example~\ref{ex:clientfork} in which \lstinline$two_clients$ forks into two \lstinline$client$ processes and \lstinline$server$ splits the channel to interact with both new \lstinline$client$ processes.
+Consider a modified version of \lstinline$server$ which echos the messages back to each \lstinline$client$:
+%\begin{lstlisting} [label=ex:detserver, caption=Client forks to create two new processes] 
+\begin{lstlisting}
+proc server = | two_ch => -> do
+		split two_ch into ch1, ch2		
+		on ch1 do											
+			get msg											-- waits for message from first client
+			put msg											-- echos first client
+			close
+		on ch2 do											-- then interacts with second client
+			get msg						
+			put msg						
+			halt			
+\end{lstlisting}
+Observe that \lstinline$server$ must wait for the message from the first client before it can begin its interaction with the second client.
+This means that the second client is also waiting for the first client in order to receive its echo from \lstinline$server$ and continue its execution.
+This is not what we imagine when we think of a concurrent system!
+
+To allow \lstinline$server$ to change the order in which it interacts with the two clients, we need \lstinline$server$ to be a non-deterministic process that dynamically adapts its execution at run-time depending on which client it receives a message from first.
+This kind of controlled non-determinism can be achieved using the \lstinline$race$ process command.
+We can modify \lstinline$server$ to hold a race as follows:
+\begin{lstlisting} [label=ex:nondetserver, caption=Server echos each client in the order they send messages] 
+proc server = | two_ch => -> do
+		split two_ch into ch1, ch2		
+		race												-- controlled non-determinism via a race
+			ch1 -> do									-- first client wins
+				on ch1 do								-- interacts with first client
+					get msg								
+					put msg						
+					close
+				on ch2 do								-- then interacts with second client
+					get msg						
+					put msg						
+					halt		
+			ch2 -> do									-- second client wins
+				on ch2 do								-- interacts with second client
+					get msg								
+					put msg						
+					close
+				on ch1 do								-- then interacts with first client
+					get msg						
+					put msg						
+					halt			
+\end{lstlisting}
+Races can be held for any number of channels on which the process is waiting for messages.
+In the above example, the \lstinline$race$ on line 3 consists of channels \lstinline$ch1$ and \lstinline$ch2$ as indicated by lines 4 and 13, respectively.
+A process body is defined for each channel in the race, and the process will execute according to the winning channel's corresponding process body. 
+In the above example, the process body that will execute if \lstinline$ch1$ wins is defined on lines 4 - 12, and the process body for \lstinline$ch2$ is defined on lines 13 -21.
+Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
+The \lstinline$race$ command must be the last command in a process block.
+
+The type signature of both versions of \lstinline$server$ would be the same because the interaction on  \lstinline$two_ch$ is the same.
+The only difference between the two versions is the order in which the steps of the interaction take place.
+
+
+\section{Higher-order message passing}
+
+
 \section{Discussion and future work}
 
 Races, Higher order message passing
