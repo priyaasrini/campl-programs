@@ -17,7 +17,7 @@
 
 \section{Introduction}
 
-The Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing. The type system of CaMPL originates from Cockett and Pastro’s paper “The Logic of Message Passing” in which the primary motivation was to define a concurrent analogue of the Curry-Howard-Lambek correspondence for functional programming \cite{CoP07}. 
+Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing. The type system of CaMPL originates from Cockett and Pastro’s paper “The Logic of Message Passing” in which the primary motivation was to define a concurrent analogue of the Curry-Howard-Lambek correspondence for functional programming \cite{CoP07}. 
 
 Cockett and Pastro described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a 
 concurrent part, called the message-passing logic, in which concurrent processes pass messages
@@ -44,7 +44,7 @@ and that we will mention things like there is a beautiful type system and that w
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$. 
-The \lstinline$console$ channel is of type \lstinline$Console$ which is a special channel type hard-coded in the compiler to connect any CaMPL program to the terminal from which it is run.
+The \lstinline$console$ channel is of type \lstinline$Console$ which is a special channel type built-in to the compiler to connect any CaMPL program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc helloworld :: | Console => = 
@@ -84,7 +84,7 @@ The main process will create \lstinline$client$ and \lstinline$server$ processes
  		client( | => ch )	-- creates client process
  		server( | ch => )	-- creates server process
 \end{lstlisting}
-The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions. We will discuss channel types in Section \ref{}.%We can express the program structure in a diagram as follows:
+The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions. We will discuss channel types in Section~\ref{Sec:channeltypes}.%We can express the program structure in a diagram as follows:
 %\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
 We can define the  \lstinline$client$ process as follows:
@@ -97,7 +97,7 @@ proc client =
 			halt
 \end{lstlisting}
 The client process has a (output) channel \lstinline$ch$ which connects it to the server.
-It sends its message using \lstinline$put$, and it receives the server's echo using \lstinline$get$.
+It sends its message using a \lstinline$put$ command, and it receives the server's echo using a \lstinline$get$ command.
 Then, it uses \lstinline$halt$ to close the channel with the server and halt.
 %For each message it sends to the server, it will first \texttt{hput} the \texttt{EchoSend} handle to indicate it has another message, then \texttt{put} its message to send it, and finally {\tt get} the server's echo. 
 %After it sends all its messages, it will send the \texttt{EchoClose} handle and halt.
@@ -120,7 +120,7 @@ These are simple programs that exemplify how CaMPL programs are written.
 In fact, running the second program does not produce any observable effects since none of the processes are connected to the outside world.
 %An alternate version of the program, which takes user input and echos it to the console rather than back to the client, is available in Appendix \ref{prog:echo}. 
 A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?'' 
-We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
+We hope that these questions motivate the reader to continue on to the more complicated examples in the remaining sections of this paper.
 
 %\section{Concurrent type system}
 
