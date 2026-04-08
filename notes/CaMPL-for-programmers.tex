@@ -663,12 +663,21 @@ To encode a process, the built-in \lstinline$store$ function is used.
 This function takes either the name of a previously defined process, as in the above example on line 4, or it takes an anonymous process as an in-line process definition.
 
 To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
-To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the type signature in the \lstinline$Store$ type.
+To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
 
 
 \section{Discussion and future work}
+%Races, Higher order message passing
 
-Races, Higher order message passing
+The CaMPL project is still very much in progress.
+On the implementation side, we are actively working on a paper that more comprehensively documents the details of the features that have been covered so far.
+We are also working on updating the compiler to add the ability for processes to race protocol/coprotocol handles.
+We would also like to make it possible to have a CaMPL program in which the processes are distributed over multiple devices that are connected by a network.
+
+On the categorical semantics side, we are working on defining a precise semantics for non-determinism and considering how a non-deterministic semantics interacts with the other programming features.
+We are also considering how a categorical semantics could be defined for message passing between quantum processes.
+This would contribute to the development of programming languages for distributed quantum computing over a ``quantum internet.''
+
 
 \printbibliography
 
