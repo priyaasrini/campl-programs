@@ -4,7 +4,9 @@
 \addbibresource{refs.bib}
 \linespread{1.11}
 
-\title{Categorical Message Passing Language (CaMPL)}
+\title{Categorical Message Passing Language (CaMPL) \\ \comment{and its Semantics}}
+% this is what the title i sent to them was. i am sure it could be changed if needed
+
 \author{
     Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little\thanks{University of Calgary} \and \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology. The author was funded by...}}
 
@@ -24,28 +26,47 @@ We will briefly explore the categorical semantics of CaMPL, and the focus of thi
 
 \section{Introduction}
 
-Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing. The type system of CaMPL originates from the Cockett and Pastro’s paper titled “The Logic of Message Passing”.The primary motivation of this paper was to define a concurrent analogue of the Curry-Howard-Lambek correspondence for functional programming \cite{CoP07}. 
+Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing. 
+The type system of CaMPL originates from Cockett and Pastro’s paper titled “The Logic of Message Passing” \cite{CoP07}.
+The primary result of this paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. 
+They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
+In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels. 
 
-Cockett and Pastro described a two-tiered logic consisting of a sequential part --- called the message logic --- that interacts with a 
-concurrent part --- called the message-passing logic --- in which concurrent processes pass messages
-of sequential data back and forth along communication channels. The categorical semantics of the message-passing logic is
-given by a "linear actegory" in which the category of messages and sequential functions acts
-on the category of communication channels and concurrent processes in two directions (sending messages towards the left or the right of the sender). 
+The categorical semantics Cockett and Pastro described for message passing was given by a {\em linear actegory} in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
+The covariant action passes messages in the forward direction, which we describe in this article as ``left to right,'' and the contravariant action passes messages in the backward direction, which we describe as ``right to left.''
+%\comment{What is the advantage having a mathematical underpinning for CaMPL?}
+% deadlocks and livelock
+%CaMPL programs are composed of multiple concurrent processes which communicate with each other by passing messages along communication channels. 
+%At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of processes which are nodes of the graph and channels which are the edges of the graph.
+% The property of acyclicity at run-time is guaranteed by CaMPL's type system.
+A linear actegory minimally consists of a monoidal category acting covariantly and contravariantly on a linearly distributive category (LDC) such that certain coherences are satisfied \cite{CoP07, CS97}.
 
-\comment{What is the advantage having a mathematical underpinning for CaMPL?}
+The concurrent type system obtained using this categorical semantics has the property that processes can never be connected by channels to form a cycle \cite{Ly18}.
+That is, at any instance in run-time, the topology of a program is a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
+This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
+The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, are not possible.
+Thus, programs that strictly follow this formal semantics have guaranteed deadlock and livelock freedom.
+Similar to the sequential case, when one aims to prove termination, the livelock freedom guarantee can only be made when general recursion is not allowed.
+However, deadlock freedom is still guaranteed.
 
-\comment{Write a little paragraph how the language implementation started.}
+%\comment{Write a little paragraph how the language implementation started.}
+% history of work on campl prashant thesis, jared thesis, melika thesis,
+Categorical Message Passing Language (CaMPL) is a proof-of-concept of a programming language built from this categorical semantics.
+The first implementation of the compiler was written by Kumar as described in \cite{Ku18}.
+This version implemented the core programming features of the sequential part, concurrent part, and message passing.
+It added features to define custom concurrent data types called protocols and coprotocols.
+The compiler performed both a type inference and type check at compile-time to ensure the compiled program followed the type system. 
+The second implementation of the compiler was written by Pon as described in \cite{Po21, Po22}.
+This version re-implemented the existing features and added controlled non-determinism in the form of ``races.''
+Changes to the categorical semantics to include non-determinism were outlined by Little in \cite{xanna, xanna2}.
+The most recent feature added to the compiler was higher-order message passing which allows processes to send messages that contain encoded processes to be decoded and invoked when they are received.
+The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}.
 
-CaMPL programs are composed of multiple concurrent processes which communicate
-with each other by passing messages along communication channels. At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of processes which are nodes of the graph and channels which are the edges of the graph. The property of acyclicity at run-time is guaranteed by CaMPL's type system.
-The current implementation of the CaMPL compiler performs both a type inference and type check at compile-time to ensure the compiled program follows the type system and will not deadlock or livelock. In this article, we introduce the features of CaMPL that constitute its concurrent type system and ensure that this guarantee can be made.
-
-
-\note{Xanna note:
-i am assuming introduction will establish justification for why we have submitted this paper to this venue.
-and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
-
-{\bf Notation and style:} We use font with \tc{this style} whenever we introduce a CaMPL terminology. 
+In this article, we use examples of CaMPL code to introduce the concurrent type system and the above three additional features.
+%\note{Xanna note:
+%i am assuming introduction will establish justification for why we have submitted this paper to this venue.
+%and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
+{\bf Notation and style:} We will use \tc{this style} whenever we introduce CaMPL terminology. 
 
 \section{A brief overview of CaMPL}
 
