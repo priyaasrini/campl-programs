@@ -13,6 +13,10 @@
 \maketitle
 
 \begin{abstract} In transit... (Should we reuse elements of the talk abstract?)
+Talk abs:
+Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language whose semantics is in category theory. Its core programming feature is message passing along typed communication channels between concurrent processes. CaMPL also supports controlled non-determinism via 'races' which allow processes to adapt dynamically while they are running, higher-order processes which pass other processes as messages, and custom channel datatypes called protocols and coprotocols which allow one to define infinite channel types or implement session types.
+Similar to the Curry-Howard-Lambek correspondence in sequential programming, the existence of a three-way correspondence between message passing, linear actegories, and poly-actegories has been established. The semantics of core CaMPL is defined using this correspondence. The type system given by the semantics ensures that a formal CaMPL program, i.e. one which does not allow general recursion, will never become deadlocked or livelocked. 
+We will briefly explore the categorical semantics of CaMPL, and the focus of this presentation will be on code demonstrations to showcase the above features.
 \end{abstract}
 
 \section{Introduction}
