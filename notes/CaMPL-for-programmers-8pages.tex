@@ -215,15 +215,15 @@ We hope that these questions motivate the reader to continue on to the more comp
 \label{Sec:Processes}
 
 Processes are the main actors of a CaMPL program. % i am not sure how i feel about ``main actors'' it's a bit vauge and informal, but i think it's fine.
-A process is specified by the keyword \lstinline$proc$ followed by a process name, an optional type signature, and lists of the variables and channels used by the process.
+A process is specified by the keyword \lstinline$proc$ followed by a process name, an optional type signature, and lists of its variables and channels.
 
 In Example \ref{ex:helloworld}, the type signature of process \lstinline$helloworld$ was "\lstinline$ :: | Console => $" which indicates that it has access to one channel of type \lstinline$Console$.
 This channel is given the name \lstinline$console$ as indicated by "\lstinline$ = | console => $" on the next line.
-We will discuss type signatures in more detail in Section~\ref{Sec:channeltypes} on channel types.
+We will discuss type signatures in Section~\ref{Sec:channeltypes}.
 
 A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. This process is the main process and the only process which can create \tc{service channels}, such as the \lstinline$Console$, for communication with the outside world.
 
-For now, we will consider the process definition of \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
+Consider the process definition of \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
 
@@ -237,7 +237,7 @@ proc broadcast =
 		close dest1
 		halt dest2  -- the last channel is closed with halt command
 \end{lstlisting}
-Observe that line 2 consists of three comma-seperated lists: 1)~variables, e.g. \lstinline$confirmation_msg$, 2)~input polarity channels, e.g. \lstinline$source, dest1$, and 3)~output polarity channels, e.g. \lstinline$dest2$.
+Observe that line 2 consists of three comma-seperated lists: 1)~variables, e.g. \lstinline$confirmation_msg$, 2)~input polarity channels, e.g. \lstinline$source,  dest1$, and 3)~output polarity channels, e.g. \lstinline$dest2$.
 \tc{Variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
 The channels left of \lstinline$=>$ are \tc{input polarity} channels.
 The channels right of \lstinline$=>$ are \tc{output polarity} channels.
