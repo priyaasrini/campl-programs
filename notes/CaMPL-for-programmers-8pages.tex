@@ -5,7 +5,7 @@
 \linespread{1.11}
 
 \title{Categorical Message Passing Language (CaMPL) \\ \comment{and its Semantics}}
-% this is what the title i sent to them was. i am sure it could be changed if needed
+% this is what the title i sent to them was. i am sure it could be changed if needed --- We can try changing and if they complain we change it to the original :D 
 
 \author{
     Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little\thanks{University of Calgary} \and \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology. The author was funded by...}}
@@ -194,7 +194,7 @@ This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 \section{Channels}
 \label{Sec:Channels}
 
-A process \tc{uses} process commands on a channel to interact with the process plugged to the same channel at the other end. In order to \lstinline$plug$ two processes, they both must have a channel of same type but of opposite polarities.The type of a channel defines the interaction that the processes will have on it, and the polarity of the channel defines each process's role in the interaction. Thus, the process commands that a process can use on a channel depend on both the channel's type and polarity. 
+A process \tc{uses} process commands on a channel to interact with the process plugged to the same channel at the other end. In order to \lstinline$plug$ two processes, they both must have a channel of "same type but opposite polarities". The type of a channel defines the interaction that the processes will have over it, and the polarity of the channel defines each process's role in the interaction. Thus, the process commands that a process can use on a channel depend on both channel type and polarity. 
 
 %Two processes can be \lstinline$plug$ged together if they both use a channel with the same type but opposite polarities. We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
 
@@ -221,52 +221,35 @@ The type of a channel can either be explicitly defined in the type signature of 
 
 \subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 
-As mentioned in Section~\ref{Sec:Processes}, processes can be defined with an optional type 
-signature that indicates the types of the variables and channels it uses.
-We will modify Example~\ref{ex:serverecho} and include the type signatures of the processes in the modified version.
-We will define \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to the client instead of echoing the message:
-\begin{lstlisting}[label=ex:serverid, caption=Server replies to Client with server id] 
-proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
-	| => ch ->
-		on ch do 
-			put "Hello Server!"	
-			get int					
-			halt
+As mentioned in Section~\ref{Sec:Processes}, process definitions may include an optional type 
+signature that indicates the types of the variables and channels it uses. Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.The names of the variables and channels are bound to the types in the order they appear in the signature.
+
+We shall now modify Example~\ref{ex:serverecho} to include the type signatures of the processes.
+To effectively illustrate the types, we redefine the \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to the client instead of an echo:
+\begin{lstlisting}[label=ex:serverid-run, caption=Server replies to Client with server id] 
 proc server :: Int | Put([Char]|Get(Int|TopBot)) => = 	-- type signature
 	server_id | ch => ->				-- new server_id variable
 		on ch do
 			get msg							
 			put server_id						-- sends server_id back
 			halt
- proc run :: | => = 					-- type signature
- 	| => -> plug					
- 		client( | => ch )		
- 		server( 1234 | ch => )		-- server process created with server_id
 \end{lstlisting}
-Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
-The names of the variables and channels are bound to the types in the order they appear.
-We can observe that the type signature of \lstinline$run$ does not contain any types because it is not using any variables or any channels to interact with other processes.
-%It creates the channel \lstinline$ch$ in \lstinline$plug$ command to connect the processes.
 
-We can also observe that the type of \lstinline$ch$ is \lstinline$Put([Char]|  Get(Int| TopBot))$.
-Recall that the type of the channel defines the interaction that the processes will have on it.
-%, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
-In this case, the interaction is that, first, a message of type \lstinline$[Char]$, i.e. a string, will travel from left to right (\lstinline$client$ to \lstinline$server$), second, a message of type  \lstinline$Int$ will travel from right to left (\lstinline$server$ to \lstinline$client$), and finally, the channel will be closed when the processes \lstinline$halt$.
-From this we can see that a channel of type \lstinline$Put$ indicates messages will travel from left to right, type \lstinline$Get$ indicates messages will travel from right to left, and type \lstinline$TopBot$ indicates the interaction is over and the channel will be closed.
+The type of \lstinline$ch$ is \lstinline$Put([Char]|  Get(Int| TopBot))$. Note that the type is constructed constructed inductively. The outer-most layer \lstinline$Put([Char] | ...)$ is the first step of the interaction. In case of \lstinline$Put$ type, message will travel from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, the server uses a \lstinline$get$ command to receive the message. In the next step, the channel proceeds with type \lstinline$Get(Int| ...)$, this means that the message will travel from the input polarity to the output polarity. Accordingly, in line 5, the server uses a \lstinline$put$ command to send \lstinline$server_id$. 
 
-We can also notice that channel types are constructed inductively.
-The outer-most layer is the first step of the interaction and the inner-most layer is the final step.
-The base case is the \lstinline$TopBot$ type because it is always the final step to  \lstinline$close$ a channel or to \lstinline$halt$ by closing the final open channel.
-The other types are inductive cases that each specify one step of the overall interaction.
+The inner-most layer is the final step. The base case is the \lstinline$TopBot$ type because it is always the final step to  \lstinline$close$ a channel or to \lstinline$halt$ by closing the final open channel.
+
+For complete version of Example \ref{ex:serverid-run}, see Appendix \ref{Sec:ex-put-get}.
 
 \subsubsection{Tensor and Par types}
 
-In our next example, we will consider a channel type that {\em bundles} two other channels together.
+Following inductive types, we will consider channel with compound types, that is, a channel type that {\em bundles} two (or more) channels together.
+
 The bundled channel types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
 By unbundling the channels, two new channels are created and passed into two new processes.
 
 We will again modify Example~\ref{ex:serverecho} to demonstrate the bundling and unbundling of channels.
-We will define another process \lstinline$two_clients$ that unbundles a channel and forks into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process:
+We will define another process \lstinline$two_clients$ that unbundles its output channel and \lstinline$fork$s into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process:
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes] 
 proc client :: | => Put([Char]|TopBot) = 		
 	| => ch ->
@@ -565,6 +548,9 @@ proc server =
 This is precisely what a deadlock is.
 In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
 Each channel type specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
+
+\section{Example: \lstinline$Put$ and \lstinline$Get$ types}
+\label{Sec:ex-put-get}
 
 
 \section{Summary of built-in types}
