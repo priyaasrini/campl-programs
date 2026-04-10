@@ -22,18 +22,16 @@
 \lstdefinelanguage[2026]{CaMPL}{%
   keywords={},%
   % Use otherkeywords for symbols
-  otherkeywords={->,=>,::,|},%
-  % otherkeywords={[3](*),(+),},%
+  otherkeywords={->,=>,::,|,\,},%
   % Use keywords [1] for keywords -- Can we have a seperate color scheme for process commands
   morekeywords={[1]data,codata,protocol,coprotocol,proc,%
-    do,on,%
-    %hput,hcase,put,get,halt,plug,%
-    %with,into,%
+    do,on,with,into,%
   },%
   % Use keywords [2] for types
-  morekeywords={[2]Console,},
-  morekeywords={[3]Put,Get,TopBot,Neg,Store},
-  morekeywords={[4]hput,hcase,put,get,halt,plug,close,fork,split,neg,store,use,race},
+  morekeywords={[2]Console},%
+  morekeywords={[3]Put,Get,TopBot,Neg,Store},%
+  % morekeywords={[3](*),(+)},% Note: this does not work
+  morekeywords={[4]hput,hcase,put,get,halt,plug,close,fork,split,neg,store,use,race},%
   sensitive,%
   morecomment=[l]--,%
   morecomment=[n]{\{-}{-\}},%
