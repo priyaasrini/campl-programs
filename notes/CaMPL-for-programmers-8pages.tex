@@ -284,21 +284,17 @@ Then, we would use the other bundled channel type, \lstinline$(+)$, which is dua
 \label{Sec:protocols}
 
 We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
-Consider a modified version of \lstinline$broadcast$ from Example \ref{ex:broadcastmsg} in which the destination channels all have the same polarity and type:
-% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels (without confirmation)]
-proc broadcast :: | Put([Char]|TopBot)
-	=> Put([Char]|TopBot), Put([Char]|TopBot) =
-	 | source => dest1, dest2 -> do
+Consider the following example of a process called \lstinline$forward$:
+\begin{lstlisting}[label=ex:forward, caption=Process that forwards a message]
+proc forward :: | Put([Char]|TopBot), Get([Char]|TopBot) => =
+	 | source, dest => -> do
 		get msg on source								-- receive message from source
-		put msg on dest1								-- broadcast message to other process
-		put msg on dest2
+		put msg on dest									-- forward message to dest
 		close source										-- close all channels and halt
-		close dest1
-		halt dest2
+		halt dest
 \end{lstlisting}
-This process is only able to broadcast a single message from the source.
-To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ to \lstinline$TopBot$.
+This process is only able to forward a single message from the source.
+To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called {\em protocols} and {\em coprotocols}, which can be recursively defined.
 
 Let us consider the following example of a protocol called \lstinline$PassMessages$:
@@ -312,12 +308,10 @@ The two {\em handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the ty
 In general, handles represent the set of valid interactions that may take place on a channel.
 They can be thought of as session types.
 
-%\comment{see if we can make this part more concise}
 When we use \lstinline$PassMessages$ as a channel type, we will instantiate the sequential type variable \lstinline$A$.
-In the case of  \lstinline$broadcast$, we will use the channel type \lstinline$PassMessages([Char]| )$ to pass strings.
+In the case of  \lstinline$forward$, an arbitrary number of strings will be passed on \lstinline$source$, so we will use the channel type \lstinline$PassMessages([Char]| )$.
 %
-This protocol does not use any concurrent type variables, but if it did, the list of the concurrent type variables would be on the right of the bar next to \lstinline$A$.
-For example, if it took a concurrent type variable \lstinline$X$, we would have \lstinline$PassMessages(A| X)$.
+If this protocol used concurrent type variables, they would be listed to the right of the bar, e.g. a concurrent type variable \lstinline$X$ would appear as \lstinline$PassMessages(A| X)$.
 %
 The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character.
 
@@ -326,39 +320,8 @@ The only difference between protocols and coprotocols is the direction that hand
 For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
 This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
 
-We can further modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ protocol as follows:
-\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)]
-proc broadcast :: | PassMessages([Char]| )
-	=> PassMessages([Char]| ), PassMessages([Char]| ) =
-	 | source => dest1, dest2 -> do
-		hcase source of					-- check whether there is another message
-			SendMsg -> do
-				get msg on source		-- receive message
-				on dest1 do					-- broadcast message to other processes
-					hput SendMsg			-- indicate there is another message
-					put msg						-- send that message
-				on dest2 do
-					hput SendMsg
-					put msg
-				broadcast( | source => dest1, dest2) -- recurse
-			CloseCh -> do					-- close all channels and halt
-				close source
-				on dest1 do
-					hput CloseCh			-- indicate source is finished
-					close							-- close channel
-				on dest2 do
-					hput CloseCh
-					halt
-\end{lstlisting}
-Since protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, \lstinline$broadcast$ is receiving handles on \lstinline$source$ and sending handles on its destination channels.
-A handle is sent on a channel using \lstinline$hput$ which {\em activates} the channel and sets its type as specified by the handle.
-A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
-
-Originally,  \lstinline$dest1$ was an input polarity channel, so the process on the other end of the channel, which we will refer to as  \lstinline$proc1$, was using the output polarity end.
-Now, \lstinline$proc1$ will need to use the input polarity end.
-Suppose we do not want to change \lstinline$proc1$ to use the input polarity end.
-Then, we can imagine that this output channel \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that forwards messages to the final destination \lstinline$proc1$.
-Coprotocols are the dual of protocols, so \lstinline$send_to_dest1$ can use a coprotocol version of \lstinline$PassMessages$ to forward the messages to \lstinline$proc1$.
+Since \lstinline$forward$ uses \lstinline$dest$ to forward every message it receives, we also need to pass an arbitrary number of strings on a \lstinline$Get$ channel.
+Furthermore, we want handles to travel in the same direction as the messages, so we can use a coprotocol version of \lstinline$PassMessages$ to forward the messages on \lstinline$dest$.
 We can define a coprotocol \lstinline$CoPassMessages$ as follows:
  \begin{lstlisting}
 coprotocol S => CoPassMessages (A| ) =
@@ -368,27 +331,28 @@ coprotocol S => CoPassMessages (A| ) =
 Notice that the state variable \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side in \lstinline$PassMessages$.
 We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
 
-We can write \lstinline$send_to_dest1$ as follows:
-\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel]
-proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
-	| source, dest1 => ->
+We can modify \lstinline$forward$ to use \lstinline$PassMessages$ and \lstinline$CoPassMessages$ as follows:
+\begin{lstlisting} [label=ex:forwardmsgs, caption=Process that forwards an arbitrary number of messages]
+proc forward :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest => ->
 		hcase source of					-- check whether there is another message
-			SendMsg -> do
+			SendMsg -> do			-- protocol handle that indicates there is
 				get msg on source
-				on dest1 do
-					hput CoSendMsg		-- use coprotocol handle
+				on dest do
+					hput CoSendMsg		-- use coprotocol handle to forward msg
 					put msg
-				send_to_dest1( | source, dest1 => ) -- recurse
-			CloseCh -> do
+				forward( | source, dest => ) -- recurse
+			CloseCh -> do			-- protocol handle that indicates source is done
 				close source
-				on dest1 do
-					hput CoCloseCh
+				on dest do
+					hput CoCloseCh	-- use coprotocol handle to indicate source is done
 					halt
-
  \end{lstlisting}
+Protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, so \lstinline$forward$ is receiving handles on \lstinline$source$.
+Coprotocol handles travel in the same direction as messages on a \lstinline$Get$ channel, so \lstinline$forward$ is sending handles on \lstinline$dest$.
+A handle is sent on a channel using \lstinline$hput$ which {\em activates} the channel and sets its type as specified by the handle.
+A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
  From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature.
-
-
 
 \section{Controlled non-determinism}
 %\comment{We could potentially move this paragraph the code, and the paragraph below the code to fork-split.}
