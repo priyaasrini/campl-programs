@@ -14,10 +14,7 @@
 
 \maketitle
 
-\begin{abstract} In transit... (Should we reuse elements of the talk abstract?)
-Talk abs:
-
-Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language whose semantics is in category theory. Its core programming feature is message passing along typed communication channels between concurrent processes. CaMPL also supports controlled non-determinism via 'races' which allow processes to adapt dynamically while they are running, higher-order processes which pass other processes as messages, and custom channel datatypes called protocols and coprotocols which allow one to define infinite channel types or implement session types.
+\begin{abstract} Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language whose semantics is in category theory. Its core programming feature is message passing along typed communication channels between concurrent processes. CaMPL also supports controlled non-determinism via 'races' which allow processes to adapt dynamically while they are running, higher-order processes which pass other processes as messages, and custom channel datatypes called protocols and coprotocols which allow one to define infinite channel types or implement session types.
 
 Similar to the Curry-Howard-Lambek correspondence in sequential programming, the existence of a three-way correspondence between message passing, linear actegories, and poly-actegories has been established. The semantics of core CaMPL is defined using this correspondence. The type system given by the semantics ensures that a formal CaMPL program, i.e. one which does not allow general recursion, will never become deadlocked or livelocked. 
 
@@ -115,7 +112,7 @@ The main process will create \lstinline$client$ and \lstinline$server$ processes
 The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions. We will discuss channel types in Section~\ref{Sec:channeltypes}.%We can express the program structure in a diagram as follows:
 %\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
-We can define the  \lstinline$client$ process as follows:
+We can define  interacting \lstinline$client$ and server processes as follows:
 \begin{lstlisting}
 proc client = 
 	| => ch ->
@@ -124,13 +121,12 @@ proc client =
 			get echo						-- receives server's echo  
 			halt
 \end{lstlisting}
-The client process has a (output) channel \lstinline$ch$ which connects it to the server.
-It sends its message using a \lstinline$put$ command, and it receives the server's echo using a \lstinline$get$ command.
+The client process has an output channel \lstinline$ch$ which connects it to the server.
+It sends its message with \lstinline$put$, and it receives the server's echo with \lstinline$get$.
 Then, it uses \lstinline$halt$ to close the channel with the server and halt.
 %For each message it sends to the server, it will first \texttt{hput} the \texttt{EchoSend} handle to indicate it has another message, then \texttt{put} its message to send it, and finally {\tt get} the server's echo. 
 %After it sends all its messages, it will send the \texttt{EchoClose} handle and halt.
 
-We can define the  \lstinline$server$ process as follows:
 \begin{lstlisting}
 proc server =  
 	| ch => ->
@@ -139,8 +135,9 @@ proc server =
 			put msg					-- sends message back
 			halt
 \end{lstlisting}	
-The server process has a (input) channel \lstinline$ch$ which connects it to the client. 
-It listens to the client and receives the client's message using \lstinline$get$, echos the message back using \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
+The server process has an input channel \lstinline$ch$ which connects it to the client. 
+It listens to the client and receives the client's message with \lstinline$get$, echos the message back with \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
+
 %Since the server doesn't know how many messages the client is going to send, it calls itself recursively to receive the next handle. 
 %If the handle received is \texttt{EchoClose}, the client is finished sending messages, so it halts. 
 
@@ -148,8 +145,7 @@ These are simple programs that exemplify how CaMPL programs are written.
 In fact, running the second program does not produce any observable effects since none of the processes are connected to the outside world.
 %An alternate version of the program, which takes user input and echos it to the console rather than back to the client, is available in Appendix \ref{prog:echo}. 
 A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?'' 
-We hope that these questions motivate the reader to continue on to the more complicated examples in the remaining sections of this paper.
-
+We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
 
 
 \section{Processes}
@@ -183,7 +179,7 @@ Observe that line 2 of the definition of \lstinline$broadcast$ consists of three
 The \tc{variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
 The channels on the left of \lstinline$ =>$ are called \tc{input polarity} channels. 
 The channels on the right of \lstinline$ =>$ are called \tc{output polarity} channels. 
-Lines 3 - 11 constitute the \tc{process body}.
+Lines 3 - 9 constitute the \tc{process body}.
 We say that the channels listed in line 2 are ``in scope'' of the process body which means that the process can perform operations, called \tc{process commands}, on these channels.
 
 The process body may be a single process command, as shown in the \lstinline$run$ processes in Examples~\ref{ex:helloworld} and~\ref{ex:serverecho}, or a \lstinline$do$ block of process commands, as shown in Example \ref{ex:broadcastmsg}. 
@@ -198,62 +194,23 @@ This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 \section{Channels}
 \label{Sec:Channels}
 
-A process \tc{uses} a channel to interact with another process connected to the other end of the channel.
-The type of a channel defines the interaction that the processes will have on it, and the polarity of the channel defines each process's role in the interaction. 
-Thus, the process commands that a process can use on a channel depend on both the channel's type and polarity. 
-Two processes can be \lstinline$plug$ged together if they both use a channel with the same type but opposite polarities. 
-We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.
-Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.
-Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
+A process \tc{uses} process commands on a channel to interact with the process plugged to the same channel at the other end. In order to \lstinline$plug$ two processes, they both must have a channel of same type but of opposite polarities.The type of a channel defines the interaction that the processes will have on it, and the polarity of the channel defines each process's role in the interaction. Thus, the process commands that a process can use on a channel depend on both the channel's type and polarity. 
+
+%Two processes can be \lstinline$plug$ged together if they both use a channel with the same type but opposite polarities. We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
 
 \subsection{Channel polarities}
 \label{Sec:polarities}
 
-Recall that processes are defined with two lists of {\em channels} that are in its scope: input polarity channels and output polarity 
-channels. Different polarities refer to different ends of a channel. 
+Recall that processes are defined with two lists of {\em channels} that are in its scope: 
+input polarity channels and output polarity 
+channels. Different polarities refer to different ends of a channel. In Example~\ref{ex:serverecho}, a \lstinline$client$ process and a \lstinline$server$ process are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (on the right end). 
+ 
+In the first communication round, \lstinline$client$ process uses the \lstinline$put$ command on its output polarity channel \lstinline$ch$ to send a message. Complementary to this \lstinline$put$, the server uses the \lstinline$get$ command on its  input polarity channel \lstinline$ch$ to receive the message.
 
-Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline$ch$.
-Observe that \lstinline$client$ uses \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (on the right end).
-%, i.e. the direction that messages will travel on the channel or the change in the topology of the process network that will occur.
-In this case, the interaction is that messages will travel from left to right (\lstinline$client$ to \lstinline$server$) and then in the opposite direction from right to left.
-%\comment{actually i think the discussion about types should not be here. we have not seen the Put or Get types yet.}
-The polarity of the channel defines the process's role in the interaction. 
-%To send or receive messages, the channel must be of type either \lstinline$Put$ or \lstinline$Get$.
-%%, i.e. sending the message or receiving the message.
-In this case, the process with the output polarity channel (on the left end) must use \lstinline$put$ and then \lstinline$get$, and the process with the input polarity channel (at the right end) must use \lstinline$get$ and then \lstinline$put$. 
-%We will explain the \lstinline$Put$ and \lstinline$Get$ types in Section \ref{Sec:channeltypes}.
+Without the use of polarities to distinguish their roles, both the client and the server may use a \lstinline$get$ command in the same communication round. Thus, they will both become stuck waiting for a message to be sent by the other causing deadlock. Defining the way a process uses a channel by both the type and polarity prevents such ambiguities enabling the compiler to identify such errors. For an illustrating example of such deadlock prevention see Appendix \ref{Sec: channel polarity deadlock prevention}.
 
-Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
-For example, suppose we do not consider polarity and rewrite our code as follows:
-\begin{lstlisting}[label=ex:ambiguityce, caption=Code without channel polarity (this code will not compile)] 
- proc run = 
- 	| => -> plug				-- connects processes by shared channel ch
- 		client( | ch )		-- client process has channel ch (no defined polarity)
- 		server( | ch )		-- server process has channel ch (no defined polarity)
-\end{lstlisting}
-
-We know that we want \lstinline$ch$ to have a type indicating that a message should be sent and received on it.
-%The processes know the type of the channel, but they can't definitively know whether they should be the one to send or receive the message.
-However, if both processes are defined to first receive a message and then reply, they will both become stuck waiting for a message to be sent by the other:
-\begin{lstlisting}
-proc client = 
-	| ch ->
-		on ch do 
-			get msg							-- receives server's message  
-			put "Hello Server!"	-- sends message to the server      
-			halt
-
-proc server =  
-	| ch ->
-		on ch do
-			get msg							-- receives client's message
-			put "Hello Client!"	-- sends message to client
-			halt
-\end{lstlisting}
-This is precisely what a deadlock is.
-In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
-Each channel type specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
-
+The reader may notice in Example~\ref{ex:serverecho} that the \lstinline$client$ (resp. \lstinline$server$) 
+uses the output (resp. input) channel \lstinline$ch$ to first send and then to receive a message. The type of the channel \lstinline$ch$ is inferred differently in each one of these steps. 
 
 \subsection{Built-in channel types}
 \label{Sec:channeltypes}
@@ -571,9 +528,45 @@ On the categorical semantics side, we are working on defining a precise semantic
 We are also considering how a categorical semantics could be defined for message passing between quantum processes.
 This would contribute to the development of programming languages for distributed quantum computing over a ``quantum internet.''
 
+\printbibliography
 
 
 \appendix
+
+\section{Channel polarity example}
+\label{Sec: channel polarity deadlock prevention}
+Defining the way a process uses a channel by both the type and polarity prevents ambiguity that can cause deadlocks.
+For example, suppose we do not consider polarity and rewrite our code as follows:
+\begin{lstlisting}[label=ex:ambiguityce, caption=Code without channel polarity (this code will not compile)] 
+ proc run = 
+ 	| => -> plug				-- connects processes by shared channel ch
+ 		client( | ch )		-- client process has channel ch (no defined polarity)
+ 		server( | ch )		-- server process has channel ch (no defined polarity)
+\end{lstlisting}
+
+We know that we want \lstinline$ch$ to have a type indicating that a message should be sent and received on it.
+%The processes know the type of the channel, but they can't definitively know whether they should be the one to send or receive the message.
+However, if both processes are defined to first receive a message and then reply, they will both become stuck waiting for a message to be sent by the other:
+\begin{lstlisting}
+proc client = 
+	| ch ->
+		on ch do 
+			get msg							-- receives server's message  
+			put "Hello Server!"	-- sends message to the server      
+			halt
+
+proc server =  
+	| ch ->
+		on ch do
+			get msg							-- receives client's message
+			put "Hello Client!"	-- sends message to client
+			halt
+\end{lstlisting}
+This is precisely what a deadlock is.
+In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
+Each channel type specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
+
+
 \section{Summary of built-in types}
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
@@ -591,7 +584,5 @@ The outer most layer is the first interaction that will take place, and after th
 ~ & ~
 \end{tabular}
 
-
-\printbibliography
 
 \end{document}
