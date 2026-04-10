@@ -467,7 +467,8 @@ If \lstinline$ch2$ wins, lines 15 will execute and \lstinline$server_determinist
 %The \lstinline$race$ command must be the last command in a process block.
 
 
-\section{ \textcolor{dkgreen}{PASS} Higher-order message passing}
+\iffalse
+\section{\textcolor{dkgreen}{PASS} Higher-order message passing}
 
 In sequential functional programming, higher-order functions take other functions as input or produce other functions as output.
 CaMPL's higher-order processes based on \comment{mathematical term} are a concurrent analogue of sequential higher order functions.
@@ -499,7 +500,7 @@ This function takes either the name of a previously defined process, as in the a
 
 To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
 To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
-
+\fi
 
 \section{Discussion and future work}
 %Races, Higher order message passing
@@ -577,8 +578,8 @@ proc run =
 
 
 \section{Summary of built-in types}
-%The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
-The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
+%The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Ku18}.
+The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Ku18}.
 We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
 Channel types that take another channel type as an argument are recursive cases.
 The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
