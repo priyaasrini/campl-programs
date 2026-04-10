@@ -223,10 +223,9 @@ We will discuss type signatures in Section~\ref{Sec:channeltypes}.
 
 A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. This process is the main process and the only process which can create \tc{service channels}, such as the \lstinline$Console$, for communication with the outside world.
 
-Consider the process definition of \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
+Consider the process definition of \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}.
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
-
+\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] 
 proc broadcast =
 	confirmation_msg | source, dest1 => dest2 -> do
 		get msg on source								-- receive message from source
