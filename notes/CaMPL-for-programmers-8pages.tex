@@ -265,7 +265,7 @@ Thus, the process commands that a process can use on a channel depend on both ch
 \subsection{Channel polarities}
 \label{Sec:polarities}
 
-Recall that processes are defined with two lists of channels in its scope:
+Recall that processes are defined with two lists of the channels in scope:
 input polarity channels and output polarity channels.
 Polarities refer to each \tc{end} of a channel. 
 
@@ -274,10 +274,10 @@ In the first step of the interaction, a message travels from left to right.
 The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to this, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
 In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently in each step.
 
-Without the use of polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time. 
-They would both become stuck waiting for a message to be sent by the other, causing a deadlock. 
+Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time. 
+They would both wait for a message to be sent by the other, causing a deadlock. 
 For an illustrating example of this, see Appendix \ref{Sec: channel polarity deadlock prevention}.
-Defining the way a process uses a channel by both its type and polarity prevents such ambiguities, enabling the compiler to identify such errors. 
+Defining how a process uses a channel by both type and polarity prevents ambiguity, enabling the compiler to identify such errors. 
 
 \subsection{Built-in channel types}
 \label{Sec:channeltypes}
