@@ -554,15 +554,16 @@ This is precisely what a deadlock is.
 In this simple example, it is easy to see the mistake, but in more complicated programs, the type system with polarities has the ability to catch these sorts of errors.
 Each channel type specifies the complementary roles of the processes on each end of the channel to ensure it is unambiguous.
 
-\section{Example: \lstinline$Put$ and \lstinline$Get$ types}
+% is there a way to make the lstinline change font size with the section header environment??
+\section{\lstinline$Put$ and \lstinline$Get$ types example}
 \label{Sec:ex-put-get}
 
 \begin{lstlisting}
-proc server :: Int | Put([Char]|Get(Int|TopBot)) => = -- type signature 
-  server_id | ch => -> -- new server_id variable
+proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		 -- type signature 
+  server_id | ch => -> 	-- new server_id variable
     on ch do 
         get msg
-        put server_id -- sends server_id back
+        put server_id		 -- sends server_id back
         halt
 
 proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
@@ -573,8 +574,8 @@ proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
 			halt
 
 proc run =
-	| => -> plug			-- connects processes by shared channel ch
-		client( | => ch )	-- creates client process
+	| => -> plug					-- connects processes by shared channel ch
+		client( | => ch )		-- creates client process
 		server( 5 | ch => )	-- creates server process
 \end{lstlisting}
 
