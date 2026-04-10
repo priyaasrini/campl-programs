@@ -604,6 +604,27 @@ Each channel type specifies the complementary roles of the processes on each end
 \section{Example: \lstinline$Put$ and \lstinline$Get$ types}
 \label{Sec:ex-put-get}
 
+\begin{lstlisting}
+proc server :: Int | Put([Char]|Get(Int|TopBot)) => = -- type signature 
+  server_id | ch => -> -- new server_id variable
+    on ch do 
+        get msg
+        put server_id -- sends server_id back
+        halt
+
+proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
+	| => ch ->
+		on ch do 
+			put "Hello Server!"	
+			get int					
+			halt
+
+proc run =
+	| => -> plug			-- connects processes by shared channel ch
+		client( | => ch )	-- creates client process
+		server( 5 | ch => )	-- creates server process
+\end{lstlisting}
+
 
 \section{Summary of built-in types}
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
