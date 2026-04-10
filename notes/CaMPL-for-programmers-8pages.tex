@@ -158,7 +158,7 @@ In this article, we use examples of CaMPL code to introduce the concurrent type 
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$.
-The \lstinline$console$ channel is of type \lstinline$Console$ which is a special channel type built-in to the compiler to connect any CaMPL program to the terminal from which it is run.
+The \lstinline$console$ channel has type \lstinline$Console$ which is a special channel type built-in to the compiler to connect any CaMPL program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc helloworld :: | Console => =
@@ -174,24 +174,10 @@ proc run =
 	| console => -> helloworld( | console => )  -- creates helloworld process
 \end{lstlisting}
 
-In Example \ref{ex:serverecho}, we will demonstrate communication between two user-defined processes: a client and a server.
-The client will send a string to the server, and the server will receive the string and echo it back.
-%When the client is finished sending messages to the server, the client and server will halt.
-
-%The processes will use a custom channel type called \texttt{Echo} for this interaction which is defined as follows:
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. protocol Echo => S =
-%			2.    EchoSend :: Put([Char] | Get([Char] | S)) => S
-%			3.    EchoClose :: TopBot => S
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center}
-%It provides a handle \texttt{EchoSend} which sets the channel type to indicate that, first, client will send and server will receive, second, server will send and client will receive, and finally, the channel will reset for another handle to be selected.
-%The handle \texttt{EchoClose} is used to indicate the client is finished sending messages and the channel should be closed.
-
-The main process will create \lstinline$client$ and \lstinline$server$ processes. It then uses a \tc{process command} called \lstinline$plug$ to connect them by a channel named \lstinline$ch$ as follows:
+In Example \ref{ex:serverecho}, we will demonstrate communication between two user-defined processes: \lstinline$client$ and \lstinline$server$. 
+The \lstinline$client$ will send a string to \lstinline$server$, and \lstinline$server$ will receive it and echo it back.
+%When \lstinline$client$ is finished sending messages, \lstinline$client$ and \lstinline$server$ will halt.
+The main process will create the \lstinline$client$ and \lstinline$server$ processes. It then uses a \tc{process command} called \lstinline$plug$ to connect them by a channel named \lstinline$ch$ as follows:
 \begin{lstlisting}[label=ex:serverecho, caption=Server echos Client's message]
 proc run =
 	| => -> plug				-- connects processes by shared channel ch
@@ -201,7 +187,10 @@ proc run =
 The CaMPL compiler will infer the type of \lstinline$ch$ using the process' definitions. We will discuss channel types in Section~\ref{Sec:channeltypes}.%We can express the program structure in a diagram as follows:
 %\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
 
-We can define  interacting \lstinline$client$ and server processes as follows:
+The client process has an output channel \lstinline$ch$ which connects it to the server.
+It sends its message with \lstinline$put$, and it receives the server's echo with \lstinline$get$.
+Then, it uses \lstinline$halt$ to close the channel with the server and halt.
+We can define \lstinline$client$ as follows:
 \begin{lstlisting}
 proc client =
 	| => ch ->
@@ -210,12 +199,10 @@ proc client =
 			get echo						-- receives server's echo
 			halt
 \end{lstlisting}
-The client process has an output channel \lstinline$ch$ which connects it to the server.
-It sends its message with \lstinline$put$, and it receives the server's echo with \lstinline$get$.
-Then, it uses \lstinline$halt$ to close the channel with the server and halt.
-%For each message it sends to the server, it will first \texttt{hput} the \texttt{EchoSend} handle to indicate it has another message, then \texttt{put} its message to send it, and finally {\tt get} the server's echo.
-%After it sends all its messages, it will send the \texttt{EchoClose} handle and halt.
 
+The server process has an input channel \lstinline$ch$ which connects it to the client.
+It listens to the client and receives the client's message with \lstinline$get$, echos the message back with \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
+We can define \lstinline$server$ as follows:
 \begin{lstlisting}
 proc server =
 	| ch => ->
@@ -224,15 +211,9 @@ proc server =
 			put msg					-- sends message back
 			halt
 \end{lstlisting}
-The server process has an input channel \lstinline$ch$ which connects it to the client.
-It listens to the client and receives the client's message with \lstinline$get$, echos the message back with \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
-
-%Since the server doesn't know how many messages the client is going to send, it calls itself recursively to receive the next handle.
-%If the handle received is \texttt{EchoClose}, the client is finished sending messages, so it halts.
 
 These are simple programs that exemplify how CaMPL programs are written.
 In fact, running the second program does not produce any observable effects since none of the processes are connected to the outside world.
-%An alternate version of the program, which takes user input and echos it to the console rather than back to the client, is available in Appendix \ref{prog:echo}.
 A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?''
 We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
 
