@@ -319,7 +319,7 @@ We will now consider compound channel types that bundle two channels together.
 The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the categorical semantics and allow changes to be made to the network of processes while ensuring no cycles are introduced.
 By unbundling the channels, two new channels are created and passed into two new processes.
 
-We will modify Example~\ref{ex:serverecho} to demonstrate the \lstinline$(*)$ type.
+We modify Example~\ref{ex:serverecho} to demonstrate \lstinline$(*)$ in Example~\ref{ex:clientfork}.
 We define a new process \lstinline$two_clients$ that uses \lstinline$fork$ to unbundle its output channel \lstinline$two_ch$ and create two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. 
 This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, \lstinline$two_ch$ is no longer in scope.
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes]
