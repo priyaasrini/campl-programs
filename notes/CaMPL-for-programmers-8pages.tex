@@ -213,7 +213,7 @@ proc server =
 These are simple programs that exemplify how CaMPL programs are written.
 In fact, running the second program does not produce any observable effects since none of the processes are connected to the outside world.
 A reader should be left with open questions such as ``what was the type of channel \lstinline$ch$?'' and ``what else can this language do?''
-We hope that these questions motivate the reader to continue on to the more complicated examples of the structure and features of CaMPL with detailed explanations in the remaining sections of this paper.
+We hope that these questions motivate the reader to continue on to the more complicated examples in the following sections.
 
 
 \section{Processes}
@@ -228,7 +228,7 @@ We will discuss type signatures in more detail in Section~\ref{Sec:channeltypes}
 
 A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. This process is the main process and the only process which can create \tc{service channels}, such as the \lstinline$Console$, for communication with the outside world.
 
-For now, we will consider the definition of process \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
+For now, we will consider the process definition of \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
 
@@ -242,16 +242,15 @@ proc broadcast =
 		close dest1
 		halt dest2  -- the last channel is closed with halt command
 \end{lstlisting}
-Observe that line 2 of the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 1) variables, e.g. \lstinline$confirmation_msg$, 2) input polarity channels, e.g. \lstinline$source, dest1$, and 3) output polarity channels, e.g. \lstinline$dest2$.
+Observe that line 2 consists of three comma-seperated lists: 1)~variables, e.g. \lstinline$confirmation_msg$, 2)~input polarity channels, e.g. \lstinline$source, dest1$, and 3)~output polarity channels, e.g. \lstinline$dest2$.
+\tc{Variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
+The channels left of \lstinline$=>$ are \tc{input polarity} channels.
+The channels right of \lstinline$=>$ are \tc{output polarity} channels.
 
-The \tc{variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
-The channels on the left of \lstinline$=>$ are called \tc{input polarity} channels.
-The channels on the right of \lstinline$=>$ are called \tc{output polarity} channels.
 Lines 3~-~9 constitute the \tc{process body}.
-We say that the channels listed in line 2 are ``in scope'' of the process body which means that the process can perform operations, called \tc{process commands}, on these channels.
-
+The channels listed in line 2 are ``in scope'' of the process body which means that the process can perform operations, called \tc{process commands}, on these channels.
 The process body may be a single process command, as shown in the \lstinline$run$ processes in Examples~\ref{ex:helloworld} and~\ref{ex:serverecho}, or a \lstinline$do$ block of process commands, as shown in Example \ref{ex:broadcastmsg}.
-Process commands performed on the same channel can be grouped together with ``\lstinline$on ch do$'' as in Example~\ref{ex:serverecho} on line 3 of the client process.
+Process commands performed on the same channel can be grouped together with ``\lstinline$on ch do$'' as in Example~\ref{ex:serverecho} on line 3 of \lstinline$client$.
 This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 
 
