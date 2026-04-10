@@ -221,24 +221,30 @@ The type of a channel can either be explicitly defined in the type signature of 
 \subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 
 As mentioned in Section~\ref{Sec:Processes}, process definitions may include an optional type
-signature that indicates the types of the variables and channels it uses. Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.The names of the variables and channels are bound to the types in the order they appear in the signature.
+signature that indicates the types of the variables and channels it uses. 
+Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
+The names of the variables and channels are bound to the types in the order they appear in the signature.
 
-We shall now modify Example~\ref{ex:serverecho} to include the type signatures of the processes.
-To effectively illustrate the types, we redefine the \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to the client instead of an echo:
+We will modify \lstinline$server$ from Example~\ref{ex:serverecho} and include its type signature.
+To effectively illustrate the types, we redefine \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to  \lstinline$client$:
 \begin{lstlisting}[label=ex:serverid-run, caption=Server replies to Client with server id]
 proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature
 	server_id | ch => ->				-- new server_id variable
 		on ch do
-			get msg
+			get msg									-- receives msg from client
 			put server_id						-- sends server_id back
 			halt
 \end{lstlisting}
+The type of \lstinline$ch$ is \lstinline$Put([Char]|  Get(Int| TopBot))$. 
+Note that channel types are constructed inductively. 
+The outer-most layer \lstinline$Put([Char] | ...)$ is the first step of the interaction in which a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses a \lstinline$get$ command to receive \lstinline$msg$. 
 
-The type of \lstinline$ch$ is \lstinline$Put([Char]|  Get(Int| TopBot))$. Note that the type is constructed constructed inductively. The outer-most layer \lstinline$Put([Char] | ...)$ is the first step of the interaction. In case of \lstinline$Put$ type, message will travel from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, the server uses a \lstinline$get$ command to receive the message. In the next step, the channel proceeds with type \lstinline$Get(Int| ...)$, this means that the message will travel from the input polarity to the output polarity. Accordingly, in line 5, the server uses a \lstinline$put$ command to send \lstinline$server_id$.
+In the next layer, \lstinline$ch$ has type \lstinline$Get(Int| ...)$, so an integer \lstinline$server_id$ travels from input polarity to output polarity (\lstinline$server$ to \lstinline$client$).
+In line 5, \lstinline$server$ uses a \lstinline$put$ command to send \lstinline$server_id$.
 
-The inner-most layer is the final step. The base case is the \lstinline$TopBot$ type because it is always the final step to  \lstinline$close$ a channel or to \lstinline$halt$ by closing the final open channel.
-
-For complete version of Example \ref{ex:serverid-run}, see Appendix \ref{Sec:ex-put-get}.
+The inner-most layer is the base case, and the final step. 
+The \lstinline$TopBot$ type is used to  \lstinline$close$ a channel or to \lstinline$halt$ by closing the final open channel.
+For a complete version of Example \ref{ex:serverid-run}, see Appendix \ref{Sec:ex-put-get}.
 
 \subsubsection{Tensor and Par types}
 
