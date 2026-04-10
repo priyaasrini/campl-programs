@@ -289,10 +289,9 @@ The type of a channel can either be explicitly defined in the type signature of 
 
 \subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 
-As mentioned in Section~\ref{Sec:Processes}, process definitions may include an optional type
-signature that indicates the types of the variables and channels it uses. 
-Type signatures have three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
-The names of the variables and channels are bound to the types in the order they appear in the signature.
+As mentioned in Section~\ref{Sec:Processes}, process definitions may include a type
+signature with three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
+Variables and channels are bound to types in the order they appear.
 
 We will modify \lstinline$server$ from Example~\ref{ex:serverecho} and include its type signature.
 To effectively illustrate the types, we redefine \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to  \lstinline$client$:
@@ -304,27 +303,26 @@ proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature
 			put server_id						-- sends server_id back
 			halt
 \end{lstlisting}
-The type of \lstinline$ch$ is \lstinline$Put([Char]|  Get(Int| TopBot))$. 
-Note that channel types are constructed inductively. 
-The outer-most layer \lstinline$Put([Char] | ...)$ is the first step of the interaction in which a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses a \lstinline$get$ command to receive \lstinline$msg$. 
-
-In the next layer, \lstinline$ch$ has type \lstinline$Get(Int| ...)$, so an integer \lstinline$server_id$ travels from input polarity to output polarity (\lstinline$server$ to \lstinline$client$).
-In line 5, \lstinline$server$ uses a \lstinline$put$ command to send \lstinline$server_id$.
-
-The inner-most layer is the base case, and the final step. 
-The \lstinline$TopBot$ type is used to  \lstinline$close$ a channel or to \lstinline$halt$ by closing the final open channel.
-For a complete version of Example \ref{ex:serverid-run}, see Appendix \ref{Sec:ex-put-get}.
+Note that \lstinline$ch$ has type \lstinline$Put([Char]|  Get(Int| TopBot))$ and channel types are constructed inductively. 
+The outer-most layer \lstinline$Put([Char]| ...)$ is the first step of the interaction and a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses \lstinline$get$ to receive \lstinline$msg$. 
+In the next layer, the type is \lstinline$Get(Int| ...)$, so an integer \lstinline$server_id$ travels from input polarity to output polarity (\lstinline$server$ to \lstinline$client$).
+In line 5, \lstinline$server$ uses \lstinline$put$ to send \lstinline$server_id$.
+The inner-most layer is the base case and final step. 
+The type is \lstinline$TopBot$, so we can \lstinline$close$ a channel or \lstinline$halt$ by closing the final open channel.
+Appendix \ref{Sec:ex-put-get} has a complete version of Example \ref{ex:serverid-run}.
 
 \subsubsection{Tensor and Par types}
 
-Following inductive types, we will consider channel with compound types, that is, a channel type that {\em bundles} two (or more) channels together.
-
-The bundled channel types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the mathematical underpinnings of CaMPL and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+% Tensor and par are also inductive types.
+%Following inductive types, 
+We will now consider compound channel types that bundle two channels together.
+% not or more. tensor and par bundle exactly two channels together you need to nest them yourself with parentheses?
+The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the categorical semantics and allow changes to be made to the network of processes while ensuring no cycles are introduced.
 By unbundling the channels, two new channels are created and passed into two new processes.
 
-We will again modify Example~\ref{ex:serverecho} to demonstrate the bundling and unbundling of channels.
-We will define another process \lstinline$two_clients$ that unbundles its output channel \lstinline$two_ch$ of type \lstinline$(*)$ and \lstinline$fork$s into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. The \lstinline$server$ unbundles its input channel of type \lstinline$(*)$ by \lstinline$split$ing \lstinline$two_ch$ into two channels namely \lstinline$ch1$ and \lstinline$ch2$. After unbundling, the channel \lstinline$two_ch$ is no longer in scope.
-
+We will modify Example~\ref{ex:serverecho} to demonstrate the \lstinline$(*)$ type.
+We define a new process \lstinline$two_clients$ that uses \lstinline$fork$ to unbundle its output channel \lstinline$two_ch$ and create two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. 
+This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, \lstinline$two_ch$ is no longer in scope.
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes]
 proc client :: | => Put([Char]|TopBot) =
 	| => ch ->
@@ -350,10 +348,9 @@ proc run :: | => =
 		two_clients( | => two_ch )		-- creates a single two_clients process
 		server( | two_ch => )
 \end{lstlisting}
-
-We can see that a channel of type \lstinline$(*)$ indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
+A channel of type \lstinline$(*)$ indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
-Then, we would use the other bundled channel type, \lstinline$(+)$, which is dual to the \lstinline$(*)$ type.
+Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.
 
 \subsection{Custom channel types}
 \label{Sec:protocols}
