@@ -112,7 +112,7 @@ We will briefly explore the categorical semantics of CaMPL, and introduce the ty
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing.
 
-The type system of CaMPL originates from Cockett and Pastro’s paper titled “The Logic of Message Passing” \cite{CoP07}. The primary result of this paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
+The type system of CaMPL originates from Cockett and Pastro’s paper titled “The Logic of Message Passing” \cite{CoP07}. The primary result of their paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 The categorical semantics of the message passing logic is given by a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
@@ -126,7 +126,7 @@ CaMPL is a proof-of-concept of a programming language built from the above categ
 That is, at any instance in run-time, the topology of a program is a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
 %This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
 The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, does not occur in a CaMPL program. The formal semantics have guaranteed deadlock and livelock freedom.
-Similar to the sequential case, when one aims to prove termination, the livelock freedom guarantee can only be made when general recursion is not allowed.
+Similar to the sequential case, when one aims to prove termination, if we allow general recursion, we lose the livelock freedom guarantee.
 However, deadlock freedom is still guaranteed.
 
 %\comment{Write a little paragraph how the language implementation started.}
@@ -134,7 +134,7 @@ However, deadlock freedom is still guaranteed.
 {\bf A brief history of CaMPL:} The first implementation of the compiler was written by Kumar as described in \cite{Ku18}.
 This version implemented the core programming features of the sequential part, concurrent part, and message passing.
 It added features to define custom concurrent data types called protocols and coprotocols.
-The compiler performed both a type inference and type check at compile-time to ensure the compiled program followed the type system.
+This compiler performed both a type inference and type checking.
 The second implementation of the compiler was written by Pon as described in \cite{Po21, Po22}.
 This version re-implemented the existing features and added controlled non-determinism in the form of ``races.''
 Changes to the categorical semantics to include non-determinism were outlined by Little in \cite{xanna, xanna2}.
