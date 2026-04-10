@@ -101,18 +101,16 @@
 
 \maketitle
 
-\begin{abstract} Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language whose semantics is in category theory. Its core programming feature is message passing along typed communication channels between concurrent processes. CaMPL also supports controlled non-determinism via 'races' which allow processes to adapt dynamically while they are running, higher-order processes which pass other processes as messages, and custom channel datatypes called protocols and coprotocols which allow one to define infinite channel types or implement session types. 
+\begin{abstract} Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language whose semantics is in category theory, more specifically, linear actegories. Its core programming feature is message passing along typed communication channels between concurrent processes. CaMPL also supports controlled non-determinism via 'races' which allow processes to adapt dynamically while they are running, higher-order processes which pass other processes as messages, and custom channel datatypes called protocols and coprotocols which allow one to define infinite channel types or implement session types. 
 
-Similar to the Curry-Howard-Lambek correspondence in sequential programming, Cockett and Pastro established the  three-way correspondence between message passing logic, linear actegories, and poly-actegories. The semantics of core CaMPL is defined using this correspondence. The type system given by the semantics ensures that a formal CaMPL program, i.e. one which does not allow general recursion, will never become deadlocked or livelocked.
-
-We will briefly explore the categorical semantics of CaMPL, and introduce the type system of CaMPL, controlled non-determinism and higher order processes using coding examples.
+The type system of CaMPL arises from a Curry-Howard-Lambek-like correspondence for concurrent programming, established by Cockett and Pastro in their paper titled "The logic of message passing". The type system ensures that a formal CaMPL program, i.e. one which does not allow general recursion, will never become deadlocked or livelocked. In this article, we introduce the type system of CaMPL, controlled non-determinism and higher order processes using coding examples after briefly exploring its mathematical underpinnings.
 \end{abstract}
 
 \section{Introduction}
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing.
 
-The type system of CaMPL originates from Cockett and Pastro’s paper titled “The Logic of Message Passing” \cite{CoP07}. The primary result of their paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
+The type system of CaMPL originates from Cockett and Pastro’s paper titled ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 The categorical semantics of the message passing logic is given by a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
