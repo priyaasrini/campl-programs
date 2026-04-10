@@ -271,9 +271,9 @@ input polarity channels and output polarity channels.
 Polarities refer to each \tc{end} of a channel. 
 
 In Example~\ref{ex:serverecho}, \lstinline$client$ and \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (the right end).
-In the first part of the interaction, a message travels from left to right.
+In the first step of the interaction, a message travels from left to right.
 The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to this, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
-In the second part, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently in each of these parts.
+In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently in each step.
 
 Without the use of polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time. 
 They would both become stuck waiting for a message to be sent by the other, causing a deadlock. 
