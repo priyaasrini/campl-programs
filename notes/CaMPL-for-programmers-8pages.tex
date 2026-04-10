@@ -201,15 +201,20 @@ A process \tc{uses} process commands on a channel to interact with the process p
 \label{Sec:polarities}
 
 Recall that processes are defined with two lists of {\em channels} that are in its scope:
-input polarity channels and output polarity
-channels. Different polarities refer to different ends of a channel. In Example~\ref{ex:serverecho}, a \lstinline$client$ process and a \lstinline$server$ process are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (on the right end).
+input polarity channels and output polarity channels.
+ Different polarities refer to different ends of a channel. 
+ In Example~\ref{ex:serverecho}, a \lstinline$client$ process and a \lstinline$server$ process are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (on the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (on the right end).
 
-In the first communication round, \lstinline$client$ process uses the \lstinline$put$ command on its output polarity channel \lstinline$ch$ to send a message. Complementary to this \lstinline$put$, the server uses the \lstinline$get$ command on its  input polarity channel \lstinline$ch$ to receive the message.
+In the first communication round, \lstinline$client$ uses the \lstinline$put$ command on its output polarity channel \lstinline$ch$ to send a message. Complementary to this \lstinline$put$, the server uses the \lstinline$get$ command on its input polarity channel \lstinline$ch$ to receive the message.
 
-Without the use of polarities to distinguish their roles, both the client and the server may use a \lstinline$get$ command in the same communication round. Thus, they will both become stuck waiting for a message to be sent by the other causing deadlock. Defining the way a process uses a channel by both the type and polarity prevents such ambiguities enabling the compiler to identify such errors. For an illustrating example of such deadlock prevention see Appendix \ref{Sec: channel polarity deadlock prevention}.
+Without the use of polarities to distinguish their roles, both the client and the server could use a \lstinline$get$ command in the same communication round. 
+Thus, they will both become stuck waiting for a message to be sent by the other causing deadlock. Defining the way a process uses a channel by both the type and polarity prevents such ambiguities enabling the compiler to identify such errors. 
+For an illustrating example of such deadlock prevention see Appendix \ref{Sec: channel polarity deadlock prevention}.
 
 The reader may notice in Example~\ref{ex:serverecho} that the \lstinline$client$ (resp. \lstinline$server$)
-uses the output (resp. input) channel \lstinline$ch$ to first send and then to receive a message. The type of the channel \lstinline$ch$ is inferred differently in each one of these steps.
+uses the output (resp. input) channel \lstinline$ch$ to first send and then to receive a message. 
+%TODO: what?
+The type of the channel \lstinline$ch$ is inferred differently in each one of these steps.
 
 \subsection{Built-in channel types}
 \label{Sec:channeltypes}
