@@ -1,6 +1,92 @@
 \documentclass[11pt]{article}
-\input{preamble}
-\input{macros}
+%{ Begin preamble
+\usepackage[utf8]{inputenc}
+
+%%% -- Use biblatex instead of bibtex
+% \usepackage[english]{babel}
+%\usepackage[style=numeric, sorting=nty]{biblatex}
+
+\usepackage[pdftex,dvipsnames]{xcolor}  % Coloured text etc.
+\usepackage{amsmath,amssymb}
+
+\usepackage[margin=1in, top=1in, bottom=1in]{geometry}
+
+\usepackage{newpxtext}
+\usepackage[varg,bigdelims]{newpxmath}
+
+\usepackage[backend=biber, backref=true, maxbibnames = 10, style = alphabetic]{biblatex}
+
+\usepackage{listings}
+\renewcommand{\lstlistingname}{Example}
+\lstdefinelanguage[2026]{CaMPL}{%
+  keywords={},%
+  % Use otherkeywords for symbols
+  otherkeywords={->,=>,::,|},%
+  % otherkeywords={[3](*),(+),},%
+  % Use keywords [1] for keywords -- Can we have a seperate color scheme for process commands
+  morekeywords={[1]data,codata,protocol,coprotocol,proc,%
+    do,on,%
+    %hput,hcase,put,get,halt,plug,%
+    %with,into,%
+  },%
+  % Use keywords [2] for types
+  morekeywords={[2]Console,},
+  morekeywords={[3]Put,Get,TopBot,Neg,Store},
+  morekeywords={[4]hput,hcase,put,get,halt,plug,close,fork,split,neg,store,use,race},
+  sensitive,%
+  morecomment=[l]--,%
+  morecomment=[n]{\{-}{-\}},%
+  morestring=[b]"%
+}[keywords,comments,strings]%
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{purple}{rgb}{0.8,0,0.3}
+\definecolor{orange}{rgb}{1,0.4,0}
+\definecolor{lightlightgray}{rgb}{.95,.95,.95}
+\definecolor{lightgray}{rgb}{.9,.9,.9}
+\definecolor{lightgray2}{rgb}{.85,.85,.85}
+\definecolor{darkgray}{rgb}{.4,.4,.4}
+\definecolor{darkred}{rgb}{0.6,0,0}
+
+\lstdefinestyle{CaMPLstyle}{%
+  language=CaMPL,%
+  %
+  keywordstyle={[1]\color{darkred}},%
+  keywordstyle={[2]\color{blue}},%
+  keywordstyle={[3]\color{dkgreen}},%
+  keywordstyle={[4]\color{purple}},%
+  commentstyle={\itshape\color{orange}},%
+  identifierstyle=\color{black},%
+  stringstyle=\color{teal},%
+  showstringspaces=false,%
+  basicstyle=\ttfamily\small,%
+  %
+  tabsize=2,%
+  showtabs=false,%
+  tab={\color{gray}\rightarrowfill},%
+  %
+  numbers=left,%
+  numberstyle=\color{gray},%
+  %
+  breaklines=true,%
+  frame=single,%
+  framexleftmargin=0pt,%
+  %
+  rulecolor=\color{lightgray2},%
+  rulesepcolor=\color{gray},%
+  backgroundcolor=\color{lightgray},%
+}%
+\lstset{defaultdialect=[2026]CaMPL,style=CaMPLstyle}%
+
+\newcommand{\knote}[1]{\par \noindent \colorbox{green!40}{Keywords:} #1}
+
+\definecolor{darkMagenta}{HTML}{DE3163}
+\newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}
+\newcommand{\ttc}[1]{\textcolor{darkMagenta}{\texttt{#1}}}
+
+\newcommand{\note}[1]{\textcolor{blue}{#1}}
+\newcommand{\comment}[1]{\textcolor{blue}{#1}}
+% End preamble}
 \addbibresource{refs.bib}
 \linespread{1.11}
 
@@ -165,6 +251,7 @@ A CaMPL program must have a process with the name \lstinline$run$ in which the e
 For now, we will consider the definition of process \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
+
 proc broadcast =
 	confirmation_msg | source, dest1 => dest2 -> do
 		get msg on source								-- receive message from source
