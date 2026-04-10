@@ -249,7 +249,8 @@ The bundled channel types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+
 By unbundling the channels, two new channels are created and passed into two new processes.
 
 We will again modify Example~\ref{ex:serverecho} to demonstrate the bundling and unbundling of channels.
-We will define another process \lstinline$two_clients$ that unbundles its output channel and \lstinline$fork$s into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process:
+We will define another process \lstinline$two_clients$ that unbundles its output channel \lstinline$two_ch$ of type \lstinline$(*)$ and \lstinline$fork$s into two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. The \lstinline$server$ unbundles its input channel of type \lstinline$(*)$ by \lstinline$split$ing \lstinline$two_ch$ into two channels namely \lstinline$ch1$ and \lstinline$ch2$. After unbundling, the channel \lstinline$two_ch$ is no longer in scope.
+
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes] 
 proc client :: | => Put([Char]|TopBot) = 		
 	| => ch ->
@@ -275,18 +276,10 @@ proc run :: | => =
  		two_clients( | => two_ch )		-- creates a single two_clients process
  		server( | two_ch => )				
 \end{lstlisting}	
-Observe that \lstinline$two_ch$ has type \lstinline$Put([Char]|TopBot) (*) Put([Char]|TopBot)$.
-This is quite intimidating, but we have already discussed the \lstinline$Put([Char]|TopBot)$ type.
-Let us use \lstinline$X$ as a shorthand for that channel type.
-Then, we can consider the bundled channel type \lstinline$X(*)X$, pronounced ``{X \em tensor X}.''
-The interaction this type defines is that the bundled channel will be replaced by two new channels, the process on the left (\lstinline$two_clients$) will be replaced by two new processes that each use one channel, and the process on the right (\lstinline$server$) will use both new channels to interact with each of the new processes according to type \lstinline$X$.
-We could also write a program that has different interactions with the two new processes, and this would need a type that bundles two channels of different types like \lstinline$X(*)Y$.
 
 We can see that a channel of type \lstinline$(*)$ indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
 Then, we would use the other bundled channel type, \lstinline$(+)$, which is dual to the \lstinline$(*)$ type.
-
-
 
 \subsection{Custom channel types}
 \label{Sec:protocols}
