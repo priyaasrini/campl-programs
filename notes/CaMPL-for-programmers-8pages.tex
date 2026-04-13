@@ -615,14 +615,14 @@ Each channel type specifies the complementary roles of the processes on each end
 \label{Sec:ex-put-get}
 
 \begin{lstlisting}
-proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		 -- type signature 
-  server_id | ch => -> 	-- new server_id variable
+proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature 
+	server_id | ch => ->		-- new server_id variable
     on ch do 
         get msg
-        put server_id		 -- sends server_id back
+			put server_id				-- sends server_id back
         halt
 
-proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
+proc client :: | => Put([Char]|Get(Int|TopBot)) =				-- type signature
 	| => ch ->
 		on ch do 
 			put "Hello Server!"	
@@ -630,9 +630,9 @@ proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
 			halt
 
 proc run =
-	| => -> plug					-- connects processes by shared channel ch
-		client( | => ch )		-- creates client process
-		server( 5 | ch => )	-- creates server process
+	| => -> plug						-- connects processes by shared channel ch
+		client( | => ch )			-- creates client process
+		server( 5 | ch => )		-- creates server process
 \end{lstlisting}
 
 \section{Schematic of fork and split}
