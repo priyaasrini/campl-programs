@@ -77,11 +77,54 @@
 }%
 \lstset{defaultdialect=[2026]CaMPL,style=CaMPLstyle}%
 
+%%%%%%%%%%%%%%%%%% TikZ %%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{tikz}
+\usepackage[all,cmtip]{xy}
+
+\tikzstyle{strings}=[baseline={([yshift=-.5ex]current bounding box.center)}]
+
+%Global tikz scaling
+
+\tikzset{every picture/.append style={scale=.5}, transform shape, strings}
+
+\tikzset{%
+symbol/.style={%
+draw=none,
+every to/.append style={%
+edge node={node [sloped, allow upside down, auto=false]{$#1$}}}
+}
+}
+
+\usetikzlibrary{shapes.geometric}
+\usetikzlibrary{patterns}
+\usetikzlibrary{fit}
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
+\usetikzlibrary{arrows}
+\usetikzlibrary{decorations.markings}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{shapes}
+
+%% -------------------------------------- Declare the layers
+\pgfdeclarelayer{nodelayer}
+\pgfdeclarelayer{edgelayer}
+\pgfsetlayers{edgelayer,nodelayer,main}
+
+%% --- Head of stick man 
+
+\tikzstyle{none}=[inner sep=-1pt]
+\tikzstyle{circle}=[shape=circle,draw]
+\tikzstyle{head}=[fill=white, draw=black, shape=circle, scale=2, thick]
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\knote}[1]{\par \noindent \colorbox{green!40}{Keywords:} #1}
 
 \definecolor{darkMagenta}{HTML}{DE3163}
 \newcommand{\tc}[1]{\textcolor{darkMagenta}{\textit{#1}}}
 \newcommand{\ttc}[1]{\textcolor{darkMagenta}{\texttt{#1}}}
+
 
 \newcommand{\note}[1]{\textcolor{blue}{#1}}
 \newcommand{\comment}[1]{\textcolor{blue}{#1}}
@@ -93,7 +136,8 @@
 % this is what the title i sent to them was. i am sure it could be changed if needed --- We can try changing and if they complain we change it to the original :D
 
 \author{
-    Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little\thanks{University of Calgary} \and \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology. The author was funded by...}}
+    Daniel Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little\thanks{University of Calgary} \and \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology. The author was funded by This work was funded by the European Union and Estonian Research Council through the Mobilitas 3.0
+(MOB3JD1227).}}
     
 \date{\vspace{-3em}}
 
@@ -112,7 +156,7 @@ This type system ensures that a formal CaMPL program, i.e. one which does not al
 \section{Introduction}
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing.
-It is a proof-of-concept of a programming language built from the type system and categorical semantics described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07} based on linear logic. The primary result of their paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
+It implements a type system based on linear logic, described in the Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 The categorical semantics of the message-passing logic is given by a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
@@ -122,10 +166,10 @@ The categorical semantics of the message-passing logic is given by a {\em linear
 % The property of acyclicity at run-time is guaranteed by CaMPL's type system.
 A linear actegory minimally consists of a monoidal category acting covariantly and contravariantly on a linearly distributive category, 
 %(LDC), 
-satisfying certain coherences~\cite{CoP07, CS97}.
+satisfying certain coherences~\cite{CoP07}. Linearly distributive categories are the categorical semantics of multiplicative linear logic~\cite{CS97}. 
 
-The concurrent type system provided by linear actegories has the property that CaMPL processes can never be connected in a cycle.
-That is, at any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
+The concurrent type system provided by linear actegories ensures that CaMPL processes can never be connected in a cycle.
+That is, at any instance in run-time, the topology of a CaMPL program is guaranteed to be a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
 %This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
 The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur in a CaMPL program  \cite{Ly18}.
 Similar to the sequential case, when one aims to prove termination, livelock freedom is not guaranteed if we allow general recursion.
@@ -142,14 +186,13 @@ The second implementation of the compiler was written by Pon as described in \ci
 This version re-implemented the existing features and added controlled non-determinism in the form of ``races.''
 Changes to the categorical semantics to include non-determinism were outlined by Little in \cite{xanna, xanna2}.
 The most recent feature added to the compiler was higher-order message passing which allows processes to send messages that contain encoded processes to be decoded and invoked when they are received.
-The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}.
-
-In this article, we use examples of CaMPL code to introduce the concurrent type system and the above additional features.
+The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}. In this article, we illustrate the CaMPL concurrent type system and these key features through a series of code examples.
 %\note{Xanna note:
 %i am assuming introduction will establish justification for why we have submitted this paper to this venue.
 %and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
 %{\bf Notation and style:} 
-We will use \tc{this style} whenever we introduce CaMPL terminology.
+
+We use \tc{this style} whenever we introduce CaMPL terminology.
 
 \section{A brief overview of CaMPL}
 
@@ -229,7 +272,7 @@ We will discuss type signatures in Section~\ref{Sec:channeltypes}.
 
 A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. This process is the main process and the only process which can create \tc{service channels}, such as the \lstinline$Console$, for communication with the outside world.
 
-Consider the process definition of \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}.
+Consider the process \lstinline$broadcast$ shown in Example \ref{ex:broadcastmsg}.
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] 
 proc broadcast =
@@ -240,7 +283,7 @@ proc broadcast =
 		put confirmation_msg on source	-- send confirmation message to source
 		close source									  -- close all channels and halt
 		close dest1
-		halt dest2  -- the last channel is closed with halt command
+		halt dest2  -- the last channel is closed with the halt command
 \end{lstlisting}
 Observe that line 2 consists of three comma-seperated lists: 1)~variables, e.g. \lstinline$confirmation_msg$, 2)~input polarity channels, e.g. \lstinline$source,  dest1$, and 3)~output polarity channels, e.g. \lstinline$dest2$.
 \tc{Variables} are instances of sequential types and \tc{channels} are instances of concurrent types.
@@ -262,9 +305,9 @@ This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 \label{Sec:Channels}
 
 A process \tc{uses} process commands on a channel to interact with the process plugged into the other end. 
-To plug two processes, they both must have a channel of the same type but opposite polarities. 
-The \tc{type} of a channel defines the interaction that the processes will have over it, and the \tc{polarity} of a channel defines each process's role in the interaction. 
-Thus, the process commands that a process can use on a channel depend on both channel type and polarity.
+Two processes are connected by (at most) one channel of same type but opposite polarities. 
+The \tc{type} of a channel defines the interaction that the processes will have over it, and its \tc{polarities}  define process' role in the interaction. 
+Thus, the process commands that a process can use on a channel depend on both type and polarity.
 
 %Two processes can be \lstinline$plug$ged together if they both use a channel with the same type but opposite polarities. We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
 
@@ -273,16 +316,16 @@ Thus, the process commands that a process can use on a channel depend on both ch
 
 Recall from Section \ref{Sec:Processes} that processes are defined with two lists of the channels in scope:
 input polarity channels and output polarity channels.
-Polarities refer to each \tc{end} of a channel. 
+Each polarity refer to each \tc{end} of a channel. 
 
-In Example~\ref{ex:serverecho}, \lstinline$client$ and \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (the right end).
+In Example~\ref{ex:serverecho}, the \lstinline$client$ and the \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (the right end).
 In the first step of the interaction, a message travels from the left to the right.
 The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to \lstinline$put$, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
 In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently compared to the previous step.
 
-Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time --- both wait for a message to be sent by the other, causing a deadlock. 
-See Appendix \ref{Sec: channel polarity deadlock prevention} for an illustrating example.
-Defining how a process uses a channel by both type and polarity enables unambiguous interaction of processes. 
+Channel polarities enable unambiguous interaction of processes. 
+ Without polarities to distinguish their roles, both the \lstinline$client$ and the \lstinline$server$ could use a \lstinline$get$ command at the same time, that is, they both wait for a message to be sent by the other, thereby causing a deadlock. 
+This scenario is illustrated in Appendix \ref{Sec: channel polarity deadlock prevention}.
 
 \subsection{Built-in channel types}
 \label{Sec:channeltypes}
@@ -297,7 +340,7 @@ As mentioned in Section~\ref{Sec:Processes}, process definitions may include a t
 signature with three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
 Variables and channels are bound to types in the order they appear.
 
-We will modify \lstinline$server$ from Example~\ref{ex:serverecho} and include its type signature.
+We will now modify \lstinline$server$ from Example~\ref{ex:serverecho} and include its type signature.
 To effectively illustrate the types, we redefine \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to  \lstinline$client$:
 \begin{lstlisting}[label=ex:serverid-run, caption=Server replies to Client with server id]
 proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature
@@ -307,8 +350,8 @@ proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature
 			put server_id						-- sends server_id back
 			halt
 \end{lstlisting}
-Note that \lstinline$ch$ has type \lstinline$Put([Char]|  Get(Int| TopBot))$ and channel types are constructed inductively. 
-The outer-most layer \lstinline$Put([Char]| ...)$ is the first step of the interaction and a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses \lstinline$get$ to receive \lstinline$msg$. 
+Note that \lstinline$ch$ has type \lstinline$Put([Char]|  Get(Int| TopBot))$ which is constructed inductively. 
+The outer-most layer \lstinline$Put([Char]| ...)$ defines the first step of the interaction and a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses \lstinline$get$ to receive \lstinline$msg$. 
 In the next layer, the type is \lstinline$Get(Int| ...)$, so an integer \lstinline$server_id$ travels from input polarity to output polarity (\lstinline$server$ to \lstinline$client$).
 In line 5, \lstinline$server$ uses \lstinline$put$ to send \lstinline$server_id$.
 The inner-most layer is the base case and final step. 
@@ -319,14 +362,14 @@ Appendix \ref{Sec:ex-put-get} has a complete version of Example \ref{ex:serverid
 
 % Tensor and par are also inductive types.
 %Following inductive types, 
-We will now consider compound channel types that bundle two channels together.
+We will now consider compound channel types that allow bundling two (or more) channels into one.
 % not or more. tensor and par bundle exactly two channels together you need to nest them yourself with parentheses?
 The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the multiplicative linear logic and allow changes to be made to the network of processes while ensuring no cycles are introduced.
 By unbundling the channels, two new channels are created and passed into two new processes.
 
 We modify Example~\ref{ex:serverecho} to demonstrate \lstinline$(*)$ type.
 We define a new process \lstinline$two_clients$ that uses \lstinline$fork$ to unbundle its output channel \lstinline$two_ch$ and create two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. 
-This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, \lstinline$two_ch$ is no longer in scope in either of the processes. The modified example is as follows.
+This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, teh channel \lstinline$two_ch$ is no longer in scope in either of the processes. The modified example is as follows.
 
 \newpage
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes]
@@ -356,7 +399,7 @@ proc run :: | => =
 \end{lstlisting}
 A channel of type \lstinline$(*)$ indicates that the process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
-Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.  For a schematic of usage of \lstinline$(*)$ type using\lstinline$split$ and \lstinline$fork$, \comment{See Figure \ref{} in Appendix \ref{}.}
+Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.  For a schematic on the usage of \lstinline$(*)$ and \lstinline$(+)$ types using \lstinline$split$ and \lstinline$fork$, see Figures \ref{Fig: Tensor} and \ref{Fig: Par} in Appendix \ref{Sec: Schematic tensor par} respectively.
 
 \subsection{Custom channel types}
 \label{Sec:protocols}
@@ -488,7 +531,7 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \section{Discussion and future work}
 %Races, Higher order message passing
 
-The CaMPL project is still very much in progress.
+The CaMPL project is still very much in progress, as such is a proof-of-concept langauge.
 On the implementation side, we are actively working on a paper to comprehensively document every programming feature.
 We are working on updating the compiler to be able to race protocol/coprotocol handles.
 We also want to be able to have processes distributed over multiple devices connected by a network.
@@ -560,6 +603,195 @@ proc run =
 		server( 5 | ch => )	-- creates server process
 \end{lstlisting}
 
+\section{Schematic of fork and split}
+\label{Sec: Schematic tensor par}
+
+The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the change in the process network on channel types \lstinline$(*)$ and \lstinline$(+)$. We use \lstinline$+$ to denote the output polarity end and \lstinline$-$ to denote the input polarity.
+%TENSOR
+\begin{figure}[h]
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (-3.75, 2.25) {};
+		\node [style=none] (1) at (-3.75, 1.25) {};
+		\node [style=none] (2) at (-4, 1) {};
+		\node [style=none] (3) at (-3.5, 1) {};
+		\node [style=none] (4) at (-4, 1.7) {};
+		\node [style=none] (5) at (-3.5, 1.7) {};
+		\node [style=head, thick] (6) at (0.25, 2.25) {};
+		\node [style=none] (7) at (0.25, 1.25) {};
+		\node [style=none] (8) at (0, 1) {};
+		\node [style=none] (9) at (0.5, 1) {};
+		\node [style=none] (10) at (0, 1.7) {};
+		\node [style=none] (11) at (0.5, 1.7) {};
+		\node [style=none] (12) at (-3, 1.5) {};
+		\node [style=none] (13) at (-0.5, 1.5) {};
+		\node [style=none] (14) at (-1.75, 1.75) {\lstinline$(*)$};
+		\node [style=none] (15) at (-3, 1.25) {+};
+		\node [style=none] (16) at (-0.5, 1.25) {-};
+		\node [style=none] (17) at (-3.75, 0.25) {Process $A$};
+		\node [style=none] (18) at (0.25, 0.25) {Process $B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+ \ar[r]^{\text{ \lstinline$fork$ / \lstinline$split$}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (5.5, 5.25) {};
+		\node [style=none] (16) at (5.5, 4.25) {};
+		\node [style=none] (17) at (5.75, 4) {};
+		\node [style=none] (18) at (5.25, 4) {};
+		\node [style=none] (19) at (5.75, 4.7) {};
+		\node [style=none] (20) at (5.25, 4.7) {};
+		\node [style=head, thick] (21) at (1.5, 6.25) {};
+		\node [style=none] (22) at (1.5, 5.25) {};
+		\node [style=none] (23) at (1.75, 5) {};
+		\node [style=none] (24) at (1.25, 5) {};
+		\node [style=none] (25) at (1.75, 5.7) {};
+		\node [style=none] (26) at (1.25, 5.7) {};
+		\node [style=none] (27) at (4.75, 4.75) {};
+		\node [style=none] (28) at (2.25, 5.5) {};
+		\node [style=head, thick] (29) at (1.5, 4.5) {};
+		\node [style=none] (30) at (1.5, 3.5) {};
+		\node [style=none] (31) at (1.75, 3.25) {};
+		\node [style=none] (32) at (1.25, 3.25) {};
+		\node [style=none] (33) at (1.75, 3.95) {};
+		\node [style=none] (34) at (1.25, 3.95) {};
+		\node [style=none] (35) at (2.25, 4) {};
+		\node [style=none] (36) at (4.75, 4.5) {};
+		\node [style=none] (44) at (7, 4.5) {Process $B$};
+		\node [style=none] (45) at (0, 5.5) {Process $A1$};
+		\node [style=none] (46) at (0, 3.75) {Process $A2$};
+		\node [style=none] (47) at (2.25, 5.75) {+};
+		\node [style=none] (48) at (2.25, 3.75) {+};
+		\node [style=none] (49) at (4.75, 5) {-};
+		\node [style=none] (50) at (4.75, 4.25) {-};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=0, out=180] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=0, out=180] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+ \caption{Change in process network on \lstinline$(*)$ type}
+ \label{Fig: Tensor}
+\end{figure}
+
+% PAR:
+\begin{figure}[h]
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (-3.75, 2.25) {};
+		\node [style=none] (1) at (-3.75, 1.25) {};
+		\node [style=none] (2) at (-4, 1) {};
+		\node [style=none] (3) at (-3.5, 1) {};
+		\node [style=none] (4) at (-4, 1.7) {};
+		\node [style=none] (5) at (-3.5, 1.7) {};
+		\node [style=head, thick] (6) at (0.25, 2.25) {};
+		\node [style=none] (7) at (0.25, 1.25) {};
+		\node [style=none] (8) at (0, 1) {};
+		\node [style=none] (9) at (0.5, 1) {};
+		\node [style=none] (10) at (0, 1.7) {};
+		\node [style=none] (11) at (0.5, 1.7) {};
+		\node [style=none] (12) at (-3, 1.5) {};
+		\node [style=none] (13) at (-0.5, 1.5) {};
+		\node [style=none] (14) at (-1.75, 1.75) {\lstinline$(+)$};
+		\node [style=none] (15) at (-3, 1.25) {+};
+		\node [style=none] (16) at (-0.5, 1.25) {-};
+		\node [style=none] (17) at (-3.75, 0.25) {Process $A$};
+		\node [style=none] (18) at (0.25, 0.25) {Process $B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture}
+ \ar[r]^{\text{ \lstinline$split$ / \lstinline$fork$}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (1.5, 5.25) {};
+		\node [style=none] (16) at (1.5, 4.25) {};
+		\node [style=none] (17) at (1.25, 4) {};
+		\node [style=none] (18) at (1.75, 4) {};
+		\node [style=none] (19) at (1.25, 4.7) {};
+		\node [style=none] (20) at (1.75, 4.7) {};
+		\node [style=head, thick] (21) at (5.5, 6.25) {};
+		\node [style=none] (22) at (5.5, 5.25) {};
+		\node [style=none] (23) at (5.25, 5) {};
+		\node [style=none] (24) at (5.75, 5) {};
+		\node [style=none] (25) at (5.25, 5.7) {};
+		\node [style=none] (26) at (5.75, 5.7) {};
+		\node [style=none] (27) at (2.25, 4.75) {};
+		\node [style=none] (28) at (4.75, 5.5) {};
+		\node [style=head, thick] (29) at (5.5, 4.5) {};
+		\node [style=none] (30) at (5.5, 3.5) {};
+		\node [style=none] (31) at (5.25, 3.25) {};
+		\node [style=none] (32) at (5.75, 3.25) {};
+		\node [style=none] (33) at (5.25, 3.95) {};
+		\node [style=none] (34) at (5.75, 3.95) {};
+		\node [style=none] (35) at (4.75, 4) {};
+		\node [style=none] (36) at (2.25, 4.5) {};
+		\node [style=none] (44) at (0, 4.5) {Process $A$};
+		\node [style=none] (45) at (7, 5.5) {Process $B1$};
+		\node [style=none] (46) at (7, 3.75) {Process $B2$};
+		\node [style=none] (47) at (2.25, 5) {+};
+		\node [style=none] (48) at (2.25, 4.25) {+};
+		\node [style=none] (49) at (4.75, 5.75) {-};
+		\node [style=none] (50) at (4.75, 3.75) {-};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=-180, out=0] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=180, out=0] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+ \caption{Change in process network on \lstinline$(+)$ type}
+ \label{Fig: Par}
+\end{figure}
 
 \section{Summary of built-in types}
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Ku18}.
