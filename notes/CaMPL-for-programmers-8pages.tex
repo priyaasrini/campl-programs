@@ -323,8 +323,8 @@ This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 \label{Sec:Channels}
 
 A process \tc{uses} process commands on a channel to interact with the process plugged into the other end. 
-Two processes are connected by (at most) one channel of same type but opposite polarities. 
-The \tc{type} of a channel defines the interaction that the processes will have over it, and its \tc{polarities}  define process' role in the interaction. 
+Two processes are connected by (at most) one typed channel that they use with opposite polarities. 
+The \tc{type} of a channel defines the interaction that the processes will have over it, and its \tc{polarities} define each process's role in the interaction. 
 Thus, the process commands that a process can use on a channel depend on both type and polarity.
 
 %Two processes can be \lstinline$plug$ged together if they both use a channel with the same type but opposite polarities. We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
@@ -332,17 +332,18 @@ Thus, the process commands that a process can use on a channel depend on both ty
 \subsection{Channel polarities}
 \label{Sec:polarities}
 
-Recall from Section \ref{Sec:Processes} that processes are defined with two lists of the channels in scope:
+Recall from Section \ref{Sec:Processes} that processes are defined with two lists of the channels in its scope:
 input polarity channels and output polarity channels.
-Each polarity refer to each \tc{end} of a channel. 
+A channel's polarity refers to which \tc{end} of the channel the process uses. 
 
-In Example~\ref{ex:serverecho}, the \lstinline$client$ and the \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (the right end).
+In Example~\ref{ex:serverecho}, the \lstinline$client$ and the \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ uses \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (the right end).
 In the first step of the interaction, a message travels from the left to the right.
 The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to \lstinline$put$, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
 In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently compared to the previous step.
 
-Channel polarities enable unambiguous interaction of processes. 
- Without polarities to distinguish their roles, both the \lstinline$client$ and the \lstinline$server$ could use a \lstinline$get$ command at the same time, that is, they both wait for a message to be sent by the other, thereby causing a deadlock. 
+Channel polarities allow one to define unambiguous interactions between processes. 
+ Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time.
+Then, they would both wait for a message to be sent by the other, thereby causing a deadlock. 
 This scenario is illustrated in Appendix \ref{Sec: channel polarity deadlock prevention}.
 
 \subsection{Built-in channel types}
