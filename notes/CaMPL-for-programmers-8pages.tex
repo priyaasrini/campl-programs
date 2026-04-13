@@ -117,6 +117,23 @@ edge node={node [sloped, allow upside down, auto=false]{$#1$}}}
 \tikzstyle{circle}=[shape=circle,draw]
 \tikzstyle{head}=[fill=white, draw=black, shape=circle, scale=2, thick]
 
+\newcommand{\blackman}{
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head] (0) at (-3, 5) {};
+		\node [style=none] (1) at (-3, 4) {};
+		\node [style=none] (2) at (-3.25, 3.75) {};
+		\node [style=none] (3) at (-2.75, 3.75) {};
+		\node [style=none] (4) at (-3.25, 4.45) {};
+		\node [style=none] (5) at (-2.75, 4.45) {};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw[thick] (0) to (1.center);
+		\draw[thick] (1.center) to (2.center);
+		\draw[thick] (1.center) to (3.center);
+		\draw[thick] (4.center) to (5.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\knote}[1]{\par \noindent \colorbox{green!40}{Keywords:} #1}
@@ -446,7 +463,7 @@ proc forward :: | PassMessages([Char]| ) => PassMessages([Char]| ) =
  
 In Example \ref{ex:forwardmsgs} - line 1, we instantiated the sequential type variable \lstinline$A$ as \lstinline$[Char]$ type so as to send arbitrary number of strings. Protocol handles represent the set of valid interactions, or session types, that may take place on a channel. When a handle is sent on a channel using \lstinline$hput$ (lines 7 and 13), it \tc{activates} the channel for a communication session and sets its  type as specified by the handle. A process can use \lstinline$hcase$ (line 3) to receive a handle and proceed further by {\em casing} on different handles (lines 4 and 10).
 
-CaMPL programs also allow coprotocols which are functionally the same as protocols. The only difference between protocols and coprotocols is the direction in which the handles travel on the channel --- for a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input channel), and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output channel), see Figure \ref{} in Appendix \ref{Sec:protocol and coprotocol}. For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send over \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
+CaMPL programs also allow coprotocols which are functionally the same as protocols. The only difference between protocols and coprotocols is the direction in which the handles travel on the channel --- for a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input channel), and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output channel), see Figure \ref{Fig: hput and hcase} in Appendix \ref{Sec:protocol and coprotocol}. For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send over \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
 
 \section{Controlled non-determinism}
 %\comment{We could potentially move this paragraph the code, and the paragraph below the code to fork-split.}
@@ -813,7 +830,17 @@ The outer most layer is the first interaction that will take place, and after th
 \section{Protocols and coprotocols example}
 \label{Sec:protocol and coprotocol}
 
-\comment{FIGURE HERE: Protocol and coprotocol handle with Put type, sending message in either direction}
+
+\begin{figure}[h]
+\[  \xymatrix{  
+ \blackman  \quad
+  \ar@<8pt>[rrrrr]^{+~~~~~\ttc{hput} \qquad {\tt PassMessages} \qquad \ttc{hcase}~~- }
+ \ar@<-8pt>@{<-}[rrrrr]_{+~~\ttc{hcase} \qquad {\tt CoPassMessages} \qquad \ttc{hput}~~-} 
+  &  & & & & \quad \blackman   }  
+ \]
+ \caption{Direction of handles on protocols and coprotocols}
+ \label{Fig: hput and hcase}
+\end{figure}
 
 Protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, so \lstinline$forward$ is receiving handles on \lstinline$source$.
 Coprotocol handles travel in the same direction as messages on a \lstinline$Get$ channel, so \lstinline$forward$ is sending handles on \lstinline$dest$.
@@ -856,6 +883,7 @@ proc forward :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					hput CoCloseCh	-- send handle to indicate all messages sent
 					halt
  \end{lstlisting}
+
 
 
 \end{document}
