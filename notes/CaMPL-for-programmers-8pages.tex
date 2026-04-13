@@ -112,7 +112,7 @@ This type system ensures that a formal CaMPL program, i.e. one which does not al
 \section{Introduction}
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing.
-It is a proof-of-concept of a programming language built from the type system and categorical semantics described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
+It is a proof-of-concept of a programming language built from the type system and categorical semantics described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07} based on linear logic. The primary result of their paper was defining a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They described a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic.
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 The categorical semantics of the message-passing logic is given by a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
@@ -124,10 +124,10 @@ A linear actegory minimally consists of a monoidal category acting covariantly a
 %(LDC), 
 satisfying certain coherences~\cite{CoP07, CS97}.
 
-The concurrent type system provided by linear actegories has the property that processes can never be connected by channels to form a cycle.
-That is, at any instance in run-time, the topology of a program is a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
+The concurrent type system provided by linear actegories has the property that CaMPL processes can never be connected in a cycle.
+That is, at any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
 %This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
-The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur in a program that follows the formal semantics  \cite{Ly18}.
+The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur in a CaMPL program  \cite{Ly18}.
 Similar to the sequential case, when one aims to prove termination, livelock freedom is not guaranteed if we allow general recursion.
 However, deadlock freedom is still guaranteed.
 
@@ -153,7 +153,7 @@ We will use \tc{this style} whenever we introduce CaMPL terminology.
 
 \section{A brief overview of CaMPL}
 
-As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
+As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, shown in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$.
 The \lstinline$console$ channel has type \lstinline$Console$ which is a special channel type built-in to the compiler to connect any CaMPL program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
@@ -271,19 +271,18 @@ Thus, the process commands that a process can use on a channel depend on both ch
 \subsection{Channel polarities}
 \label{Sec:polarities}
 
-Recall that processes are defined with two lists of the channels in scope:
+Recall from Section \ref{Sec:Processes} that processes are defined with two lists of the channels in scope:
 input polarity channels and output polarity channels.
 Polarities refer to each \tc{end} of a channel. 
 
 In Example~\ref{ex:serverecho}, \lstinline$client$ and \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (the right end).
-In the first step of the interaction, a message travels from left to right.
-The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to this, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
-In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently in each step.
+In the first step of the interaction, a message travels from the left to the right.
+The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to \lstinline$put$, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
+In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently compared to the previous step.
 
-Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time. 
-They would both wait for a message to be sent by the other, causing a deadlock. 
-For an illustrating example of this, see Appendix \ref{Sec: channel polarity deadlock prevention}.
-Defining how a process uses a channel by both type and polarity prevents ambiguity, enabling the compiler to identify such errors. 
+Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time --- both wait for a message to be sent by the other, causing a deadlock. 
+See Appendix \ref{Sec: channel polarity deadlock prevention} for an illustrating example.
+Defining how a process uses a channel by both type and polarity enables unambiguous interaction of processes. 
 
 \subsection{Built-in channel types}
 \label{Sec:channeltypes}
@@ -322,12 +321,12 @@ Appendix \ref{Sec:ex-put-get} has a complete version of Example \ref{ex:serverid
 %Following inductive types, 
 We will now consider compound channel types that bundle two channels together.
 % not or more. tensor and par bundle exactly two channels together you need to nest them yourself with parentheses?
-The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the categorical semantics and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the multiplicative linear logic and allow changes to be made to the network of processes while ensuring no cycles are introduced.
 By unbundling the channels, two new channels are created and passed into two new processes.
 
-We modify Example~\ref{ex:serverecho} to demonstrate \lstinline$(*)$ in Example~\ref{ex:clientfork}.
+We modify Example~\ref{ex:serverecho} to demonstrate \lstinline$(*)$ type.
 We define a new process \lstinline$two_clients$ that uses \lstinline$fork$ to unbundle its output channel \lstinline$two_ch$ and create two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. 
-This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, \lstinline$two_ch$ is no longer in scope.
+This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, \lstinline$two_ch$ is no longer in scope in either of the processes. The modified example is as follows.
 
 \newpage
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes]
@@ -355,9 +354,9 @@ proc run :: | => =
 		two_clients( | => two_ch )		-- creates a single two_clients process
 		server( | two_ch => )
 \end{lstlisting}
-A channel of type \lstinline$(*)$ indicates that one process on the left will be replaced by two new processes that are both connected to the process on the right.
+A channel of type \lstinline$(*)$ indicates that the process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
-Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.
+Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.  For a schematic of usage of \lstinline$(*)$ type using\lstinline$split$ and \lstinline$fork$, \comment{See Figure \ref{} in Appendix \ref{}.}
 
 \subsection{Custom channel types}
 \label{Sec:protocols}
@@ -365,14 +364,14 @@ Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.
 We have covered some basic channel types, but our processes cannot send variable numbers of messages.
 Consider process \lstinline$forward$ in Example~\ref{ex:forward} that only forwards a single message from \lstinline$source$:
 \begin{lstlisting}[label=ex:forward, caption=Process that forwards a message]
-proc forward :: | Put([Char]|TopBot), Get([Char]|TopBot) => =
-	 | source, dest => -> do
+proc forward :: | Put([Char]|TopBot) => Put([Char]|TopBot)  =
+	 | source => dest -> do
 		get msg on source								-- receive message from source
 		put msg on dest									-- forward message to dest
 		close source										-- close all channels and halt
 		halt dest
 \end{lstlisting}
-To allow \lstinline$forward$ to call itself recursively until all messages are sent, the channel type needs to change from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
+To allow \lstinline$forward$ to call itself recursively until all messages are sent, the channel type \comment{needs to change: talk to Xanna about this.} from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called \tc{protocols} and \tc{coprotocols}, which can be recursive.
 %
 Consider the protocol called \lstinline$PassMessages$:
@@ -382,55 +381,29 @@ protocol PassMessages (A| ) => S =			-- passes messages of type A
     SendMsg :: Put(A|S) => S						-- handle to send another message
     CloseCh :: TopBot => S							-- handle to finish sending messages
 \end{lstlisting}
-This protocol allows an arbitrary number of type \lstinline$A$ messages to be sent on a \lstinline$Put$ channel.
-The two \tc{handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the channel type to be set to either \lstinline$Put$ or \lstinline$TopBot$.
-In general, handles represent the set of valid interactions, or session types, that may take place on a channel.
-
-When we use a \lstinline$PassMessages$ channel, we will instantiate the sequential type variable \lstinline$A$.
-In the case of  \lstinline$forward$, an arbitrary number of strings will be sent on \lstinline$source$, so we will use the channel type \lstinline$PassMessages([Char]| )$.
-%
-If \lstinline$PassMessages$ used concurrent type variables, they would be listed to the right of the bar, e.g. concurrent type \lstinline$X$ would appear as \lstinline$PassMessages(A| X)$.
-%
-%The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character.
-
-%Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages.
-The only difference between protocols and coprotocols is the direction that handles travel on the channel.
-For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
-%This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
-%
-We need \lstinline$forward$ to send an arbitrary number of strings on a \lstinline$Get$ channel.
-Furthermore, we want handles to travel in the same direction as the messages, so we use a coprotocol version of \lstinline$PassMessages$ to forward the messages on \lstinline$dest$.
-We can define a coprotocol \lstinline$CoPassMessages$ as follows:
- \begin{lstlisting}
-coprotocol S => CoPassMessages (A| ) =
-    CoSendMsg ::  S => Get(A|S)
-    CoCloseCh :: S => TopBot
-\end{lstlisting}
-Notice that the \tc{state variable} \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side in \lstinline$PassMessages$.
-We use different handle names than in \lstinline$PassMessages$ because all handle names must be globally unique.
-
-We modify \lstinline$forward$ to use \lstinline$PassMessages$ and \lstinline$CoPassMessages$ as follows:
+This protocol allows an arbitrary number of type \lstinline$A$ messages to be sent on a \lstinline$Put$ channel. The \tc{handle}, \lstinline$SendMsg$ allow the channel type to be set to either \lstinline$Put$ arbitrary number of times.
+We modify \lstinline$forward$ to use \lstinline$PassMessages$ protocol to send an arbitrary number of type \lstinline$A$ messages follows:
 \begin{lstlisting} [label=ex:forwardmsgs, caption=Process that forwards an arbitrary number of messages]
-proc forward :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
-	| source, dest => ->
+proc forward :: | PassMessages([Char]| ) => PassMessages([Char]| ) =
+	| source => dest ->
 		hcase source of				-- check whether there is another message
 			SendMsg -> do				-- protocol handle that indicates another message
 				get msg on source
 				on dest do
-					hput CoSendMsg	-- send coprotocol handle to forward msg
+					hput SendMsg	-- send protocol handle to forward msg
 					put msg
 				forward( | source, dest => ) -- recurse
 			CloseCh -> do				-- protocol handle that indicates all messages sent
 				close source
 				on dest do
-					hput CoCloseCh	-- send handle to indicate all messages sent
+					hput CloseCh	-- send handle to indicate all messages sent
 					halt
  \end{lstlisting}
-Protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, so \lstinline$forward$ is receiving handles on \lstinline$source$.
-Coprotocol handles travel in the same direction as messages on a \lstinline$Get$ channel, so \lstinline$forward$ is sending handles on \lstinline$dest$.
-A handle is sent on a channel using \lstinline$hput$ which \tc{activates} the channel and sets its type as specified by the handle.
-A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
- From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature.
+ 
+ 
+In Example \ref{ex:forwardmsgs} - line 1, we instantiated the sequential type variable \lstinline$A$ as \lstinline$[Char]$ type so as to send arbitrary number of strings. Protocol handles represent the set of valid interactions, or session types, that may take place on a channel. When a handle is sent on a channel using \lstinline$hput$ (lines 7 and 13), it \tc{activates} the channel for a communication session and sets its  type as specified by the handle. A process can use \lstinline$hcase$ (line 3) to receive a handle and proceed further by {\em casing} on different handles (lines 4 and 10).
+
+CaMPL programs also allow coprotocols which are functionally the same as protocols. The only difference between protocols and coprotocols is the direction in which the handles travel on the channel --- for a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input channel), and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output channel), see Figure \ref{} in Appendix \ref{Sec:protocol and coprotocol}. For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send over \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
 
 \section{Controlled non-determinism}
 %\comment{We could potentially move this paragraph the code, and the paragraph below the code to fork-split.}
@@ -604,6 +577,53 @@ The outer most layer is the first interaction that will take place, and after th
 \lstinline$Ch1(+) Ch2$ & process on the right becomes two processes both connected to process on the left. \\
 ~ & ~
 \end{tabular}
+
+\section{Protocols and coprotocols example}
+\label{Sec:protocol and coprotocol}
+
+\comment{FIGURE HERE: Protocol and coprotocol handle with Put type, sending message in either direction}
+
+Protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, so \lstinline$forward$ is receiving handles on \lstinline$source$.
+Coprotocol handles travel in the same direction as messages on a \lstinline$Get$ channel, so \lstinline$forward$ is sending handles on \lstinline$dest$.
+
+To demonstrate a usage of coprotocols, we consider  process \lstinline$forward$ which forwards a single message from \lstinline$source$ over an input channel \lstinline$dest$:
+\begin{lstlisting}[label=ex:coforward, caption=Process that forwards a message]
+proc forward :: | Put([Char]|TopBot), Get([Char]|TopBot) =>   =
+	 | source, dest => -> do
+		get msg on source								-- receive message from source
+		put msg on dest									-- forward message to dest
+		close source										-- close all channels and halt
+		halt dest
+\end{lstlisting}
+
+We need \lstinline$forward$ to send an arbitrary number of strings on a \lstinline$Get$ channel. Furthermore, we want handles to travel in the same direction as the messages, so we define a coprotocol version of \lstinline$PassMessages$ (in Section \ref{Sec:protocols} 
+) called \lstinline$CoPassMessages$ to forward the messages on \lstinline$dest$.
+
+\begin{lstlisting}
+coprotocol S => CoPassMessages (A| ) =
+    CoSendMsg ::  S => Get(A|S)
+    CoCloseCh :: S => TopBot
+\end{lstlisting}
+Notice that the \tc{state variable} \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side in \lstinline$PassMessages$.
+We use different handle names than in \lstinline$PassMessages$ because all handle names must be globally unique.
+
+We modify \lstinline$forward$ to use \lstinline$PassMessages$ and \lstinline$CoPassMessages$ as follows:
+\begin{lstlisting} [label=ex:coforwardmsgs, caption=Process that forwards an arbitrary number of messages]
+proc forward :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest => ->
+		hcase source of				-- check whether there is another message
+			SendMsg -> do				-- protocol handle that indicates another message
+				get msg on source
+				on dest do
+					hput CoSendMsg	-- send coprotocol handle to forward msg
+					put msg
+				forward( | source, dest => ) -- recurse
+			CloseCh -> do				-- protocol handle that indicates all messages sent
+				close source
+				on dest do
+					hput CoCloseCh	-- send handle to indicate all messages sent
+					halt
+ \end{lstlisting}
 
 
 \end{document}
