@@ -562,14 +562,15 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \section{Discussion and future work}
 %Races, Higher order message passing
 
-The CaMPL project is still very much in progress, as such CaMPL is a proof-of-concept langauge.
+The CaMPL project is still very much in progress.
+As such, CaMPL is a proof-of-concept langauge.
 On the implementation side, we are actively working on a paper to comprehensively document every programming feature.
 We are working on updating the compiler to be able to race protocol/coprotocol handles.
-We also want to be able to have processes distributed over multiple devices connected by a network.
+We also want to add features to work with processes that are distributed over multiple devices and connected by a network.
 
-On the categorical semantics side, we are working on a precise semantics for non-determinism that considers the interaction with other features.
-We are also considering a categorical semantics for message passing between quantum processes.
-This would contribute to the development of programming languages for distributed quantum computing over a ``quantum internet'' \cite{QMP23}.
+On the categorical semantics side, we are working on a precise semantics for non-determinism that considers how races interact with the other features.
+We are also considering a categorical semantics for message passing between quantum processes \cite{QMP23}.
+This will contribute to the development of programming languages for distributed quantum computing over a quantum internet.
 
 \printbibliography
 
