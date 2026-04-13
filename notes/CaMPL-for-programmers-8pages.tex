@@ -431,7 +431,7 @@ proc forward :: | Put([Char]|TopBot) => Put([Char]|TopBot)  =
 		close source										-- close all channels and halt
 		halt dest
 \end{lstlisting}
-To allow \lstinline$forward$ to call itself recursively until all messages are sent, the channel type needs to change from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
+To allow \lstinline$forward$ to call itself recursively until all messages are sent, \comment{For Xanna: channel type needs to change} from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called \tc{protocols} and \tc{coprotocols}, which can be recursive.
 %
 Consider the protocol called \lstinline$PassMessages$:
@@ -548,14 +548,14 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \section{Discussion and future work}
 %Races, Higher order message passing
 
-The CaMPL project is still very much in progress, as such is a proof-of-concept langauge.
+The CaMPL project is still very much in progress, as such CaMPL is a proof-of-concept langauge.
 On the implementation side, we are actively working on a paper to comprehensively document every programming feature.
 We are working on updating the compiler to be able to race protocol/coprotocol handles.
 We also want to be able to have processes distributed over multiple devices connected by a network.
 
 On the categorical semantics side, we are working on a precise semantics for non-determinism that considers the interaction with other features.
 We are also considering a categorical semantics for message passing between quantum processes.
-This would contribute to the development of programming languages for distributed quantum computing over a ``quantum internet.''
+This would contribute to the development of programming languages for distributed quantum computing over a ``quantum internet'' \cite{QMP23}.
 
 \printbibliography
 
