@@ -432,39 +432,52 @@ proc forward :: | Put([Char]|TopBot) => Put([Char]|TopBot)  =
 		close source										-- close all channels and halt
 		halt dest
 \end{lstlisting}
-To allow \lstinline$forward$ to call itself recursively until all messages are sent, \comment{For Xanna: channel type needs to change} from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
+
+To allow \lstinline$forward$ to call itself recursively until all messages are sent, the channel type needs to be able to change from \lstinline$Put$ to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called \tc{protocols} and \tc{coprotocols}, which can be recursive.
 %
 Consider the protocol called \lstinline$PassMessages$:
+
+\newpage
 \begin{lstlisting} %[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages]
 
 protocol PassMessages (A| ) => S =			-- passes messages of type A
     SendMsg :: Put(A|S) => S						-- handle to send another message
     CloseCh :: TopBot => S							-- handle to finish sending messages
 \end{lstlisting}
-The above protocol allows an arbitrary number of type \lstinline$A$ messages to be sent on a \lstinline$Put$ channel. The \tc{handle}, \lstinline$SendMsg$ allow the channel type to be set to either \lstinline$Put$ arbitrary number of times.
+This protocol allows an arbitrary number of type \lstinline$A$ messages to be sent on a \lstinline$Put$ channel.
+%The two \tc{handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the channel type to be set to either \lstinline$Put$ or \lstinline$TopBot$.
+The \tc{handles} represent the set of valid interactions, or session types, that may take place on the channel. 
+The handle \lstinline$SendMsg$ sets the channel type to \lstinline$Put$ to allow another message to be sent.
+Once all messages are sent, \lstinline$CloseCh$ can be used to change the channel type to \lstinline$TopBot$.
 We modify \lstinline$forward$ to use the \lstinline$PassMessages$ protocol to send an arbitrary number of type \lstinline$[Char]$ messages: 
 \begin{lstlisting} [label=ex:forwardmsgs, caption=Process that forwards an arbitrary number of messages]
 proc forward :: | PassMessages([Char]| ) => PassMessages([Char]| ) =
 	| source => dest ->
-		hcase source of				-- check whether there is another message
-			SendMsg -> do				-- protocol handle that indicates another message
+		hcase source of									-- check whether there is another message
+			SendMsg -> do									-- indicates another message will be sent
 				get msg on source
-				on dest do
-					hput SendMsg	-- send protocol handle to forward msg
+				on dest do									-- forward handle and msg
+					hput SendMsg		
 					put msg
-				forward( | source, dest => ) -- recurse
-			CloseCh -> do				-- protocol handle that indicates all messages sent
+				forward( | source, dest => )-- recurse
+			CloseCh -> do									-- indicates all messages have been sent
 				close source
-				on dest do
-					hput CloseCh	-- send handle to indicate all messages sent
+				on dest do									-- forward handle and halt
+					hput CloseCh	
 					halt
  \end{lstlisting}
- 
- 
-In Example \ref{ex:forwardmsgs} - line 1, we instantiated the sequential type variable \lstinline$A$ as \lstinline$[Char]$ type so as to send arbitrary number of strings. Protocol handles represent the set of valid interactions, or session types, that may take place on a channel. When a protocol handle is sent on an (output) channel using \lstinline$hput$ (lines 7 and 13), it \tc{activates} the channel for a communication session and sets its  type as specified by the handle. A process can use \lstinline$hcase$ (line 3) to receive a handle on an (input) channel and proceed further by {\em casing} on different handles (lines 4 and 10).
+The sequential type variable \lstinline$A$ is instantiated with \lstinline$[Char]$ on line 1 to send an arbitrary number of strings.
+A handle is received on the input polarity channel \lstinline$source$ using \lstinline$hcase$ on line 3.
+Process bodies for each handle are defined on lines 4 - 9 and 10 - 14.
+On lines 7 and 13, a communication session is initiated on the output polarity channel \lstinline$dest$ by \tc{activating} it with a handle using \lstinline$hput$.
+This sets the channel type as specified by the handle. 
 
-CaMPL programs also allow coprotocols which are functionally the same as protocols. The only difference between protocols and coprotocols is the direction in which the handles travel on the channel --- for a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input channel), and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output channel), see Figure \ref{Fig: hput and hcase} in Appendix \ref{Sec:protocol and coprotocol}. For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send over \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
+Coprotocols are functionally the same as protocols. 
+The only difference between protocols and coprotocols is the direction in which the handles travel on the channel, see Figure \ref{Fig: hput and hcase} in Appendix~\ref{Sec:protocol and coprotocol}.
+For protocols, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input).
+For coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output). 
+For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send on an input polarity \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
 
 \section{Controlled non-determinism}
 %\comment{We could potentially move this paragraph the code, and the paragraph below the code to fork-split.}
