@@ -1623,50 +1623,92 @@ and that they need to be defined in a very specific way for the abstract machine
 \section{Sequential types}
 \label{Sec:SequentialTypes}
 
-Note that a {\tt do} block ends with a {\em procCmd} or an {\tt if} statement or a {\tt case} statement. 
+\subsection{Higher-order messages}
 
-\begin{center}
-\begin{minipage}[t]{0.2\textwidth}
-{\tt do } 
+In sequential functional programming, higher-order functions take other functions as input or produce other functions as output. CaMPL's higher-order processes based on \comment{mathematical term} are a concurrent analogue of sequential higher order functions.
 
-\quad \quad {\em procCmd}$_1$ 
- 
-\quad \quad {\em procCmd}$_2$ 
+Higher-order processes encode other processes as sequential data, pass an encoded process as a message, and/or decode and invoke an encoded process.
+Example \ref{ex:hoprocs} shows higher-order processes that pass an encoded \lstinline$helloworld$ process from Example~\ref{ex:helloworld}:
+\begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
+proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
+    | => ch -> do
+        on ch do
+            put store(helloworld)		-- encode helloworld and send as a message
+            halt
+proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
+    | ch, console => -> do
+        on ch do
+           get stored_process			-- receive message with encoded helloworld
+            close
+        on console do
+            hput ConsolePut
+            put ("Server says: Running the stored process")
+        use(stored_process)( | console => )		-- decode and invoke helloworld
+\end{lstlisting}
+Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ typed channel.
+The sequential type \lstinline$Store$ indicates that a message containing an encoded process is being passed.
 
-\quad \quad $\cdots$ 
+The type signature of the encoded process, in this case \lstinline$helloworld$, is indicated within the \lstinline$Store$ type.
 
-\quad \quad {\em procCmd}$_n$  
-\end{minipage}
-\begin{minipage}[t]{0.3\textwidth}
-{\tt do } 
+To encode a process, the built-in \lstinline$store$ function is used.
+This function takes either the name of a previously defined process, as in the above example on line 4, or it takes an anonymous process as an in-line process definition.
 
-\quad \quad {\em procCmd}
+To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
+To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
 
-\quad \quad $\cdots$ 
+\subsection{Codata types}
 
-\quad \quad {\tt if } {\em expr}
+  The \lstinline$case$, the \lstinline$constructor$, and the \lstinline$fold$ are the sequential MPL constructs that work on the data types.
+  The \lstinline$record$, the \lstinline$product$, the \lstinline$destructor$, and the unfold are the sequential MPL constructs that work on codata types.
+  
+  CaMPL supports both data and codata types. Codata allows one to represent potentially infinite structures that are evaluated lazily. Example \ref{ex:codata stack} defines a Stack codata type to create an infinitely-growing stack. 
 
-\quad \quad \quad \quad {\tt then } {\em procBody}$_1$  
+\begin{lstlisting} [label=ex:codata stack, caption=Definition of a Stack codata type and a success-failure data type, numbers=left, name=codata]
+(*@ \color{gray} data SF(A) -> C = @*)
+      (*@ \color{gray} SS :: A -> C  -- Success constructor @*)
+      (*@ \color{gray} FF :: -> C    -- Fail constructor @*)
 
-\quad \quad \quad \quad {\tt else } {\em procBody}$_2$  
-\end{minipage}
-\begin{minipage}[t]{0.45\textwidth}
-{\tt do } 
+codata S -> Stack(A) = 
+      Push :: A, S -> S      -- Push destructor
+      Pop :: S -> SF((A,S))  -- Pop destructor
+\end{lstlisting}  
+The Stack codata stores a data of sequential type $A$ has two \tc{destructors} namely \lstinline$Push$ and \lstinline$Pop$. Continuing the example, we define a sequential function \lstinline$makeStack :: [A] -> Stack(A)$ that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
+\begin{lstlisting} [numbers=left, name=codata]
+	fun listStack ::[A] -> Stack(A) = 
+      cs -> ( Push := c -> listStack(c:cs),   -- definition of destructor Push
+              Pop := -> case cs of            -- definition of destructor Pop
+                  [] -> FF
+                  b:bs -> SS((b,listStack(bs)))
+            )
+\end{lstlisting}  
+We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
+\begin{lstlisting} 
+proc run =
+      |  =>
+       -> Pop(Push("Hello World", listStack([])))
 
-\quad \quad {\em procCmd}
+\end{lstlisting} 
+There is no visible output when this program is run. To make things interesting, we arrange for the \lstinline$run$ process to print output. We write a helper function \lstinline$flatten :: Stack([Char]) -> [Char]$ which will recursively pop strings out the stack and concatenate them: as follows.
+\begin{lstlisting} 
+fun flatten :: Stack([Char]) -> [Char] =
+  s -> case Pop(s) of
+         SS((a, st)) -> a ++ " " ++ flatten(st)
+         _ -> ""
 
-\quad \quad $\cdots$ 
+proc run =
+      | console =>
+       -> do on console do
+              hput ConsolePut
+              put flatten(Push("Hello ", listStack(["World"])))
+	      hput ConsoleClose
+	      halt
+\end{lstlisting}
 
-\quad \quad {\tt case } {\em expr} {\tt of}
+ \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack}?
 
-\quad \quad \quad \quad $C_1(a_{11, \ldots,a_{1n}})$ {\tt ->} {\em procBody}$_1$
-
-\quad \quad \quad \quad $\cdots$ 
-
-\quad \quad \quad \quad $C_1(a_{p1, \ldots,a_{pn}})$ {\tt ->} {\em procBody}$_p$  
-\end{minipage}
-\end{center}
+\subsection{Overview of other sequential types}
 	
+	....
 	
 \section{Example programs}
 
