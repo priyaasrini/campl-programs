@@ -192,18 +192,19 @@ The concurrent type system provided by linear actegories ensures that processes 
 That is, at any instance in run-time, the topology of a program is guaranteed to be a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
 %This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
 The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur \cite{Ly18}.
-Similar to the sequential case, when one aims to prove termination, livelock freedom is not guaranteed if we allow general recursion.
+However, similar to proving termination in the sequential case, livelock freedom is only guaranteed if we disallow general recursion.
 Deadlock freedom is still guaranteed.
 
 % how the language implementation started;  history of work on campl prashant thesis, jared thesis, xanna thesis, melika thesis
 The first implementation of the CaMPL compiler was written by Kumar as described in \cite{Ku18}.
-This version implemented the core programming features of the sequential part, concurrent part, and message passing.
+This version implemented sequential and concurrent type systems.
 It added features to define custom concurrent data types called protocols and coprotocols.
+The categorical semantics for protocols and coprotocols were given by Yeasin in \cite{Ye12}.
 This compiler performed both a type inference and type checking.
 The second implementation of the compiler was written by Pon as described in \cite{Po21, Po22}.
 This version re-implemented the existing features and added controlled non-determinism in the form of ``races.''
 Changes to the categorical semantics to include non-determinism were outlined by Little in \cite{xanna, xanna2}.
-The most recent feature added to the compiler was higher-order message passing which allows processes to send messages that contain encoded processes to be decoded and invoked when they are received.
+The most recent feature added to the compiler was higher-order message passing which allows processes to send messages that contain encoded processes which can be decoded and invoked when they are received.
 The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}. 
 
 %\note{Xanna note:
@@ -213,6 +214,7 @@ In this article, we illustrate CaMPL's concurrent type system and the above feat
 We use \tc{this style} whenever we introduce CaMPL terminology.
 
 \section{A brief overview of CaMPL}
+\label{Sec:overview}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, shown in Example \ref{ex:helloworld}.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$.
@@ -354,6 +356,7 @@ Built-in channel types define the fundamental interactions that are permitted to
 The type of a channel can either be explicitly defined in the type signature of a process, or the compiler can infer the type of a channel based on how the processes on either end use it.
 
 \subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
+\label{Sec:putandget}
 
 As mentioned in Section~\ref{Sec:Processes}, process definitions may include a type
 signature with three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
@@ -378,6 +381,7 @@ We can \lstinline$close$ the channel or, as above, \lstinline$halt$ by closing t
 Appendix \ref{Sec:ex-put-get} has a complete version of Example \ref{ex:serverid-run}.
 
 \subsubsection{Tensor and Par types}
+\label{Sec:tensorandpar}
 
 We will now consider compound channel types that allow bundling two (or more) channels into one.
 % two at each level, but inductively we can bundle more than two. tensor and par bundle exactly two channels together and then you can nest them with parentheses? i think
@@ -480,6 +484,7 @@ For coprotocols, handles travel in the same direction as a \lstinline$Get$ chann
 For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send on an input polarity \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
 
 \section{Controlled non-determinism}
+\label{Sec:races}
 %\comment{We could potentially move this paragraph the code, and the paragraph below the code to fork-split.}
 % priyaa suggested that we use the fork/split code and modify it for the discussion on races.
 % we tried to recall the split fork code, but we need the messages to be sent back and forth for the race to be obviously necessary, so we couldn't directly reuse the code
