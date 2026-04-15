@@ -316,7 +316,7 @@ The type of a channel can either be explicitly defined in the type signature of 
 Two processes can be connected along a channel if their process definitions both have a channel with the same type and opposite polarities.
 This section will discuss the details of how and why this has been defined in this way.
 
-\subsubsection{On Channel polarities}
+\subsubsection{Polarities}
 \label{Sec:polarities}
 
 Recall Example~\ref{ex:serverecho} in which two processes are connected along a channel \lstinline$ch$.
@@ -391,7 +391,7 @@ Each built-in channel type in CaMPL specifies the complementary roles of the pro
 %
 
 
-\subsubsection{Built-in Channel types}
+\subsubsection{Built-in types}
 \label{Sec:channeltypes}
 
 The built-in channel types define the fundamental interactions that are permitted to occur between processes.
@@ -582,7 +582,7 @@ The outer most layer is the first interaction that will take place, and after th
 %The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
 %The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
-\subsubsection{Constructing custom channel types}
+\subsubsection{Custom types}
 \label{Sec:protocols}
 
 We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
@@ -750,9 +750,27 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 %A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
 
+\subsection{Non-deterministic processes}
+\label{Sec:races}
+
+\section{Sequential types}
+\label{Sec:SequentialTypes}
+
+\comment{TODO: move content up here. (i think priyaa is working on these sections so i don't want to move the content and mess it up :')}
+
+
+\section{Interacting with the outside world via service channels}
+\label{Sec:ServiceChannels}
+
+\comment{TODO: move content up here. (i think priyaa is working on these sections so i don't want to move the content and mess it up :')}
+
+
+
 \section{Process Commands}
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
+
+{TODO: the idea is the type system parts can focus on the concepts and be like a nice paper to read and then the proc commands section can be more like a manual because we don't really have a manual manual. they should be able to write some programs after the concurrent and sequential type system sections, and if they have compiler errors or ``why isn't this working'' questions then they can go to the process commands section. }
 
 We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
 The novel features that we will introduce in this section are controlled non-determinism using the \lstinline$race$ command and higher-order message passing using the \lstinline$store$ and \lstinline$use$ commands.
@@ -1534,7 +1552,7 @@ The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules fo
 \label{Fig: sequent rules for split}
 \end{figure}
 
-\subsection{Non-deterministic communication using {\tt race}}
+\subsection{Controlled non-determinism using {\tt race}}
 
 \comment{TODO: move non det to concurrent section, h.o. to sequential section? and move sequential section to before process commands. eventually add any interesting details about commands like get and put to concurrent types section?
 
@@ -1617,11 +1635,15 @@ Note that the above method for higher-order message passing behavior is implicit
 \section{Interacting with the outside world via service channels}
 \label{Sec:ServiceChannels}
 
+\comment{TODO: move this section to before process commands but after sequential types}
+
 \comment{TODO: mention that the Console protocol and Terminal coprotocols need to be defined in a prelude or in the file or something.
 and that they need to be defined in a very specific way for the abstract machine, but the type checker doesn't know about them or something}
 	
 \section{Sequential types}
 \label{Sec:SequentialTypes}
+
+\comment{TODO: move this section to before process commands but after concurrent types}
 
 \subsection{Higher-order messages}
 
