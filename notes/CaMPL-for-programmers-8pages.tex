@@ -623,10 +623,10 @@ Each channel type specifies the complementary roles of the processes on each end
 \begin{lstlisting}
 proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature 
 	server_id | ch => ->		-- new server_id variable
-    on ch do 
-        get msg
+		on ch do
+			get msg
 			put server_id				-- sends server_id back
-        halt
+			halt
 
 proc client :: | => Put([Char]|Get(Int|TopBot)) =				-- type signature
 	| => ch ->
