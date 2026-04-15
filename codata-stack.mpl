@@ -17,15 +17,28 @@ fun listStack ::[A] -> Stack(A) =
                   b:bs -> SS((b,listStack(bs)))
             )
 
+--fun listStack ::[A] -> Stack(A) = 
+--      cs -> unfold cs of 
+--            ds => Push: case ds of 
+--                   x:- ->    
+                  
+
+-- Pops the topmost element of the stack
 fun pop :: Stack([Char]) -> [Char] = 
       s -> case Pop(s) of 
             SS((a,_)) -> a 
             _ -> "Fail" 
 
+-- Recursively pops and concatenates it to a list until no elements left
+fun flatten :: Stack([Char]) -> [Char] =
+  s -> case Pop(s) of
+         SS((a, st)) -> a ++ " " ++ flatten(st)
+         _ -> ""
+
 proc run =
       | console =>
        -> do on console do
               hput ConsolePut
-              put pop(Push("Hello world", listStack([])))
+              put flatten(Push("Hello ", listStack(["Priyaa"])))
 	      hput ConsoleClose
 	      halt

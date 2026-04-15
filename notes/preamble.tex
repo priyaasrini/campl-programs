@@ -47,6 +47,8 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 
 \usepackage{listings}
 \renewcommand{\lstlistingname}{Example}
+\lstset{escapeinside={(*@}{@*)}}
+\newcommand{\lighten}[1]{(*@ \color{gray}#1 @*)}
 \lstdefinelanguage[2026]{CaMPL}{%
   keywords={},%
   % Use otherkeywords for symbols
@@ -54,6 +56,8 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
   % Use keywords [1] for keywords -- Can we have a seperate color scheme for process commands
   morekeywords={[1]data,codata,protocol,coprotocol,proc,%
     do,%
+    fun,
+    case,fold,unfold,switch,where,if,then,else
     %hput,hcase,put,get,halt,plug,%
 	%on,with,into,%
   },%
