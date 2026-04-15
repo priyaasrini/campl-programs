@@ -172,8 +172,9 @@ This type system ensures that a formal CaMPL program, i.e. one which does not al
 
 \section{Introduction}
 
-Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing.
-It implements a type system based on linear logic, described in the Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence, or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
+Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses message-passing concurrency.
+%i didn't like the use of implements twice in a row. i liked the proof of concept line though.
+It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 The categorical semantics of the message-passing logic is given by a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
@@ -183,18 +184,18 @@ The categorical semantics of the message-passing logic is given by a {\em linear
 % The property of acyclicity at run-time is guaranteed by CaMPL's type system.
 A linear actegory minimally consists of a monoidal category acting covariantly and contravariantly on a linearly distributive category, 
 %(LDC), 
-satisfying certain coherences~\cite{CoP07}. Linearly distributive categories are the categorical semantics of multiplicative linear logic~\cite{CS97}. 
+satisfying certain coherences~\cite{CoP07, CS97}. 
+%Linearly distributive categories are the categorical semantics of multiplicative linear logic~\cite{CS97}. 
 
-The concurrent type system provided by linear actegories ensures that CaMPL processes can never be connected in a cycle.
-That is, at any instance in run-time, the topology of a CaMPL program is guaranteed to be a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
+% i don't think we can say ``CaMPL processes/programs'' here because CaMPL programs can have livelocks because we do allow recursion.
+The concurrent type system provided by linear actegories ensures that processes can never be connected in a cycle.
+That is, at any instance in run-time, the topology of a program is guaranteed to be a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
 %This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
-The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur in a CaMPL program  \cite{Ly18}.
+The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur \cite{Ly18}.
 Similar to the sequential case, when one aims to prove termination, livelock freedom is not guaranteed if we allow general recursion.
-However, deadlock freedom is still guaranteed.
+Deadlock freedom is still guaranteed.
 
-%\comment{Write a little paragraph how the language implementation started.}
-% history of work on campl prashant thesis, jared thesis, melika thesis,
-%{\bf A brief history of CaMPL:} 
+% how the language implementation started;  history of work on campl prashant thesis, jared thesis, xanna thesis, melika thesis
 The first implementation of the CaMPL compiler was written by Kumar as described in \cite{Ku18}.
 This version implemented the core programming features of the sequential part, concurrent part, and message passing.
 It added features to define custom concurrent data types called protocols and coprotocols.
@@ -203,12 +204,12 @@ The second implementation of the compiler was written by Pon as described in \ci
 This version re-implemented the existing features and added controlled non-determinism in the form of ``races.''
 Changes to the categorical semantics to include non-determinism were outlined by Little in \cite{xanna, xanna2}.
 The most recent feature added to the compiler was higher-order message passing which allows processes to send messages that contain encoded processes to be decoded and invoked when they are received.
-The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}. In this article, we illustrate the CaMPL concurrent type system and these key features through a series of code examples.
+The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}. 
+
 %\note{Xanna note:
 %i am assuming introduction will establish justification for why we have submitted this paper to this venue.
 %and that we will mention things like there is a beautiful type system and that we are doing message passing and that there is a categorical semantics}
-%{\bf Notation and style:} 
-
+In this article, we illustrate CaMPL's concurrent type system and the above features through a series of code examples.
 We use \tc{this style} whenever we introduce CaMPL terminology.
 
 \section{A brief overview of CaMPL}
@@ -322,8 +323,8 @@ This allows one to omit a repetitive ``\lstinline$on ch$'' after each command.
 \label{Sec:Channels}
 
 A process \tc{uses} process commands on a channel to interact with the process plugged into the other end. 
-Two processes are connected by (at most) one channel of same type but opposite polarities. 
-The \tc{type} of a channel defines the interaction that the processes will have over it, and its \tc{polarities}  define process' role in the interaction. 
+Two processes are connected by (at most) one typed channel that they use with opposite polarities. 
+The \tc{type} of a channel defines the interaction that the processes will have over it, and its \tc{polarities} define each process's role in the interaction. 
 Thus, the process commands that a process can use on a channel depend on both type and polarity.
 
 %Two processes can be \lstinline$plug$ged together if they both use a channel with the same type but opposite polarities. We will explain and justify the necessity of polarities in Section~\ref{Sec:polarities}.Then, we will explain the interactions for each built-in channel type in Section~\ref{Sec:channeltypes}.Finally, we will discuss custom channel types in Section~\ref{Sec:protocols}.
@@ -331,17 +332,18 @@ Thus, the process commands that a process can use on a channel depend on both ty
 \subsection{Channel polarities}
 \label{Sec:polarities}
 
-Recall from Section \ref{Sec:Processes} that processes are defined with two lists of the channels in scope:
+Recall from Section \ref{Sec:Processes} that processes are defined with two lists of the channels in its scope:
 input polarity channels and output polarity channels.
-Each polarity refer to each \tc{end} of a channel. 
+A channel's polarity refers to which \tc{end} of the channel the process uses. 
 
-In Example~\ref{ex:serverecho}, the \lstinline$client$ and the \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ has \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ has \lstinline$ch$ with input polarity (the right end).
+In Example~\ref{ex:serverecho}, the \lstinline$client$ and the \lstinline$server$ are connected by a channel \lstinline$ch$. The \lstinline$client$ uses \lstinline$ch$ with output polarity (the left end) and \lstinline$server$ uses \lstinline$ch$ with input polarity (the right end).
 In the first step of the interaction, a message travels from the left to the right.
 The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to \lstinline$put$, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
 In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently compared to the previous step.
 
-Channel polarities enable unambiguous interaction of processes. 
- Without polarities to distinguish their roles, both the \lstinline$client$ and the \lstinline$server$ could use a \lstinline$get$ command at the same time, that is, they both wait for a message to be sent by the other, thereby causing a deadlock. 
+Channel polarities allow one to define unambiguous interactions between processes. 
+ Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time.
+Then, they would both wait for a message to be sent by the other, thereby causing a deadlock. 
 This scenario is illustrated in Appendix \ref{Sec: channel polarity deadlock prevention}.
 
 \subsection{Built-in channel types}
@@ -368,25 +370,24 @@ proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature
 			halt
 \end{lstlisting}
 Note that \lstinline$ch$ has type \lstinline$Put([Char]|  Get(Int| TopBot))$ which is constructed inductively. 
-The outer-most layer \lstinline$Put([Char]| ...)$ defines the first step of the interaction and a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses \lstinline$get$ to receive \lstinline$msg$. 
-In the next layer, the type is \lstinline$Get(Int| ...)$, so an integer \lstinline$server_id$ travels from input polarity to output polarity (\lstinline$server$ to \lstinline$client$).
+The outer-most layer \lstinline$Put([Char]| ...)$ defines the first step of the interaction in which a string \lstinline$msg$ travels from output polarity to input polarity (\lstinline$client$ to \lstinline$server$). Accordingly, in line 4, \lstinline$server$ uses \lstinline$get$ to receive \lstinline$msg$. 
+In the next layer \lstinline$Get(Int| ...)$, an integer \lstinline$server_id$ travels from input polarity to output polarity (\lstinline$server$ to \lstinline$client$).
 In line 5, \lstinline$server$ uses \lstinline$put$ to send \lstinline$server_id$.
-The inner-most layer is the base case and final step. 
-The type is \lstinline$TopBot$, so we can \lstinline$close$ a channel or \lstinline$halt$ by closing the final open channel.
+The inner-most layer \lstinline$TopBot$ is the base case and final step. 
+We can \lstinline$close$ the channel or, as above, \lstinline$halt$ by closing the final open channel.
 Appendix \ref{Sec:ex-put-get} has a complete version of Example \ref{ex:serverid-run}.
 
 \subsubsection{Tensor and Par types}
 
-% Tensor and par are also inductive types.
-%Following inductive types, 
 We will now consider compound channel types that allow bundling two (or more) channels into one.
-% not or more. tensor and par bundle exactly two channels together you need to nest them yourself with parentheses?
-The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from the multiplicative linear logic and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+% two at each level, but inductively we can bundle more than two. tensor and par bundle exactly two channels together and then you can nest them with parentheses? i think
+The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from multiplicative linear logic and allow changes to be made to the network of processes while ensuring no cycles are introduced.
+% i decided i do actually like linear logic here so i didn't change it. thank you priyaa :)
 By unbundling the channels, two new channels are created and passed into two new processes.
 
-We modify Example~\ref{ex:serverecho} to demonstrate \lstinline$(*)$ type.
+We modify Example~\ref{ex:serverecho} to demonstrate \lstinline$(*)$.
 We define a new process \lstinline$two_clients$ that uses \lstinline$fork$ to unbundle its output channel \lstinline$two_ch$ and create two instances of \lstinline$client$ that both send a message to a modified \lstinline$server$ process. 
-This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, teh channel \lstinline$two_ch$ is no longer in scope in either of the processes. The modified example is as follows.
+This \lstinline$server$ uses \lstinline$split$ to unbundle its input channel \lstinline$two_ch$ into two channels, \lstinline$ch1$ and \lstinline$ch2$. After unbundling, \lstinline$two_ch$ is no longer in scope in either process. %The modified example is as follows.
 
 \newpage
 \begin{lstlisting} [label=ex:clientfork, caption=Client forks to create two new processes]
@@ -416,7 +417,7 @@ proc run :: | => =
 \end{lstlisting}
 A channel of type \lstinline$(*)$ indicates that the process on the left will be replaced by two new processes that are both connected to the process on the right.
 What if we wanted the process on the right to be replaced by two new processes instead?
-Then, we would use  \lstinline$(+)$ which is dual to the \lstinline$(*)$ type.  For a schematic on the usage of \lstinline$(*)$ and \lstinline$(+)$ types using \lstinline$split$ and \lstinline$fork$, see Figures \ref{Fig: Tensor} and \ref{Fig: Par} in Appendix \ref{Sec: Schematic tensor par} respectively.
+Then, we would use  \lstinline$(+)$ which is dual to \lstinline$(*)$.  For a schematic on the usage of \lstinline$(*)$ and \lstinline$(+)$ with \lstinline$split$ and \lstinline$fork$, see Figures \ref{Fig: Tensor} and \ref{Fig: Par} in Appendix \ref{Sec: Schematic tensor par}.
 
 \subsection{Custom channel types}
 \label{Sec:protocols}
@@ -431,39 +432,52 @@ proc forward :: | Put([Char]|TopBot) => Put([Char]|TopBot)  =
 		close source										-- close all channels and halt
 		halt dest
 \end{lstlisting}
-To allow \lstinline$forward$ to call itself recursively until all messages are sent, \comment{For Xanna: channel type needs to change} from \lstinline$Put$ (or \lstinline$Get$) to \lstinline$TopBot$.
+
+To allow \lstinline$forward$ to call itself recursively until all messages are sent, the channel type needs to be able to change from \lstinline$Put$ to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called \tc{protocols} and \tc{coprotocols}, which can be recursive.
 %
 Consider the protocol called \lstinline$PassMessages$:
+
+\newpage
 \begin{lstlisting} %[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages]
 
 protocol PassMessages (A| ) => S =			-- passes messages of type A
     SendMsg :: Put(A|S) => S						-- handle to send another message
     CloseCh :: TopBot => S							-- handle to finish sending messages
 \end{lstlisting}
-The above protocol allows an arbitrary number of type \lstinline$A$ messages to be sent on a \lstinline$Put$ channel. The \tc{handle}, \lstinline$SendMsg$ allow the channel type to be set to either \lstinline$Put$ arbitrary number of times.
+This protocol allows an arbitrary number of type \lstinline$A$ messages to be sent on a \lstinline$Put$ channel.
+%The two \tc{handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the channel type to be set to either \lstinline$Put$ or \lstinline$TopBot$.
+The \tc{handles} represent the set of valid interactions, or session types, that may take place on the channel. 
+The handle \lstinline$SendMsg$ sets the channel type to \lstinline$Put$ to allow another message to be sent.
+Once all messages are sent, \lstinline$CloseCh$ can be used to change the channel type to \lstinline$TopBot$.
 We modify \lstinline$forward$ to use the \lstinline$PassMessages$ protocol to send an arbitrary number of type \lstinline$[Char]$ messages: 
 \begin{lstlisting} [label=ex:forwardmsgs, caption=Process that forwards an arbitrary number of messages]
 proc forward :: | PassMessages([Char]| ) => PassMessages([Char]| ) =
 	| source => dest ->
-		hcase source of				-- check whether there is another message
-			SendMsg -> do				-- protocol handle that indicates another message
+		hcase source of									-- check whether there is another message
+			SendMsg -> do									-- indicates another message will be sent
 				get msg on source
-				on dest do
-					hput SendMsg	-- send protocol handle to forward msg
+				on dest do									-- forward handle and msg
+					hput SendMsg		
 					put msg
-				forward( | source, dest => ) -- recurse
-			CloseCh -> do				-- protocol handle that indicates all messages sent
+				forward( | source, dest => )-- recurse
+			CloseCh -> do									-- indicates all messages have been sent
 				close source
-				on dest do
-					hput CloseCh	-- send handle to indicate all messages sent
+				on dest do									-- forward handle and halt
+					hput CloseCh	
 					halt
  \end{lstlisting}
- 
- 
-In Example \ref{ex:forwardmsgs} - line 1, we instantiated the sequential type variable \lstinline$A$ as \lstinline$[Char]$ type so as to send arbitrary number of strings. Protocol handles represent the set of valid interactions, or session types, that may take place on a channel. When a protocol handle is sent on an (output) channel using \lstinline$hput$ (lines 7 and 13), it \tc{activates} the channel for a communication session and sets its  type as specified by the handle. A process can use \lstinline$hcase$ (line 3) to receive a handle on an (input) channel and proceed further by {\em casing} on different handles (lines 4 and 10).
+The sequential type variable \lstinline$A$ is instantiated with \lstinline$[Char]$ on line 1 to send an arbitrary number of strings.
+A handle is received on the input polarity channel \lstinline$source$ using \lstinline$hcase$ on line 3.
+Process bodies for each handle are defined on lines 4 - 9 and 10 - 14.
+On lines 7 and 13, a communication session is initiated on the output polarity channel \lstinline$dest$ by \tc{activating} it with a handle using \lstinline$hput$.
+This sets the channel type as specified by the handle. 
 
-CaMPL programs also allow coprotocols which are functionally the same as protocols. The only difference between protocols and coprotocols is the direction in which the handles travel on the channel --- for a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input channel), and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output channel), see Figure \ref{Fig: hput and hcase} in Appendix \ref{Sec:protocol and coprotocol}. For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send over \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
+Coprotocols are functionally the same as protocols. 
+The only difference between protocols and coprotocols is the direction in which the handles travel on the channel, see Figure \ref{Fig: hput and hcase} in Appendix~\ref{Sec:protocol and coprotocol}.
+For protocols, handles travel in the same direction as messages on a \lstinline$Put$ channel (\lstinline$hput$ on output and  \lstinline$hcase$ on input).
+For coprotocols, handles travel in the same direction as a \lstinline$Get$ channel (\lstinline$hput$ on input and  \lstinline$hcase$ on output). 
+For a modified  \lstinline$forward$ process which uses a protocol to receive from \lstinline$src$ and a coprotocol to send on an input polarity \lstinline$dest$, see Appendix \ref{Sec:protocol and coprotocol}.
 
 \section{Controlled non-determinism}
 %\comment{We could potentially move this paragraph the code, and the paragraph below the code to fork-split.}
@@ -548,14 +562,15 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \section{Discussion and future work}
 %Races, Higher order message passing
 
-The CaMPL project is still very much in progress, as such CaMPL is a proof-of-concept langauge.
+The CaMPL project is still very much in progress.
+As such, CaMPL is a proof-of-concept langauge.
 On the implementation side, we are actively working on a paper to comprehensively document every programming feature.
 We are working on updating the compiler to be able to race protocol/coprotocol handles.
-We also want to be able to have processes distributed over multiple devices connected by a network.
+We also want to add features to work with processes that are distributed over multiple devices and connected by a network.
 
-On the categorical semantics side, we are working on a precise semantics for non-determinism that considers the interaction with other features.
-We are also considering a categorical semantics for message passing between quantum processes.
-This would contribute to the development of programming languages for distributed quantum computing over a ``quantum internet'' \cite{QMP23}.
+On the categorical semantics side, we are working on a precise semantics for non-determinism that considers how races interact with the other features.
+We are also considering a categorical semantics for message passing between quantum processes \cite{QMP23}.
+This will contribute to the development of programming languages for distributed quantum computing over a quantum internet.
 
 \printbibliography
 
@@ -600,14 +615,14 @@ Each channel type specifies the complementary roles of the processes on each end
 \label{Sec:ex-put-get}
 
 \begin{lstlisting}
-proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		 -- type signature 
-  server_id | ch => -> 	-- new server_id variable
+proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature 
+	server_id | ch => ->		-- new server_id variable
     on ch do 
         get msg
-        put server_id		 -- sends server_id back
+			put server_id				-- sends server_id back
         halt
 
-proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
+proc client :: | => Put([Char]|Get(Int|TopBot)) =				-- type signature
 	| => ch ->
 		on ch do 
 			put "Hello Server!"	
@@ -615,9 +630,9 @@ proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
 			halt
 
 proc run =
-	| => -> plug					-- connects processes by shared channel ch
-		client( | => ch )		-- creates client process
-		server( 5 | ch => )	-- creates server process
+	| => -> plug						-- connects processes by shared channel ch
+		client( | => ch )			-- creates client process
+		server( 5 | ch => )		-- creates server process
 \end{lstlisting}
 
 \section{Schematic of fork and split}
