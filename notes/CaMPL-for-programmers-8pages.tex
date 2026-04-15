@@ -13,6 +13,7 @@
 
 \usepackage{newpxtext}
 \usepackage[varg,bigdelims]{newpxmath}
+\usepackage{array}
 
 \usepackage[backend=bibtex, backref=true, maxbibnames = 10, style = alphabetic]{biblatex}
 \usepackage[bookmarks=true, colorlinks=true, linkcolor=blue!50!black, citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperref}
@@ -837,17 +838,57 @@ We denote an argument for a sequential type with \lstinline$A$ and a concurrent 
 Channel types that take another channel type as an argument are recursive cases.
 The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
 
-\begin{tabular}{r l}
-\lstinline$TopBot$ & end communication on the channel (this is the base case). \\
-\lstinline$Neg(Ch)$ & negate the channel type (interaction is the dual of \lstinline$Ch$). \\
-\lstinline$Put (A|Ch)$ & a message of type \lstinline$A$ travels from left to right (output to input polarity). \\
-\lstinline$Get (A|Ch)$ & a message of type \lstinline$A$ travels from right to left (input to output polarity). \\
-\lstinline$Ch1(*) Ch2$ & process on the left becomes two processes both connected to process on the right. \\
-\lstinline$Ch1(+) Ch2$ & process on the right becomes two processes both connected to process on the left. \\
-~ & ~
-\end{tabular}
+%\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
 
-\section{Protocols and coprotocols example}
+\begin{table}[h]
+\begin{center}
+	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.2cm} | }
+	\hline
+		 Channel type & Description & Process command & Section \\
+		 \hline
+		 \hline      
+		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Neg(Ch)$ & Dual interaction of \lstinline$Ch$ by negating and identifying with another channel.  & \lstinline$neg$ and \lstinline$|=|$  &  \\
+		 \hline      
+		 \lstinline$Put(A|Ch)$ & Message of type \lstinline$A$ travels from left to right (output to input polarity).  & \lstinline$put$/\lstinline$get$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{Sec:tensorandpar} \\
+		 \hline
+		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{Sec:tensorandpar} \\
+		 \hline
+		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{Sec:protocols} \\
+		 \hline
+		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{Sec:protocols} \\
+		 \hline
+		  & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{Sec:overview} \\
+		 \hline
+		  & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{Sec:races} \\
+		 \hline
+		  & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \\
+		 \hline
+		  & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \\
+		 \hline
+	\end{tabular}
+	\caption{Summary of channel types and process commands.}
+	\label{Table:summary}
+\end{center}
+\end{table}
+
+
+%\begin{tabular}{r l}
+%\lstinline$TopBot$ & end communication on the channel (this is the base case). \\
+%\lstinline$Neg(Ch)$ & negate the channel type (interaction is the dual of \lstinline$Ch$). \\
+%\lstinline$Put (A|Ch)$ & a message of type \lstinline$A$ travels from left to right (output to input polarity). \\
+%\lstinline$Get (A|Ch)$ & a message of type \lstinline$A$ travels from right to left (input to output polarity). \\
+%\lstinline$Ch1(*) Ch2$ & process on the left becomes two processes both connected to process on the right. \\
+%\lstinline$Ch1(+) Ch2$ & process on the right becomes two processes both connected to process on the left. \\
+%~ & ~
+%\end{tabular}
+
+\section{Protocol and coprotocol example}
 \label{Sec:protocol and coprotocol}
 
 
