@@ -173,7 +173,7 @@ This type system ensures that a formal CaMPL program, i.e. one which does not al
 \section{Introduction}
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language which implements concurrency by message passing.
-It implements a type system based on linear logic, described in the Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
+It implements a type system based on linear logic, described in the Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence, or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 The categorical semantics of the message-passing logic is given by a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
