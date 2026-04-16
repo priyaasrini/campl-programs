@@ -872,6 +872,14 @@ If \lstinline$ch2$ wins, lines 15 will execute and \lstinline$server_determinist
 The type signature of both versions of \lstinline$server$ would be the same because the interaction on  \lstinline$two_ch$ is the same.
 The only difference between the two versions is the order in which the steps of the interaction take place.
 
+\comment{TODO: add another example with Timer}
+
+\begin{lstlisting}
+coprotocol S => Timer =
+    Timer :: S => Get(Int|S (*) Put(()|TopBot))
+    TimerClose :: S => TopBot 
+\end{lstlisting}
+
 
 \section{Sequential types}
 \label{Sec:SequentialTypes}
