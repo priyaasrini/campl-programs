@@ -1,6 +1,7 @@
 \documentclass[11pt]{article}
 \input{preamble}
 \input{macros}
+\usepackage{array}
 \addbibresource{refs.bib}
 \linespread{1.11}
 
@@ -749,6 +750,18 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 %\[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
 %A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
+\subsubsection{Interacting with the outside world using service types}
+\label{Sec:ServiceChannels}
+
+\comment{TODO: forward reference to sequential part example for terminating communication with if on message information}
+
+\comment{TODO: mention that the Console protocol and Terminal coprotocols need to be defined in a prelude or in the file or something.
+and that they need to be defined in a very specific way for the abstract machine, but the type checker doesn't know about them or something}
+	
+
+
+\comment{TODO: move content up here. (i think priyaa is working on these sections so i don't want to move the content and mess it up :')}
+
 
 \subsection{Non-deterministic processes}
 \label{Sec:races}
@@ -802,17 +815,120 @@ The only difference between the two versions is the order in which the steps of 
 \section{Sequential types}
 \label{Sec:SequentialTypes}
 
-\comment{TODO: move content up here. (i think priyaa is working on these sections so i don't want to move the content and mess it up :')}
+
+\subsection{Functions}
+
+infix function syntax (like for example append as ++ )
 
 
-\section{Interacting with the outside world via service channels}
-\label{Sec:ServiceChannels}
+\subsection{Data and codata types}
 
-\comment{TODO: move content up here. (i think priyaa is working on these sections so i don't want to move the content and mess it up :')}
+TODO: write content
+Built-in seq types are ... Store
+The Store type is for encoded processes that are used in higher-order message passing... see section \\ref.
+
+Then talk about custom sequential (co)data types.
+
+CaMPL supports both data and codata types. 
+Codata allows one to represent potentially infinite structures that are evaluated lazily.
+
+The \lstinline$case$, the \lstinline$constructor$, and the \lstinline$fold$ are the sequential MPL constructs that work on the data types.
+The \lstinline$record$, the \lstinline$product$, the \lstinline$destructor$, and the unfold are the sequential MPL constructs that work on codata types.
+
+Example \ref{ex:codata stack} defines a Stack codata type to create an infinitely-growing stack. 
+
+\begin{lstlisting} [label=ex:codata stack, caption=Definition of a Stack codata type and a success-failure data type, numbers=left, name=codata]
+(*@ \color{gray} data SF(A) -> C = @*)
+      (*@ \color{gray} SS :: A -> C  -- Success constructor @*)
+      (*@ \color{gray} FF :: -> C    -- Fail constructor @*)
+
+codata S -> Stack(A) = 
+      Push :: A, S -> S      -- Push destructor
+      Pop :: S -> SF((A,S))  -- Pop destructor
+\end{lstlisting}  
+The Stack codata stores a data of sequential type $A$ has two \tc{destructors} namely \lstinline$Push$ and \lstinline$Pop$. Continuing the example, we define a sequential function \lstinline$makeStack :: [A] -> Stack(A)$ that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
+\begin{lstlisting} [numbers=left, name=codata]
+	fun listStack ::[A] -> Stack(A) = 
+      cs -> ( Push := c -> listStack(c:cs),   -- definition of destructor Push
+              Pop := -> case cs of            -- definition of destructor Pop
+                  [] -> FF
+                  b:bs -> SS((b,listStack(bs)))
+            )
+\end{lstlisting}  
+We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
+\begin{lstlisting} 
+proc run =
+      |  =>
+       -> Pop(Push("Hello World", listStack([])))
+
+\end{lstlisting} 
+There is no visible output when this program is run. To make things interesting, we arrange for the \lstinline$run$ process to print output. We write a helper function \lstinline$flatten :: Stack([Char]) -> [Char]$ which will recursively pop strings out the stack and concatenate them: as follows.
+\begin{lstlisting} 
+fun flatten :: Stack([Char]) -> [Char] =
+  s -> case Pop(s) of
+         SS((a, st)) -> a ++ " " ++ flatten(st)
+         _ -> ""
+
+proc run =
+      | console =>
+       -> do on console do
+              hput ConsolePut
+              put flatten(Push("Hello ", listStack(["World"])))
+	      hput ConsoleClose
+	      halt
+\end{lstlisting}
+
+% \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack? no :(((}
+
+	
 
 
 
-\section{Process Commands}
+\subsection{Sequential control}
+
+\comment{TODO: example of terminiating comm with user with service handles}
+
+\comment{TODO: (if/switch/case)}
+
+
+\subsection{Higher-order messages}
+
+In sequential functional programming, higher-order functions take other functions as input or produce other functions as output. CaMPL's higher-order processes based on \comment{mathematical term} are a concurrent analogue of sequential higher order functions.
+
+Higher-order processes encode other processes as sequential data, pass an encoded process as a message, and/or decode and invoke an encoded process.
+Example \ref{ex:hoprocs} shows higher-order processes that pass an encoded \lstinline$helloworld$ process from Example~\ref{ex:helloworld}:
+\begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
+proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
+    | => ch -> do
+        on ch do
+            put store(helloworld)		-- encode helloworld and send as a message
+            halt
+proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
+    | ch, console => -> do
+        on ch do
+           get stored_process			-- receive message with encoded helloworld
+            close
+        on console do
+            hput ConsolePut
+            put ("Server says: Running the stored process")
+        use(stored_process)( | console => )		-- decode and invoke helloworld
+\end{lstlisting}
+Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ typed channel.
+The sequential type \lstinline$Store$ indicates that a message containing an encoded process is being passed.
+
+The type signature of the encoded process, in this case \lstinline$helloworld$, is indicated within the \lstinline$Store$ type.
+
+To encode a process, the built-in \lstinline$store$ function is used.
+This function takes either the name of a previously defined process, as in the above example on line 4, or it takes an anonymous process as an in-line process definition.
+
+To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
+To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
+
+
+
+
+
+\section{Process command manual}
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
 
@@ -1668,105 +1784,130 @@ Note that the above method for higher-order message passing behavior is implicit
 	\infer{\Lambda \vvdash A^\perp \oplus B := A \lollipop B}{\Lambda, A \vvdash B}
 \]
 
-\section{Interacting with the outside world via service channels}
-\label{Sec:ServiceChannels}
 
-\comment{TODO: move this section to before process commands but after sequential types}
 
-\comment{TODO: mention that the Console protocol and Terminal coprotocols need to be defined in a prelude or in the file or something.
-and that they need to be defined in a very specific way for the abstract machine, but the type checker doesn't know about them or something}
+
+\section{Summary of compiler and interface design}
+
+CaMPL has concurrent and sequential types. Some useful tables and notes.
+
+The following table summarizes the analogues of sequential and concurrent worlds.
+
+\begin{center}
+\begin{tabular}{ c | c | c | c }
+ {\bf Sequential} & Datatypes  & Functions & Instances \\ 
+   & (and coDatatypes)  &  &  \\
+ \hline
+ {\bf Concurrent} & Protocols & Processes & Channels \\  
+ & (and coProtocols)  &  &  \\
+\end{tabular}
+\end{center}
+
+Channels are instances of (co)protocols. Given a process and a channel {\em connected} to it, the channel may have input (+) or output polarity (-) for that process. 
+
+%\section{Summary of built-in types}
+%The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Ku18}.
+The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Ku18}.
+We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
+Channel types that take another channel type as an argument are recursive cases.
+The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
+
+%\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
+
+\begin{table}[h]
+\begin{center}
+	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.2cm} | }
+	\hline
+		 Channel type & Description & Process command & Section \\
+		 \hline
+		 \hline      
+		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Neg(Ch)$ & Dual interaction of \lstinline$Ch$ by negating and identifying with another channel.  & \lstinline$neg$ and \lstinline$|=|$  &  \\
+		 \hline      
+		 \lstinline$Put(A|Ch)$ & Message of type \lstinline$A$ travels from left to right (output to input polarity).  & \lstinline$put$/\lstinline$get$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{Sec:tensorandpar} \\
+		 \hline
+		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{Sec:tensorandpar} \\
+		 \hline
+		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{Sec:protocols} \\
+		 \hline
+		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{Sec:protocols} \\
+		 \hline
+		  N/A & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{Sec:overview} \\
+		 \hline
+		  \lstinline$Put(A|Ch)$ or \newline \lstinline$Get(A|Ch)$ & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{Sec:races} \\
+		 \hline
+		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \\
+		 \hline
+		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \\
+		 \hline
+	\end{tabular}
+	\caption{Summary of channel types and process commands.}
+	\label{Table:summary}
+\end{center}
+\end{table}
+
+
+
+Here are a few practical programming notes:
+\begin{itemize}
+	\item {\tt close} command closes a channel. {\tt halt} command is used on a process which has only one connected channel. Halt closes the channel and halts the process. 
 	
-\section{Sequential types}
-\label{Sec:SequentialTypes}
-
-\comment{TODO: move this section to before process commands but after concurrent types}
-
-\subsection{Higher-order messages}
-
-In sequential functional programming, higher-order functions take other functions as input or produce other functions as output. CaMPL's higher-order processes based on \comment{mathematical term} are a concurrent analogue of sequential higher order functions.
-
-Higher-order processes encode other processes as sequential data, pass an encoded process as a message, and/or decode and invoke an encoded process.
-Example \ref{ex:hoprocs} shows higher-order processes that pass an encoded \lstinline$helloworld$ process from Example~\ref{ex:helloworld}:
-\begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
-proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
-    | => ch -> do
-        on ch do
-            put store(helloworld)		-- encode helloworld and send as a message
-            halt
-proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
-    | ch, console => -> do
-        on ch do
-           get stored_process			-- receive message with encoded helloworld
-            close
-        on console do
-            hput ConsolePut
-            put ("Server says: Running the stored process")
-        use(stored_process)( | console => )		-- decode and invoke helloworld
-\end{lstlisting}
-Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ typed channel.
-The sequential type \lstinline$Store$ indicates that a message containing an encoded process is being passed.
-
-The type signature of the encoded process, in this case \lstinline$helloworld$, is indicated within the \lstinline$Store$ type.
-
-To encode a process, the built-in \lstinline$store$ function is used.
-This function takes either the name of a previously defined process, as in the above example on line 4, or it takes an anonymous process as an in-line process definition.
-
-To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
-To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
-
-\subsection{Codata types}
-
-  The \lstinline$case$, the \lstinline$constructor$, and the \lstinline$fold$ are the sequential MPL constructs that work on the data types.
-  The \lstinline$record$, the \lstinline$product$, the \lstinline$destructor$, and the unfold are the sequential MPL constructs that work on codata types.
-  
-  CaMPL supports both data and codata types. Codata allows one to represent potentially infinite structures that are evaluated lazily. Example \ref{ex:codata stack} defines a Stack codata type to create an infinitely-growing stack. 
-
-\begin{lstlisting} [label=ex:codata stack, caption=Definition of a Stack codata type and a success-failure data type, numbers=left, name=codata]
-(*@ \color{gray} data SF(A) -> C = @*)
-      (*@ \color{gray} SS :: A -> C  -- Success constructor @*)
-      (*@ \color{gray} FF :: -> C    -- Fail constructor @*)
-
-codata S -> Stack(A) = 
-      Push :: A, S -> S      -- Push destructor
-      Pop :: S -> SF((A,S))  -- Pop destructor
-\end{lstlisting}  
-The Stack codata stores a data of sequential type $A$ has two \tc{destructors} namely \lstinline$Push$ and \lstinline$Pop$. Continuing the example, we define a sequential function \lstinline$makeStack :: [A] -> Stack(A)$ that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
-\begin{lstlisting} [numbers=left, name=codata]
-	fun listStack ::[A] -> Stack(A) = 
-      cs -> ( Push := c -> listStack(c:cs),   -- definition of destructor Push
-              Pop := -> case cs of            -- definition of destructor Pop
-                  [] -> FF
-                  b:bs -> SS((b,listStack(bs)))
-            )
-\end{lstlisting}  
-We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
-\begin{lstlisting} 
-proc run =
-      |  =>
-       -> Pop(Push("Hello World", listStack([])))
-
-\end{lstlisting} 
-There is no visible output when this program is run. To make things interesting, we arrange for the \lstinline$run$ process to print output. We write a helper function \lstinline$flatten :: Stack([Char]) -> [Char]$ which will recursively pop strings out the stack and concatenate them: as follows.
-\begin{lstlisting} 
-fun flatten :: Stack([Char]) -> [Char] =
-  s -> case Pop(s) of
-         SS((a, st)) -> a ++ " " ++ flatten(st)
-         _ -> ""
-
-proc run =
-      | console =>
-       -> do on console do
-              hput ConsolePut
-              put flatten(Push("Hello ", listStack(["World"])))
-	      hput ConsoleClose
-	      halt
-\end{lstlisting}
-
- \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack}?
-
-\subsection{Overview of other sequential types}
+	{\bf Design question:} Why not interpret closing all the channels as a signal to halt? For example: 
+	\begin{verbatim}
+		 close ch1  
+		 close ch2  
+		 halt
+	\end{verbatim}
 	
-	....
+	\item The handles \tt{ConsoleGet}, \tt{ConsolePut}, \tt{ConsoleClose}, \tt{StringTerminalGet}, \tt{StringTerminalPut}, and \tt{StringTerminalClose} which are used for reading from and writing to terminals are hard-coded.  
+	
+\begin{center}
+	\begin{tabular}{ c | c | c }
+		     (P)       & (+) & (-) \\
+		 \hline      
+		 {\tt Get}  & {\tt get}  & {\tt put} \\
+		 \hline
+		 {\tt Put}  & {\tt put}  & {\tt get} 
+	\end{tabular}
+	\quad \quad 
+	\begin{tabular}{ c | c | c }
+		     (coP)       & (+) & (-) \\
+		 \hline      
+		 {\tt Get}  & {\tt put}  & {\tt get} \\
+		 \hline
+		 {\tt Put}  & {\tt get}  & {\tt put} 
+	\end{tabular}
+	\quad \quad 
+	\begin{tabular}{ c | c | c }
+		            & (+) & (-) \\
+		 \hline      
+		 (P)  & {\tt hput}  & {\tt hcase} \\
+		 \hline
+		 (coP)  & {\tt hcase}  & {\tt hput} 
+	\end{tabular}
+\end{center}
+ 
+\end{itemize}
+
+The following items were suggested by Hashimoto as improvements to CaMPL syntax:
+
+\begin{itemize}
+	\item While we have \texttt{Get} and \texttt{Put} for protocols (which means get and put on the output polarity), it will be user-friendly \texttt{coGet} and \texttt{coPut} for coprotocols (to mean \texttt{put} and \texttt{get} respectively on the output terminal.
+	\item Racing on handles instead of \texttt{put}. So be able to race on \texttt{hput}, and \texttt{fork} handles.
+	\item Merge the \texttt{hput} followed by the get or put. 
+	\item \texttt{on <channel> hput <handle>} instead of \texttt{hput <handle> on <channel>}. 
+	\item Currently, to halt a process, the channels are first closed and the final \texttt{halt <channel>} command takes in the name of the last channel to be closed. Instead, close all the channels followed by \texttt{halt} command.
+\end{itemize}
+
+
+
+
+
 	
 \section{Example programs}
 
@@ -2263,77 +2404,11 @@ The process {\tt memCell} takes an input {\tt MemCh} channel, reads and writes t
 The full version of the code is available in Appendix \ref{prog:mem-cell}. A screenshot of the output is given below. To begin with process {\tt A} reads ``I like dogs" from the memory cell and writes ``Apple" to the memory cell. Process  {\tt B} reads ``Apple" from memory cell and writes ``Orange" to it. Process then {\tt A} reads ``Orange" from the memory cell.
 \[ \includegraphics[scale=0.35]{figs/memcell-output.png} \]
 
-\section{Notes on the compiler and interface design}
-
-CaMPL has concurrent and sequential types. Some useful tables and notes.
-
-The following table summarizes the analogues of sequential and concurrent worlds.
-
-\begin{center}
-\begin{tabular}{ c | c | c | c }
- {\bf Sequential} & Datatypes  & Functions & Instances \\ 
-   & (and coDatatypes)  &  &  \\
- \hline
- {\bf Concurrent} & Protocols & Processes & Channels \\  
- & (and coProtocols)  &  &  \\
-\end{tabular}
-\end{center}
-
-Channels are instances of (co)protocols. Given a process and a channel {\em connected} to it, the channel may have input (+) or output polarity (-) for that process. 
-
-Here are a few practical programming notes:
-\begin{itemize}
-	\item {\tt close} command closes a channel. {\tt halt} command is used on a process which has only one connected channel. Halt closes the channel and halts the process. 
-	
-	{\bf Design question:} Why not interpret closing all the channels as a signal to halt? For example: 
-	\begin{verbatim}
-		 close ch1  
-		 close ch2  
-		 halt
-	\end{verbatim}
-	
-	\item The handles \tt{ConsoleGet}, \tt{ConsolePut}, \tt{ConsoleClose}, \tt{StringTerminalGet}, \tt{StringTerminalPut}, and \tt{StringTerminalClose} which are used for reading from and writing to terminals are hard-coded.  
-	
-\begin{center}
-	\begin{tabular}{ c | c | c }
-		     (P)       & (+) & (-) \\
-		 \hline      
-		 {\tt Get}  & {\tt get}  & {\tt put} \\
-		 \hline
-		 {\tt Put}  & {\tt put}  & {\tt get} 
-	\end{tabular}
-	\quad \quad 
-	\begin{tabular}{ c | c | c }
-		     (coP)       & (+) & (-) \\
-		 \hline      
-		 {\tt Get}  & {\tt put}  & {\tt get} \\
-		 \hline
-		 {\tt Put}  & {\tt get}  & {\tt put} 
-	\end{tabular}
-	\quad \quad 
-	\begin{tabular}{ c | c | c }
-		            & (+) & (-) \\
-		 \hline      
-		 (P)  & {\tt hput}  & {\tt hcase} \\
-		 \hline
-		 (coP)  & {\tt hcase}  & {\tt hput} 
-	\end{tabular}
-\end{center}
- 
-\end{itemize}
-
-The following items were suggested by Hashimoto as improvements to CaMPL syntax:
-
-\begin{itemize}
-	\item While we have \texttt{Get} and \texttt{Put} for protocols (which means get and put on the output polarity), it will be user-friendly \texttt{coGet} and \texttt{coPut} for coprotocols (to mean \texttt{put} and \texttt{get} respectively on the output terminal.
-	\item Racing on handles instead of \texttt{put}. So be able to race on \texttt{hput}, and \texttt{fork} handles.
-	\item Merge the \texttt{hput} followed by the get or put. 
-	\item \texttt{on <channel> hput <handle>} instead of \texttt{hput <handle> on <channel>}. 
-	\item Currently, to halt a process, the channels are first closed and the final \texttt{halt <channel>} command takes in the name of the last channel to be closed. Instead, close all the channels followed by \texttt{halt} command.
-\end{itemize}
 
 
 \section{Mathematical Underpinning}
+
+% convey that these constructs are coming from a mathematical foundation and not just ``out of thin air'' 
 
 The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. 
 
