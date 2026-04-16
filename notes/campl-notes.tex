@@ -703,7 +703,6 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 				on dest1 do
 					hput CoCloseCh
 					halt
-				
  \end{lstlisting}
  From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
  
@@ -750,18 +749,80 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 %\[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
 %A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
-\subsubsection{Interacting with the outside world using service types}
+\subsubsection{Interacting with the outside world using service channels}
 \label{Sec:ServiceChannels}
 
-\comment{TODO: forward reference to sequential part example for terminating communication with if on message information}
+The examples we have considered so far, with the exception of Example~\ref{ex:helloworld}, will not produce any observable effects to a user since they have not been connected to the outside world.
+Recall and observe that Example~\ref{ex:helloworld} had the only \lstinline$run$ process that was defined with a non-empty list of channels in its scope.
+\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with.
+They are implemented as protocols and coprotocols on which processes always use \lstinline$hput$, and the compiler has built-in implementations of \lstinline$hcase$. 
+
+The service channel types are \lstinline$Console$, \lstinline$Terminal$, and \lstinline$Timer$.
+\comment{TODO: add Terminal/Timer syntax highlighting.}
+A \lstinline$Console$ allows a user to interact through the terminal in which the program was run.
+A \lstinline$Terminal$ opens a new Alacritty terminal for user interaction.
+A \lstinline$Timer$ can be used to implement time-out features using controlled non-determinism, which we demonstrate in Section~\ref{Sec:races}.
+A complete list of the handles for these types is included in Section~\ref{}.
+For now, we will focus on the following handles:
+\begin{lstlisting} [label=ex:servicechs, caption=Service channels] 
+protocol Terminal => S =
+    StringTerminalPut :: Put([Char]|S) => S
+    StringTerminalGet :: Get([Char]|S) => S 
+    StringTerminalClose :: TopBot => S
+    
+coprotocol S => Console =
+    ConsolePut :: S => Get([Char]|S) 
+    ConsoleGet :: S => Put([Char]|S) 
+    ConsoleClose :: S => TopBot 
+\end{lstlisting}
+
+Consider a modification of Example~\ref{ex:serverecho} in which \lstinline$client$ has a \lstinline$Terminal$ to receive user input and \lstinline$server$ has a  \lstinline$Console$ to log the messages it receives:
+\begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels] 
+proc client :: | => PassMessages([Char]|), Terminal =
+    | => ch, terminal -> do
+        on terminal do								-- receive user input
+            hput StringTerminalPut
+            put "Hello User! Please enter message in terminal:"
+            hput StringTerminalGet
+            get msg
+        on ch do											-- forward to server
+            hput SendMsg
+            put msg
+            hput CloseCh
+            close
+        on terminal do								-- confirm then halt when user is ready
+            hput StringTerminalPut
+            put "Sent message to server. Press ENTER to close terminal."
+            hput StringTerminalGet
+            get _											-- wait for user before closing terminal
+            hput StringTerminalClose
+            halt    
+proc server :: | PassMessages([Char]|), Console => =
+    | ch, console => -> do
+        hcase ch of
+            SendMsg -> do							-- log each message received
+                get msg on ch
+                on console do
+                    hput ConsolePut
+                    put "message from user: " ++ msg	-- append msg and print
+                server( | ch, console => )
+            CloseCh -> do							-- halt after all messages received
+                close ch
+                on console do
+                    hput ConsoleClose
+                    halt
+proc run :: | Console => Terminal = 
+    | console => terminal -> plug
+        client( | => ch, terminal )
+        server( | ch, console => )
+ \end{lstlisting}
+
 
 \comment{TODO: mention that the Console protocol and Terminal coprotocols need to be defined in a prelude or in the file or something.
-and that they need to be defined in a very specific way for the abstract machine, but the type checker doesn't know about them or something}
+and (probably in the manual section: mention that the handles need to be defined in a very specific way for the abstract machine (and give all of the handles), but the name Console/Terminal is not enforced :') also you can call run with as many consoles as you want and it seems to all work? like it causes race conditions and probably problems when you get different data types involved but it compiles and runs}
 	
 
-
-\comment{TODO: move content up here. (i think priyaa is working on these sections so i don't want to move the content and mess it up :')}
-
+\comment{TODO: forward reference to sequential part example for terminating communication with if on message information}
 
 \subsection{Non-deterministic processes}
 \label{Sec:races}
