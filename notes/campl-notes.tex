@@ -583,6 +583,8 @@ The outer most layer is the first interaction that will take place, and after th
 %The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
 %The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
+\comment{Ask Xanna if we can move controlled non-determinism here. Even though this order is not chronologically accurate, the example is a natural continuation of split and fork.}
+
 \subsubsection{Custom types}
 \label{Sec:protocols}
 
@@ -885,14 +887,15 @@ coprotocol S => Timer =
 The sequential part of CaMPL is a basic functional programming language.
 Higher-order functions are not yet supported.
 Codata types are supported.
-Sequential types for encoded processes that can be passed as messages are supported.
+Sequential type for encoding processes and passing an encoded process as a message, that is, higher order message passing, is supported.
 
 \subsection{Functions}
 
 Functions are defined using the \lstinline{fun} keyword, and they are called using their name and a comma-separated list of their input arguments enclosed in parentheses.
 
 %infix function syntax (like for example append as ++ )
-Recall that we printed the user's message appended to a log message in Example~\ref{ex:serverclientwithservices}.
+
+In line 27 of Example~\ref{ex:serverclientwithservices}, '\lstinline$put "message from user: " ++ msg$', in which the \lstinline$server$ printed the user's message appended to a log message using \lstinline$++$ operator. 
 An infix append function \lstinline{++} can be defined as follows:
 \begin{lstlisting}
 fun (++) :: [A],[A] -> [A] =
@@ -906,14 +909,14 @@ The name of an infix function is required to contain only special characters.
 
 \subsection{Data and codata types}
 
-Built-in sequential types include \lstinline{Int}, \lstinline{Bool}, \lstinline{Char}, tuples e.g. the unit \lstinline{()} or pairs \lstinline{(Int,Bool)}, lists e.g. strings \lstinline{[Char]}, and encoded processes e.g. \lstinline{Store(Int|Console=>TopBot)}.
+Built-in sequential types include \lstinline$Int$, \lstinline$Bool$, \lstinline$Char$, tuples (for example, the unit \lstinline$()$ or pairs \lstinline$(Int,Bool)$), lists (for example, strings \lstinline$[Char]$), and encoded processes (for example, \lstinline$Store(Int|Console=>TopBot)$).
 Encoded processes in a \lstinline{Store} type can be passed as higher-order messages which we explain and demonstrate in Section~\ref{sec:homsgs}.
 
 Custom sequential types can be defined as either \lstinline{data} or \lstinline{codata}. 
 Codata allows one to represent potentially infinite structures that are evaluated lazily.
 
-The \lstinline$case$, the \lstinline$constructor$, and the \lstinline$fold$ are the sequential MPL constructs that work on the data types.
-The \lstinline$record$, the \lstinline$product$, the \lstinline$destructor$, and the unfold are the sequential MPL constructs that work on codata types.
+The \lstinline$case$, tuple, and the \lstinline$constructor$ are the sequential MPL constructs that work on the data types.
+The \lstinline$record$, \lstinline$product$, and \lstinline$destructor$ are the sequential MPL constructs that work on codata types.
 
 Example \ref{ex:codata stack} defines a Stack codata type to create an infinitely-growing stack. 
 
@@ -942,7 +945,7 @@ proc run =
        -> Pop(Push("Hello World", listStack([])))
 
 \end{lstlisting} 
-There is no visible output when this program is run. To make things interesting, we arrange for the \lstinline$run$ process to print output. We write a helper function \lstinline$flatten :: Stack([Char]) -> [Char]$ which will recursively pop strings out the stack and concatenate them: as follows.
+There is no visible output when this program is run. To make things interesting, we arrange for the \lstinline$run$ process to print output. We write a helper function \lstinline$flatten :: Stack([Char]) -> [Char]$ which will recursively pop strings out the stack and concatenate them using \lstinline$++$.
 \begin{lstlisting} 
 fun flatten :: Stack([Char]) -> [Char] =
   s -> case Pop(s) of
@@ -958,13 +961,13 @@ proc run =
 	      halt
 \end{lstlisting}
 
-% \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack? no :(((}
-
-	
-
-
+% \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack? no :((( :D }
 
 \subsection{Sequential control}
+
+In Example \ref{serverclientwithservices}, the \lstinline$client$ process \lstinline$get$s a single message (String) from the terminal, \lstinline$put$s it on the the channel \lstinline$ch$ and \lstinline$close$s the channel  even though the protocol \lstinline$PassMessages$ allow arbitrary rounds of such communication. Let us modify this example, by setting up the \lstinline$client$ to forward arbitrary number of message until a prompt from the user to close channel \lstinline$ch$.
+
+CaMPL supports \lstinline$if$-\lstinline$then$-\lstinline$else$, \lstinline$case$, and \lstinline$switch$ for controlled branching. For this example, we shall use the  \lstinline$case$ construct on the message 
 
 \comment{TODO: example of terminiating comm with user with service handles}
 
