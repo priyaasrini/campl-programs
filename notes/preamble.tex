@@ -131,6 +131,13 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \newcommand{\note}[1]{\textcolor{blue}{#1}}
 \newcommand{\comment}[1]{\textcolor{blue}{#1}}
 
+\usepackage{todonotes}
+\newcommand{\marn}[1]{\todo[color=green!40]{#1}}
+\newcommand{\TODO}[1]{{ \tikzset{every picture/.append style={scale=2}, transform shape, strings} \todo[inline, size=large, inlinewidth=\textwidth, color=green!40]{#1}}}
+\renewcommand{\note}[1]{{ \tikzset{every picture/.append style={scale=2}, transform shape, strings} \todo[inline, size=large, inlinewidth=\textwidth, color=orange!40]{#1}}}
+
+\newcommand{\warn}[1]{{\color{red}#1}}
+
 
 %\newtheorem{observation}{dummy}[section]
 \newcounter{dummy} 
