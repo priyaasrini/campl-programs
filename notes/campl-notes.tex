@@ -754,18 +754,15 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 
 The examples we have considered so far, with the exception of Example~\ref{ex:helloworld}, will not produce any observable effects to a user since they have not been connected to the outside world.
 Recall and observe that Example~\ref{ex:helloworld} had the only \lstinline$run$ process that was defined with a non-empty list of channels in its scope.
-\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with.
-They are implemented as protocols and coprotocols on which processes always use \lstinline$hput$, and the compiler has built-in implementations of \lstinline$hcase$. 
+\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with. The service channel types are \lstinline$Console$, \lstinline$StringTerminal$, and \lstinline$Timer$. They are implemented the as protocols and coprotocols on which processes must always use \lstinline$hput$, and the compiler has built-in implementations of the service process which does \lstinline$hcase$
 
-The service channel types are \lstinline$Console$, \lstinline$Terminal$, and \lstinline$Timer$.
-\comment{TODO: add Terminal/Timer syntax highlighting.}
 A \lstinline$Console$ allows a user to interact through the terminal in which the program was run.
-A \lstinline$Terminal$ opens a new Alacritty terminal for user interaction.
-A \lstinline$Timer$ can be used to implement time-out features using controlled non-determinism, which we demonstrate in Section~\ref{Sec:races}.
+A \lstinline$StringTerminal$ opens a new Alacritty terminal for user interaction.
+A \lstinline$Timer$ can be used to implement time-out features using controlled non-determinism, which we will discuss in more detail in Section~\ref{Sec:races}.
 A complete list of the handles for these types is included in Section~\ref{}.
 For now, we will focus on the following handles:
 \begin{lstlisting} [label=ex:servicechs, caption=Service channels] 
-protocol Terminal => S =
+protocol StringTerminal => S =
     StringTerminalPut :: Put([Char]|S) => S
     StringTerminalGet :: Get([Char]|S) => S 
     StringTerminalClose :: TopBot => S
@@ -776,18 +773,18 @@ coprotocol S => Console =
     ConsoleClose :: S => TopBot 
 \end{lstlisting}
 
-Consider a modification of Example~\ref{ex:serverecho} in which \lstinline$client$ has a \lstinline$Terminal$ to receive user input and \lstinline$server$ has a  \lstinline$Console$ to log the messages it receives:
+Consider a modification of Example~\ref{ex:serverecho} in which \lstinline$client$ has a \lstinline$StringTerminal$ to receive user input and \lstinline$server$ has a  \lstinline$Console$ to log the messages it receives:
 \begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels] 
-proc client :: | => PassMessages([Char]|), Terminal =
+proc client :: | => PassMessages([Char]|), StringTerminal =
     | => ch, terminal -> do
-        on terminal do								-- receive user input
+        on terminal do								
             hput StringTerminalPut
             put "Hello User! Please enter message in terminal:"
             hput StringTerminalGet
-            get msg
-        on ch do											-- forward to server
+            get msg                   -- receive user input
+        on ch do											
             hput SendMsg
-            put msg
+            put msg                   -- forward to server
             hput CloseCh
             close
         on terminal do								-- confirm then halt when user is ready
@@ -811,7 +808,7 @@ proc server :: | PassMessages([Char]|), Console => =
                 on console do
                     hput ConsoleClose
                     halt
-proc run :: | Console => Terminal = 
+proc run :: | Console => StringTerminal = 
     | console => terminal -> plug
         client( | => ch, terminal )
         server( | ch, console => )
@@ -880,6 +877,7 @@ coprotocol S => Timer =
     TimerClose :: S => TopBot 
 \end{lstlisting}
 
+\comment{@Xanna: Shall we add a timer to the racing example? If both the clients do not send, then the server times out.}
 
 \section{Sequential types}
 \label{Sec:SequentialTypes}
