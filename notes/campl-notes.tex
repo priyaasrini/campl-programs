@@ -5,9 +5,9 @@
 \addbibresource{refs.bib}
 \linespread{1.11}
 
-\title{Categorical Message Passing Language (CaMPL)}
+\title{Categorical Message Passing Language (CaMPL): syntax and semantics}
 \author{
-    Robin Cockett\thanks{University of Calgary} \and Daniel K. Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little* \and Melika Norouzbeygi* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
+    Robin Cockett\thanks{University of Calgary} \and Daniel Kiyoshi Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna Little* \and Melika Norouzbeygi* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
 %\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
 \date{\today}
 
@@ -24,8 +24,6 @@ It is a functional-style programming language with the abstract machine built on
 The current version of CaMPL compiler is to be considered a proto-alpha, a proof-of-concept 
 of a programming language built from the mathematics of linear actegories.
 \end{abstract}
-
-%\addcontentsline{toc}{section}{References}
 
 \tableofcontents
 
@@ -894,10 +892,16 @@ Sequential type for encoding processes and passing an encoded process as a messa
 
 Functions are defined using the \lstinline{fun} keyword, and they are called using their name and a comma-separated list of their input arguments enclosed in parentheses.
 
-\comment{TODO: write the function that takes user input and outputs a bool to indicate whether the user is done inputting messages. this will be used in the sequential control if statement example.}
+\comment{TODO: write the function that takes user input and outputs a bool to indicate whether the user is done inputting messages. this will be used in the sequential control if statement example. -- Done}
 
+Let us define a function that will take a \lstinline$[Char]$ type as an input argument and will return a \lstinline$Bool$ type, depending on, whether the input string is empty or not. We will later use this function in the \lstinline$client$ process shown in Example \ref{ex:serverclientwithservices} when we demonstrate branching.
+\begin{lstlisting}
+fun isExit :: [Char] -> Bool =
+    []      -> True
+    _       -> False
+\end{lstlisting}
+  
 %infix function syntax (like for example append as ++ )
-
 In line 27 of Example~\ref{ex:serverclientwithservices}, '\lstinline$put "message from user: " ++ msg$', in which the \lstinline$server$ printed the user's message appended to a log message using \lstinline$++$ operator. 
 An infix append function \lstinline{++} can be defined as follows:
 \begin{lstlisting}
@@ -909,6 +913,8 @@ fun (++) :: [A],[A] -> [A] =
 Notice the use of parentheses around the function name to indicate it is infix.
 The name of an infix function is required to contain only special characters.
 
+CaMPL also supports defining functions locally (within a process)
+using the \lstinline$where$ construct. 
 
 \subsection{Data and codata types}
 
@@ -968,14 +974,51 @@ proc run =
 
 \subsection{Sequential control}
 
-In Example \ref{serverclientwithservices}, the \lstinline$client$ process \lstinline$get$s a single message (String) from the terminal, \lstinline$put$s it on the the channel \lstinline$ch$ and \lstinline$close$s the channel  even though the protocol \lstinline$PassMessages$ allow arbitrary rounds of such communication. Let us modify this example, by setting up the \lstinline$client$ to forward arbitrary number of message until a prompt from the user to close channel \lstinline$ch$.
+It is mildly unsatisfactory that, in Example \ref{ex:serverclientwithservices},  
+the \lstinline$client$ transmits precisely one message from 
+the user to the \lstinline$server$ and closes the connection. 
+We shall arrange for the \lstinline$client$ to transmit arbitrary 
+number of  messages from the user until the user sends a prompt, 
+say an empty string, to close the channel using the \lstinline$isExit$ 
+function shown in Section \ref{sec:funcs}.
 
-CaMPL supports \lstinline$if$-\lstinline$then$-\lstinline$else$, \lstinline$case$, and \lstinline$switch$ for controlled branching. For this example, we shall use the  \lstinline$case$ construct on the message 
+CaMPL supports \lstinline$if$-\lstinline$then$-\lstinline$else$, 
+\lstinline$case$, and \lstinline$switch$ for conditional branching. 
+We shall demonstrate the usage of the \lstinline$case$ construct in 
+the following example.
+\begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client sending finite arbitrary number messages to Server] 
+proc client :: | => PassMessages([Char]|), StringTerminal =
+    | => ch, terminal -> do
+        on terminal do								
+            hput StringTerminalPut
+            put "Hello User! Enter message in terminal. Press ENTER to close."
+            hput StringTerminalGet
+            get msg                   -- receive user input
+        case isExit(msg) of -- conditional branching on the value of the msg
+            True -> do                -- user pressed ENTER   
+                on ch do 
+                     hput SendMsg
+                     put "Closing channel."  
+                     hput CloseCh     -- close the channel to the server
+                     close 
+                on term do 
+                     hput StringTerminalClose --  close the channel to the user
+                     halt 
+             False -> do              -- user has provided a message
+                  on ch do											
+                      hput SendMsg
+                      put msg         -- forward msg to server
+                  client (| => ch, term)   -- recurse 
+\end{lstlisting}   
 
-\comment{TODO: example of terminating comm with user with service handles. rewrite client from ex 13 so user can send more than one message. use the function defined in \ref{sec:funcs}}
-
-\comment{TODO: (if/switch/case)}
-
+The above example can also be implemented using \lstinline$if$-\lstinline$then$-\lstinline$else$:
+\begin{lstlisting}
+	if (isExit(msg))
+        then do                -- user pressed ENTER   
+            <CODE for do block>
+        else do 
+		        <CODE  for do block>
+\end{lstlisting}
 
 \subsection{Higher-order messages}
 \label{sec:homsgs}
