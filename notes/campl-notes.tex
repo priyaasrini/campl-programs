@@ -1005,7 +1005,7 @@ Conditional branching of a process's execution uses \lstinline$if$-\lstinline$th
 
 We modify \lstinline$client$ to prompt the user for input until the user presses enter without typing a message, thereby sending an empty string.
 Each time \lstinline$client$ receives a string from the user, it will check if it is empty using the \lstinline$isEmpty$ function defined in Section~\ref{sec:funcs}.
-\begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client sending finite arbitrary number messages to Server] 
+\begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client execution conditional on user input] 
 proc client :: | => PassMessages([Char]|), StringTerminal =
 	| => ch, terminal -> do
 		on terminal do				-- receive msg from user
