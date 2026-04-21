@@ -1043,29 +1043,33 @@ The above example can also be implemented using \lstinline$case$:
 \subsection{Higher-order messages}
 \label{sec:homsgs}
 
-In sequential functional programming, higher-order functions take other functions as input or produce other functions as output. CaMPL's higher-order processes based on \comment{mathematical term} are a concurrent analogue of sequential higher order functions.
+In sequential functional programming, higher-order functions take other functions as input or produce functions as output. 
+Although higher-order functions are not currently supported in CaMPL, a concurrent analogue, called \tc{higher-order processes}, is.
+%Higher-order processes are given by enriching the concurrent part in the sequential part.
+% the categorical semantics of higher-order functions is given by cartesian closed categories because the closed part basically gives a self-enrichment, so the concurrent analogue is given by enriching processes in the sequential side.
+% idk what happens if you have a process that uses a function that is passed as a message then i guess either the code for that function is packaged up with the process or it's only the name and then hopefully the other process knows how to call that function?? idk
+Higher-order processes encode other processes as sequential data -- called a \tc{higher-order message}, pass a higher-order message, and/or decode and invoke an encoded process.
 
-Higher-order processes encode other processes as sequential data, pass an encoded process as a message, and/or decode and invoke an encoded process.
-Example \ref{ex:hoprocs} shows higher-order processes that pass an encoded \lstinline$helloworld$ process from Example~\ref{ex:helloworld}:
+Example \ref{ex:hoprocs} shows higher-order processes passing \lstinline$helloworld$ from Example~\ref{ex:helloworld}:
 \begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
 proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
-    | => ch -> do
-        on ch do
-            put store(helloworld)		-- encode helloworld and send as a message
-            halt
+	| => ch -> do
+		on ch do
+			put store(helloworld)		-- encode helloworld and send as a message
+			halt
+			
 proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
-    | ch, console => -> do
-        on ch do
-           get stored_process			-- receive message with encoded helloworld
-            close
-        on console do
-            hput ConsolePut
-            put ("Server says: Running the stored process")
-        use(stored_process)( | console => )		-- decode and invoke helloworld
+	| ch, console => -> do
+		on ch do
+			get stored_process			-- receive message with encoded helloworld
+			close
+		on console do
+			hput ConsolePut
+			put ("Server says: Running the stored process")
+		use(stored_process)( | console => )		-- decode and invoke helloworld
 \end{lstlisting}
-Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ typed channel.
-The sequential type \lstinline$Store$ indicates that a message containing an encoded process is being passed.
-
+Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ type channel.
+The built-in sequential type \lstinline$Store$ indicates that a higher-order message is being passed.
 The type signature of the encoded process, in this case \lstinline$helloworld$, is indicated within the \lstinline$Store$ type.
 
 To encode a process, the built-in \lstinline$store$ function is used.
