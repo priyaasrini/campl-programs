@@ -999,51 +999,46 @@ If we want to use that implementation, we can initialize \lstinline$stack$ as \l
 
 \subsection{Sequential control}
 
-It is mildly unsatisfactory that, in Example \ref{ex:serverclientwithservices},  
-the \lstinline$client$ transmits precisely one message from 
-the user to the \lstinline$server$ and closes the connection. 
-We shall arrange for the \lstinline$client$ to transmit arbitrary 
-number of  messages from the user until the user sends a prompt, 
-say an empty string, to close the channel using the \lstinline$isExit$ 
-function shown in Section \ref{sec:funcs}.
+Recall that, in Example \ref{ex:serverclientwithservices}, \lstinline$client$  transmitted precisely one message from the user to \lstinline$server$.
+To allow a user to input arbitrarily many messages before pressing enter to close the terminal, a stopping condition based on sequential data must be able to control the \lstinline$client$'s execution.
+Conditional branching of a process's execution uses \lstinline$if$-\lstinline$then$-\lstinline$else$, \lstinline$case$, or \lstinline$switch$ statements. 
 
-CaMPL supports \lstinline$if$-\lstinline$then$-\lstinline$else$, 
-\lstinline$case$, and \lstinline$switch$ for conditional branching. 
-We shall demonstrate the usage of the \lstinline$case$ construct in 
-the following example.
+We modify \lstinline$client$ to prompt the user for input until the user presses enter without typing a message, thereby sending an empty string.
+Each time \lstinline$client$ receives a string from the user, it will check if it is empty using the \lstinline$isEmpty$ function defined in Section~\ref{sec:funcs}.
 \begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client sending finite arbitrary number messages to Server] 
 proc client :: | => PassMessages([Char]|), StringTerminal =
-    | => ch, terminal -> do
-        on terminal do								
-            hput StringTerminalPut
-            put "Hello User! Enter message in terminal. Press ENTER to close."
-            hput StringTerminalGet
-            get msg                   -- receive user input
-        case isEmpty(msg) of -- conditional branching on the value of the msg
-            True -> do                -- user pressed ENTER   
-                on ch do 
-                     hput SendMsg
-                     put "Closing channel."  
-                     hput CloseCh     -- close the channel to the server
-                     close 
-                on term do 
-                     hput StringTerminalClose --  close the channel to the user
-                     halt 
-             False -> do              -- user has provided a message
-                  on ch do											
-                      hput SendMsg
-                      put msg         -- forward msg to server
-                  client (| => ch, term)   -- recurse 
+	| => ch, terminal -> do
+		on terminal do				-- receive user input
+			hput StringTerminalPut
+			put "Hello User! Enter message in terminal. Press ENTER to close."
+			hput StringTerminalGet
+			get msg
+		if isEmpty(msg)				-- conditional branching on the value of msg
+			then do							-- user pressed ENTER so close channels and halt
+				on ch do 
+					hput CloseCh
+					close 
+				on term do
+					hput StringTerminalClose	
+					halt 
+			else do							-- user has provided a message so forward to server
+				on ch do											
+					hput SendMsg
+					put msg
+				client( | => ch, term)	-- recurse 
 \end{lstlisting}   
 
-The above example can also be implemented using \lstinline$if$-\lstinline$then$-\lstinline$else$:
+The above example can also be implemented using \lstinline$case$:
 \begin{lstlisting}
-	if (isEmpty(msg))
-        then do                -- user pressed ENTER   
-            <CODE for do block>
-        else do 
-		        <CODE  for do block>
+	case isEmpty(msg) of
+		True -> do						-- user pressed ENTER so close channels and halt
+			<lines 10-15>
+		False -> do						-- user has provided a message so forward to server
+			<lines 17-20>
 \end{lstlisting}
+
+
+\TODO{do we need an example for switch?}
 
 \subsection{Higher-order messages}
 \label{sec:homsgs}
