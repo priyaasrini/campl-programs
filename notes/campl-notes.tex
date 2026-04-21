@@ -1228,7 +1228,7 @@ Negation and identification are particularly useful when channels are passed as 
 For example, consider the protocol \lstinline$Mutex$ which coordinates exclusive access to a resource between processes:
 \begin{lstlisting}[label=ex:mutex-protocol, caption=Mutex protocol which uses a Neg channel, numbers=left]
 protocol Mutex( |M) => S =		-- coordinates access to a channel of type M
-	Pass :: M (+) Neg(S) => S 	-- uses a Neg channel to coordinate swapping
+	Pass :: M (+) Neg(S) => S 	-- uses a Neg channel to facilitate passing
 \end{lstlisting}
 %
 We demonstrate \lstinline$Mutex$ in Example~\ref{ex:mem-cell} in which two processes take turns accessing a memory cell process called \lstinline$memCell$. 
