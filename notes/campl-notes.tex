@@ -1008,20 +1008,20 @@ Each time \lstinline$client$ receives a string from the user, it will check if i
 \begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client sending finite arbitrary number messages to Server] 
 proc client :: | => PassMessages([Char]|), StringTerminal =
 	| => ch, terminal -> do
-		on terminal do				-- receive user input
+		on terminal do				-- receive msg from user
 			hput StringTerminalPut
 			put "Hello User! Enter message in terminal. Press ENTER to close."
 			hput StringTerminalGet
 			get msg
 		if isEmpty(msg)				-- conditional branching on the value of msg
-			then do							-- user pressed ENTER so close channels and halt
+			then do							-- user pressed ENTER, so close channels and halt
 				on ch do 
 					hput CloseCh
 					close 
 				on term do
 					hput StringTerminalClose	
 					halt 
-			else do							-- user has provided a message so forward to server
+			else do							-- user has sent a message, so forward to server
 				on ch do											
 					hput SendMsg
 					put msg
