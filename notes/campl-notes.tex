@@ -958,7 +958,7 @@ fun listStack :: [A] -> Stack(A) =
 		Pop := -> case cs of							-- implementation of Pop
 			b:bs -> (SS(b), listStack(bs))	-- pop top of the stack
 			[] -> (FF, listStack([]))				-- fail if stack is empty
-            )
+		)
 \end{lstlisting}  
 %We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
 %this does not compile because you cannot use sequential statements in a process body. a process body must consist of process commands like plug, put, get, etc.
