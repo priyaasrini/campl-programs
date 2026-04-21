@@ -1209,6 +1209,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
  When a process is called outside of a \lstinline$plug$ command, it must be the last command in the process block.
 This means that all existing open channels in scope at the time the process is called must be passed to the process.
 
+
 \subsection{Equating channels using {\tt id} and {\tt neg}}
 \label{sec:neg}
 
@@ -1217,116 +1218,90 @@ This command can be thought of as calling an identity process that ``does nothin
 It must be used as the last command in a process block.
 
 The \lstinline$neg$ command is used to equate two channels of the same polarity if one of them has a \lstinline$Neg$ type.
-This is because because the \lstinline$neg$ command will change a channel of type \lstinline$X$ to type \lstinline$Neg(X)$ and flip the polarity. 
+The \lstinline$neg$ command changes a channel of type \lstinline$X$ to type \lstinline$Neg(X)$ and flips its polarity. 
+Thus, after using \lstinline$neg$, both channels will have type \lstinline$Neg(X)$ and opposite polarities, so they can be identified.
+The \lstinline$neg$ command can only be used within an identification command.
 
-The \lstinline$neg$ process command is particularly useful when channels are passed as resources between multiple processes. \textcolor{purple}{See example ... for a case study.} 
-\comment{TODO: make an example using passer protocol that is not 100 lines long.}
-
-For example, consider the following protocol called \lstinline$Mutex$ 
-
-\begin{lstlisting}
-	protocol Mutex( | M ) => S =
-		Pass :: M (+) Neg(S)  => S
+Negation and identification are particularly useful when channels are passed as resources between multiple processes. 
+%\textcolor{purple}{See example ... for a case study.} 
+%\comment{TODO: make an example using passer protocol that is not 100 lines long.}
+For example, consider the protocol \lstinline$Mutex$ which coordinates exclusive access to a resource between processes:
+\begin{lstlisting}[label=ex:mutex-protocol, caption=Mutex protocol which uses a Neg channel, numbers=left]
+protocol Mutex( |M) => S =		-- coordinates access to a channel of type M
+	Pass :: M (+) Neg(S) => S
 \end{lstlisting}
-
-\lstinline$Mutex$ protocol can be used for communication between two processes for 
-exclusive access to a resource. We demonstrate an example where two processes 
-take turns in accessing a memory cell using the \lstinline$Mutex$ protocol. 
-A complete version of this example is available in Appendix \ref{prog:mem-cell}.
-
-The program begins execution with the main process defined as follows:-
-\begin{lstlisting}
-	 proc run =
-	    | =>  -> do
-	        plug 
-	            memAccess("Ping " | mutex => mem)
-	            memWait("Pong " |        => mutex)
-	            memCell( "I like dogs" | mem => )
+%
+We demonstrate \lstinline$Mutex$ in Example~\ref{ex:mem-cell} in which two processes take turns accessing a memory cell process called \lstinline$memCell$. 
+A complete version of this example in which the memory cell value is set with user input is available in Appendix \ref{prog:mem-cell}.
+\begin{lstlisting}[label=ex:mem-cell, caption=Passing a Mutex channel as a resource, numbers=left, name=mutex]
+proc run =
+	| => -> plug 
+		memCell( "" | mem => )						-- memory cell is initially empty
+		memAccess("Ping" | mutex => mem)	-- Ping has access first
+		memWait("Pong" | => mutex)
 \end{lstlisting}
+The processes are coordinating access to the memory cell \lstinline$memCell$, and they want to write either \lstinline$"Ping"$ or \lstinline$"Pong"$. 
+They access the memory cell using channel \lstinline$mem$ which has type \lstinline$MemCh([Char]| )$.
+The \lstinline$memCell$ code and \lstinline$MemCh$ protocol are straightforward and their definitions are given in the complete version.
+%We will refer to each process using the tag they are writing: for example, \lstinline$"Ping"$ starts with access and \lstinline$"Pong"$ is waiting.
 
-We have two processes named {\tt "A"} and {\tt "B"} competing to access the memory cell. Each of these processes access a string terminal to read user input which is stored in memory. To begin with Process {\tt A} starts by running {\tt memAccess} and process {\tt B} starts by running {\tt memWait}.
-
-{\tt memWait} and {\tt memAccess} are mutually recursive processes. The process running {\tt memAccess} calls {\tt memWait} (once the read/write is complete), and vice versa.
-
-{\tt memWait} sends {\tt Pass} handle over {\tt mutex} to {\tt memAccess}. On receiving the handle, {\tt memAccess} reads and writes to the memory over the {\tt mem} channel. Once it completes, it forks over the {\tt mutex} channel and invokes {\tt memWait} using {\tt plug}. The input {\tt Neg(Mutex)} needs to be negated to get an output {\tt Mutex} channel type, which is then used in the invocation of {\tt memWait}.
-
+The process with access to \lstinline$memCell$ runs \lstinline$memAccess$.
+The process that is waiting runs \lstinline$memWait$.
+When access to \lstinline$memCell$ changes, the processes will swap what they are running.
+That is, the process running \lstinline$memAccess$ will call \lstinline$memWait$ and vice versa.
+To define processes like this, we need \lstinline$memAccess$ and \lstinline$memWait$ to be mutually recursive. 
+This uses the \lstinline$defn$ keyword:
 \begin{lstlisting}
-    proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) 
-    	=> MemCh([Char]| ) =
-    		tag | mutex => mem, _strterm -> hcase mutex of 
-    			Pass -> do 
-    				hput MemGet on mem
-    				get inp on mem
-				
-    				hput MemPut on mem
-    				put tag on mem
-
-    				fork mutex as
-    					mmem with mem -> mmem |=| mem
-
-    					negmutex with _strterm -> do
-    						plug
-    							memWait(tag | => nmutex, _strterm)
-    							nmutex, negmutex => -> negmutex |=| neg nmutex
+defn
+	proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
+		...
+    		
+	proc memWait :: [Char] | => Mutex( |MemCh([Char]| )) =
+		...
 \end{lstlisting}
+However, for clearer explanations, we will consider the process definitions separately.
+
+% this description helped me to realize that the accessing process should not block until the other process requests a Pass before it even starts accessing the memory cell lmao
+%{\tt memWait} sends {\tt Pass} handle over {\tt mutex} to {\tt memAccess}. 
+%On receiving the handle, {\tt memAccess} reads and writes to the memory over the {\tt mem} channel. 
+%Once it completes, it forks over the {\tt mutex} channel and invokes {\tt memWait} using {\tt plug}. 
+%The input {\tt Neg(Mutex)} needs to be negated to get an output {\tt Mutex} channel type, which is then used in the invocation of {\tt memWait}.
+First, we will consider \lstinline$memAccess$:
+\begin{lstlisting}
+proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
+	tag | mutex => mem -> do		-- note: waiting process has other end of mutex
+		on mem do									-- access memory cell using mem
+			hput MemGet
+			get stored_tag
+			hput MemPut
+			put tag
+		hcase mutex of Pass -> do	-- block until other process requests to swap
+			fork mutex as						-- pass memory cell access and swap to waiting
+				pass_mem with mem -> 
+					pass_mem |=| mem							-- use id to pass mem access
+				neg_mutex -> plug								-- now wait on other end of mutex
+					neg_mutex, new_mutex => ->		
+						neg_mutex |=| neg new_mutex	-- negate other end to id with it	
+					memWait(tag | => new_mutex)		-- recurse with other end
+\end{lstlisting}
+We demonstrate how identification can be used to pass a channel as a resource on line 11.
+We demonstrate how a channel can be identified with a \lstinline$Neg$ channel using \lstinline$neg$ on line 14.
 
 %The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} type channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
 
-Process {\tt memWait} activates the {\tt mutex} channel by sending {\tt Pass} handle over it. Then it blocks itself using {\tt split} command. When {\tt memAccess} executes {\tt fork} command, the {\tt memWait} is unblocked and invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
-
+%Process {\tt memWait} activates the {\tt mutex} channel by sending {\tt Pass} handle over it. Then it blocks itself using {\tt split} command. When {\tt memAccess} executes {\tt fork} command, the {\tt memWait} is unblocked and invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
+Next, consider \lstinline$memWait$:
 \begin{lstlisting}
-	proc memWait :: [Char] |  => Mutex( | MemCh([Char] | )) =
-		tag | => mutex -> do
-		hput Pass on mutex
-		split mutex into mem, negmutex
-	
-		plug
-			memAccess(tag | nmutex => mem)
-			=> negmutex, nmutex -> negmutex |=| neg nmutex
+proc memWait :: [Char] | => Mutex( |MemCh([Char]| )) =
+	tag | => mutex -> do
+		hput Pass on mutex									-- request to swap to accessing
+		split mutex into mem, neg_mutex			-- block until other proc passes mem
+		plug																-- need to use other end of mutex
+			=> neg_mutex, new_mutex -> 
+				neg_mutex |=| neg new_mutex			-- negate other end to id with it	
+			memAccess(tag | new_mutex => mem)	-- recurse with other end
 \end{lstlisting}
-
-The process {\tt memCell} takes an input {\tt MemCh} channel, reads and writes to it.
-\begin{lstlisting}
-	proc memCell :: A | MemCh(A | ) => =
-		val | ch => -> hcase ch of
-			MemPut -> do
-		        get nval on ch
-				memCell(nval | ch => )
-			MemGet -> do
-				put val on ch
-				memCell(val | ch => )
-			MemCls -> do
-				halt ch
-\end{lstlisting}
-
-The full version of the code is available in Appendix \ref{prog:mem-cell}. A screenshot of the output is given below. To begin with process {\tt A} reads ``I like dogs" from the memory cell and writes ``Apple" to the memory cell. Process  {\tt B} reads ``Apple" from memory cell and writes ``Orange" to it. Process then {\tt A} reads ``Orange" from the memory cell.
-\[ \includegraphics[scale=0.35]{figs/memcell-output.png} \]
-
-%THIS CODE DOESN'T ACTUALLY COMPILE.
-%The following code snippet demonstrates the usage of these commands. The {\tt id} command is written as {\tt |=|}.
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. proc equateChannels :: | A, Neg(A) => A = 
-%			2.		  | a, neg_a => a' -> 
-%			3.		       a |=| a'						                    -- equating
-%			4.		       neg_a |=| neg(a)                  -- equating after negating
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%
-%A detailed explanation of the code is as follows:
-%
-%\begin{itemize}
-%\item Line {\tt 1.} provides the type signature of the process {\tt equateChannels}. The process has no sequential arguments, two input polarity channel of type {\tt A} and {\tt Neg(A)}, and an output polarity channel of type {\tt A}.
-%
-%\item Line {\tt 2.} provides variable names to the concurrent types.
-%
-%\item Line {\tt 3.} equates the input channel {\tt a} to the output channel {\tt a'}, both of type {\tt A}.
-%
-%\item Line {\tt 4.} first negates channel  {\tt a} --- since {\tt a} is an input channel of type {\tt A}, {\tt neg(a)} is an output channel of type {\tt Neg(A)}. Then, it equates input channel {\tt neg\_a} of type {\tt Neg(A)} with {\tt neg(a)}.
-%
-%\end{itemize}
+Again, we use  \lstinline$neg$ to identify with a \lstinline$Neg$ channel on line 7.
 
 
 \subsection{Ending communication using {\tt halt} and {\tt close}}
@@ -2912,6 +2887,10 @@ Thus, the message passing logic provides a clean separation of computation and c
 
 \subsection{Memory Cell}
 \label{prog:mem-cell}
+
+\TODO{add a termination condition for user input so the program doesn't need to be ctrl+C'd}
+\TODO{change code like previous example so that memAccess doesn't wait until memWait requests access before starting its own access.}
+
 \begin{center}
 	\begin{Verbatim}
 		include Prelude
@@ -2995,6 +2974,12 @@ Thus, the message passing logic provides a clean separation of computation and c
 	\end{Verbatim}
 		------
 \end{center}
+
+A screenshot of the output is given below. 
+First, process {\tt A} reads ``I like dogs" from the memory cell and writes ``Apple" to the memory cell. 
+Then, process  {\tt B} reads ``Apple" from memory cell and writes ``Orange" to it. 
+Finally, process {\tt A} reads ``Orange" from the memory cell.
+\[ \includegraphics[scale=0.35]{figs/memcell-output.png} \]
 
 \end{appendix}
 
