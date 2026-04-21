@@ -526,8 +526,9 @@ proc server =
 Races can be held for any number of channels on which a process is waiting for a message.
 The \lstinline$race$ on line 14 consists of channels \lstinline$ch1$ and \lstinline$ch2$ as indicated by lines 15 and 16, respectively.
 A process body is defined for each channel in the race, and the process will execute according to the winning channel's corresponding process body.
-If \lstinline$ch1$ wins, line 14 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch1$ in the argument for the  \lstinline$winner$ channel.
-If \lstinline$ch2$ wins, lines 15 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch2$ in the argument for the \lstinline$winner$ channel.
+%MAKE SURE THE LINE NUMBERS ARE CORRECT IF THE SPACE IS PUT BACK
+If \lstinline$ch1$ wins, line 15 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch1$ in the argument for the  \lstinline$winner$ channel.
+If \lstinline$ch2$ wins, line 16 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch2$ in the argument for the \lstinline$winner$ channel.
 %Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
 %The \lstinline$race$ command must be the last command in a process block.
 
@@ -563,6 +564,7 @@ The type signature of the encoded process, in this case \lstinline$helloworld$, 
 To encode a process, the built-in \lstinline$store$ function is used.
 This function takes either the name of a previously defined process, as in the above example on line 4, or it takes an anonymous process as an in-line process definition.
 
+% MAKE SURE THE LINE NUMBERS ARE CORRECT
 To decode and invoke an encoded process, the \lstinline$use$ process command is used as in the above example on line 15.
 To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
 \fi
