@@ -916,58 +916,84 @@ using the \lstinline$where$ construct.
 \TODO{is this true? jared's thesis only mentions where within a defn. we can define functions locally within a function with let, but i am not sure if we can define functions locally within a process.}
 
 \subsection{Data and codata types}
-
-Built-in sequential types include \lstinline$Int$, \lstinline$Bool$, \lstinline$Char$, tuples (for example, the unit \lstinline$()$ or pairs \lstinline$(Int,Bool)$), lists (for example, strings \lstinline$[Char]$), and encoded processes (for example, \lstinline$Store(Int|Console=>TopBot)$).
+% maybe we need to change this sentence entirely so that there aren't three examples, but the for examples use so much more space than eg so i changed that back. i think the parentheses and commas make it grammatically correct though
+Built-in sequential types include \lstinline$Int$, \lstinline$Bool$, \lstinline$Char$, tuples (e.g., the unit \lstinline$()$ or pairs \lstinline$(Int,Bool)$), lists (e.g., strings \lstinline$[Char]$), and encoded processes (e.g., \lstinline$Store(Int|Console=>TopBot)$).
 Encoded processes in a \lstinline{Store} type can be passed as higher-order messages which we explain and demonstrate in Section~\ref{sec:homsgs}.
 
+%constructor :: data -> create data structure
+%case :: data structure -> access data
+%record :: data -> build codata structure
+%destructor :: codata structure (record?) -> access data
 Custom sequential types can be defined as either \lstinline{data} or \lstinline{codata}. 
-Codata allows one to represent potentially infinite structures that are evaluated lazily.
+Data types are defined with constructors that build instances of their data structures.
+The data in a data structure can be accessed using \lstinline$case$ statements.
+Codata types allow one to represent potentially infinite structures that are evaluated lazily using their \tc{destructors}.
+Instances of codata structures are built using \tc{records} that define an implementation of the destructors for that instance.
 
-The \lstinline$case$, tuple, and the \lstinline$constructor$ are the sequential MPL constructs that work on the data types.
-The \lstinline$record$, \lstinline$product$, and \lstinline$destructor$ are the sequential MPL constructs that work on codata types.
-
-Example \ref{ex:codata stack} defines a Stack codata type to create an infinitely-growing stack. 
-
-\begin{lstlisting} [label=ex:codata stack, caption=Definition of a Stack codata type and a success-failure data type, numbers=left, name=codata]
-(*@ \color{gray} data SF(A) -> C = @*)
-      (*@ \color{gray} SS :: A -> C  -- Success constructor @*)
-      (*@ \color{gray} FF :: -> C    -- Fail constructor @*)
+% lists can already grow infinitely, but you can't remove elements from a list infinitely.
+% stacks can be defined to allow infinite pops.
+Example \ref{ex:codata stack} defines a ``success or failure'' \lstinline{SF} data type (a.k.a. ``Maybe'') and a \lstinline{Stack} codata type which can optionally be implemented to be infinitely popped.
+% i think we should explain the SF data type. like i'm sure most people can figure it out but i feel like the SS/FF constructors are a robin thing
+\begin{lstlisting} [label=ex:codata stack, caption=Definition of a Stack codata type using a success/failure data type, numbers=left, name=codata]
+data SF(A) -> C =
+	SS :: A -> C  							-- Success constructor (a.k.a Just)
+	FF :: -> C    							-- Failure constructor (a.k.a Nothing)
 
 codata S -> Stack(A) = 
-      Push :: A, S -> S      -- Push destructor
-      Pop :: S -> SF((A,S))  -- Pop destructor
+	Push :: A, S -> S 					-- Push destructor
+	Pop :: S -> (SF(A),S)				-- Pop destructor uses SF data type
 \end{lstlisting}  
-The Stack codata stores a data of sequential type $A$ has two \tc{destructors} namely \lstinline$Push$ and \lstinline$Pop$. Continuing the example, we define a sequential function \lstinline$makeStack :: [A] -> Stack(A)$ that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
+A \lstinline{Stack} stores data of any sequential type \lstinline$A$, and it has two destructors namely \lstinline$Push$ and \lstinline$Pop$. 
+New data can be added to the top of the \lstinline{Stack} using \lstinline$Push$.
+\lstinline$Pop$ removes the data at the top of the stack and returns a pair of that data, if it exists, and the resulting \lstinline{Stack}.
+The \lstinline{SF} data type allows a \lstinline$Pop$ to safely fail if the \lstinline{Stack} is empty.
+
+An instance of a \lstinline{Stack} can be built from a list using \lstinline{(:)} to implement the destructors.
+We define the following function \lstinline$listStack$ which returns a record that builds a \lstinline{Stack}:
+%that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
 \begin{lstlisting} [numbers=left, name=codata]
-	fun listStack ::[A] -> Stack(A) = 
-      cs -> ( Push := c -> listStack(c:cs),   -- definition of destructor Push
-              Pop := -> case cs of            -- definition of destructor Pop
-                  [] -> FF
-                  b:bs -> SS((b,listStack(bs)))
+fun listStack :: [A] -> Stack(A) = 
+	cs -> (		-- given a list, returns the record:
+		Push := c -> listStack(c:cs),			-- implementation of Push
+		Pop := -> case cs of							-- implementation of Pop
+			b:bs -> (SS(b), listStack(bs))	-- pop top of the stack
+			[] -> (FF, listStack([]))				-- fail if stack is empty
             )
 \end{lstlisting}  
-We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
-\begin{lstlisting} 
-proc run =
-      |  =>
-       -> Pop(Push("Hello World", listStack([])))
+%We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
+%this does not compile because you cannot use sequential statements in a process body. a process body must consist of process commands like plug, put, get, etc.
+%\begin{lstlisting} 
+%proc run =
+%      |  =>
+%       -> Pop(Push("Hello World", listStack([])))
+%\end{lstlisting} 
+%There is no visible output when this program is run. 
 
-\end{lstlisting} 
-There is no visible output when this program is run. To make things interesting, we arrange for the \lstinline$run$ process to print output. We write a helper function \lstinline$flatten :: Stack([Char]) -> [Char]$ which will recursively pop strings out the stack and concatenate them using \lstinline$++$.
-\begin{lstlisting} 
+We use a \lstinline{Stack} in the following \lstinline$reverse_print$ process to collect messages as they are received.
+Once all the messages have been received, we will \lstinline$flatten$ and print the \lstinline$stack$ from top to bottom.
+Since the most recent message will be on the top of the \lstinline$stack$, the messages will be printed in reverse order.
+\begin{lstlisting} [label=ex:codata reverse_print, caption=Printing messages from most recent to least recent, numbers=left]
 fun flatten :: Stack([Char]) -> [Char] =
-  s -> case Pop(s) of
-         SS((a, st)) -> a ++ " " ++ flatten(st)
-         _ -> ""
-
-proc run =
-      | console =>
-       -> do on console do
-              hput ConsolePut
-              put flatten(Push("Hello ", listStack(["World"])))
-	      hput ConsoleClose
-	      halt
+	s -> case Pop(s) of			-- recursively pop strings and concat them
+		(SS(str), stack) -> str ++ " " ++ flatten(stack)
+		(FF, stack) -> ""
+        
+proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
+	stack | source, console => -> do
+		hcase source of
+			SendMsg -> do		-- push messages to stack as they are received
+				get msg on source
+				reverse_print(Push(msg, stack) | source, console => )
+			CloseCh -> do		-- once all messages are received, print flattened stack
+				close source
+				on console do
+					hput ConsolePut
+					put "Printing stack from top to bottom: " ++ flatten(stack)
+					hput ConsoleClose
+					halt
 \end{lstlisting}
+Note that we don't actually require that \lstinline$stack$ is implemented using the \lstinline$listStack$ record.
+If we want to use that implementation, we can initialize \lstinline$stack$ as \lstinline{listStack([])} when \lstinline$reverse_print$ is first called.
 
 % \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack? no :((( :D }
 
