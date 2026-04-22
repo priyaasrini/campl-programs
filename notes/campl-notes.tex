@@ -2646,8 +2646,8 @@ This tier concerned with generation of messages represents the logic of computat
 \[ \Phi \vdash A \]
 where the {\em antecedent} (which we will also call the {\em context}) of $\Phi$ is a comma-separated list of formulas and the {\em succedent} $A$ is a single formula. The term calculus for this logic is given in Figure \ref{Fig:MsgRules}. In the inference rules, {\em subs} stands for substitution and is the cut rule. 
 
-\begin{figure}
-\centering
+\begin{figure}[h]
+	\centering
 	\includegraphics[scale=0.5]{figs/MsgRules.PNG}
 	\caption{Inference rules for {\bf Msg}}
 	\label{Fig:MsgRules}
@@ -2658,21 +2658,21 @@ where the {\em antecedent} (which we will also call the {\em context}) of $\Phi$
 	The logic of message, {\bf PMsg}, passing concerned with communication over channels represents the logic of communication, and is concerned with channels over which processes communicate messages. A sequent of {\bf PMsg} has three components all of which are unordered lists: list $\Phi$ of message types, list $\Lambda$ of left polarity channels, and list $\Delta$ of right polarity channels which, together define a sequent of PMsg: 
 \[ \Phi ~|~ \Lambda \vvdash \Delta \]	
 The inference rules for {\bf PMsg} are presented in Figure \ref{Fig:PMsgRules}. Most of the rules of this calculus are standard ones for two-sided multiplicative linear logic except the {\em action} rules $\circ_l$, $\circ_r$, $\bullet_l$, and $\bullet_r$ which allow messages to be bound to channels of interaction.
-\begin{figure}
-\centering
+\begin{figure}[p]
+	\centering
 	\includegraphics[scale=0.6]{figs/PMsgRules.PNG}
-	\caption{Inference rules for {\bf PMsg}}
-	\label{Fig:PMsgRules}
+	\caption{Inference rules for {\bf PMsg} \label{Fig:PMsgRules}}
 \end{figure}
 	
 Thus, the message passing logic provides a clean separation of computation and communication layers thereby allowing the complexities associated with each layer to be addressed effectively. Figure \ref{Fig:programming-syntax} provides the programming syntax for CaMPL.
-\begin{figure}
-\centering
+\begin{figure}[p]
+	\centering
 	\includegraphics[scale=0.6]{figs/programming-syntax.png}
-	\caption{Programming syntax for {\bf PMsg}}
-	\label{Fig:programming-syntax}
+	\caption{Programming syntax for {\bf PMsg} \label{Fig:programming-syntax}}
 \end{figure}
 
+
+\newpage
 
 \begin{appendix}
 \section{Examples: Complete programs}
