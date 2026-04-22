@@ -72,7 +72,7 @@ and that we will mention things like there is a beautiful type system and that w
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a process named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a channel named \lstinline$console$. 
 The \lstinline$console$ channel has the type \lstinline$Console$ which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
-\begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
+\begin{lstlisting}[label=ex:helloworld, caption=Hello World!, name=helloworld] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc helloworld :: | Console => = 
 	| console => -> do
@@ -82,7 +82,7 @@ proc helloworld :: | Console => =
 		halt console                     -- closes console channel and halts               
 \end{lstlisting}
 The \lstinline$helloworld$ process can be invoked by calling it in the main process, \lstinline$run$, and giving it the \lstinline$console$ channel as follows:
-\begin{lstlisting}
+\begin{lstlisting}[name=helloworld]
 proc run = 
 	| console => -> helloworld( | console => )  -- creates helloworld process
 \end{lstlisting}
@@ -757,11 +757,11 @@ Recall and observe that Example~\ref{ex:helloworld} had the only \lstinline$run$
 \tc{Service channels} are the channels that a \lstinline$run$ process can be defined with. The service channel types are \lstinline$Console$, \lstinline$StringTerminal$, and \lstinline$Timer$. They are implemented the as protocols and coprotocols on which processes must always use \lstinline$hput$, and the compiler has built-in implementations of the service process which does \lstinline$hcase$
 
 A \lstinline$Console$ allows a user to interact through the terminal in which the program was run.
-A \lstinline$StringTerminal$ opens a new Alacritty terminal for user interaction.
+A \lstinline$StringTerminal$ opens a new Alacritty\footnote{https://alacritty.org} terminal for user interaction.
 A \lstinline$Timer$ can be used to implement time-out features using controlled non-determinism, which we will discuss in more detail in Section~\ref{Sec:races}.
 A complete list of the handles for these types is included in Section~\ref{}.
 For now, we will focus on the following handles:
-\begin{lstlisting} [label=ex:servicechs, caption=Service channels] 
+\begin{lstlisting} [label=ex:servicechs, caption=Service channels, name=services] 
 protocol StringTerminal => S =
     StringTerminalPut :: Put([Char]|S) => S
     StringTerminalGet :: Get([Char]|S) => S 
@@ -774,7 +774,7 @@ coprotocol S => Console =
 \end{lstlisting}
 
 Consider a modification of Example~\ref{ex:serverecho} in which \lstinline$client$ has a \lstinline$StringTerminal$ to receive user input and \lstinline$server$ has a  \lstinline$Console$ to log the messages it receives:
-\begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels] 
+\begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels, name=services]  
 proc client :: | => PassMessages([Char]|), StringTerminal =
     | => ch, terminal -> do
         on terminal do								
@@ -1065,7 +1065,7 @@ proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
 			close
 		on console do
 			hput ConsolePut
-			put ("Server says: Running the stored process")
+			put ("Higher order receiver says: Running the stored process")
 		use(stored_process)( | console => )		-- decode and invoke helloworld
 \end{lstlisting}
 Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ type channel.
