@@ -892,7 +892,7 @@ Sequential type for encoding processes and passing an encoded process as a messa
 
 Functions are defined using the \lstinline{fun} keyword, and they are called using their name and a comma-separated list of their input arguments enclosed in parentheses.
 Let us define a function that will take a string as input and return a \lstinline$Bool$ depending on whether the input string is empty or not. We will use this function in Example \ref{ex:serverclientwithservices-branching} to check whether the user has input an empty string.
-\begin{lstlisting}
+\begin{lstlisting}[label=ex:isEmpty, caption=Sequential function that checks if a string is empty]
 fun isEmpty :: [Char] -> Bool =
 	[]	-> True
 	_		-> False
@@ -901,7 +901,7 @@ fun isEmpty :: [Char] -> Bool =
 %infix function syntax (like for example append? concat? as ++ )
 We can define infix functions such as concatenation \lstinline{++}, which we used on line 27 of Example~\ref{ex:serverclientwithservices} `\lstinline$put "message from user: "     ++ msg$':
 %An infix append function \lstinline{++} can be defined as follows:
-\begin{lstlisting}
+\begin{lstlisting}[label=ex:concat, caption=Infix concatenation function]
 fun (++) :: [A],[A] -> [A] =
 	a,[]			-> a
 	[],a 			-> a
@@ -951,7 +951,7 @@ The \lstinline{SF} data type allows a \lstinline$Pop$ to safely fail if the \lst
 An instance of a \lstinline{Stack} can be built from a list using \lstinline{(:)} to implement the destructors.
 We define the following function \lstinline$listStack$ which returns a record that builds a \lstinline{Stack}:
 %that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
-\begin{lstlisting} [numbers=left, name=codata]
+\begin{lstlisting} [label=ex:record, caption=Function that produces a record to build Stack from a list, numbers=left, name=codata]
 fun listStack :: [A] -> Stack(A) = 
 	cs -> (		-- given a list, returns the record:
 		Push := c -> listStack(c:cs),			-- implementation of Push
@@ -1934,61 +1934,66 @@ Since only one of the race process bodies will be executed, all existing open ch
 The \lstinline$race$ command must be the last command in a process block.
 
 
-\subsection{Higher-order message passing using {\tt store} and {\tt use}}
 
-CaMPL supports higher-order processes, that is, allowing {\em process}es to be packaged and passed to other processes, thereby treating processes as ``first-class citizens".  It provides two constructs for this purpose, namely,  
-\begin{itemize}
-	\item {\tt store} converts a concurrent process into sequential data.
-	\item {\tt use} allow the calling of a stored process.
-\end{itemize}
-CaMPL provides a sequential data type {\tt Store}$(\Phi|\Lambda \vvdash \Delta)$ to represent stored processes. The following program demonstrates higher-order message passing using the Store type and the constructs. Process {\tt q} calls the stored process {\tt p}, {\tt counter} number of times.
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			proc q :: Int, Store( | A => A) | A => A = 
-					   counter, stored_process | a1 => a2 -> 
-					       case counter of 
-						       0 -> x |=| y						                    -- base	case
-						       _ -> plug 					                       -- recursive case
-							         use(stored_process)(| x => z)				               -- using the stored process
-							         q(counter-1, p | z => y)		         -- recurse
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-The mathematics semantics of storing concurrent processes as sequential data is given by the equivalence between a right $\A$-actegory with Hom-objects and a right $\A$-enriched category with copowers, see \cite{Melika25}.
-
-Another method of passing a process {\tt p} of type "{\tt | A => B}" to a process {\tt q} is using the channel type {\tt Neg(A) (+) B}. The channel type {\tt Neg(A) (+) B} encodes a process {\tt p} of type signature "{\tt | A => B}". Then, a process may "apply" the channel type "{\tt Neg(A) (+) B}" to a input channel of type {\tt A} to produce a output channel of type {\tt B}. The following code demonstrates this. 
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			proc apply :: | A, Neg(A) (+) B => B =
-				 | a, neg_a_b => b ->
-				        fork neg_a_b as
-				               neg_a -> neg_a |=| neg(a)
-				               b' -> b |=| b' 
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-However, this method does not support arbitrary recursive definitions since channels are linear resources, hence cannot be duplicated (thereby disallowing multiple invocations of a received process). For example, consider a process {\tt q} that receives two input channels: one of type {\tt A} and another of type {\tt Neg(A) (+) A} (representing a process with type signature {\tt A => A}). Additionally, the process {\tt q} has a output channel of type {\tt A} and a sequential {\tt counter} of type {\tt Int}. The goal is to apply the input process to the input channel {\tt counter} times  possibly using the below code snippet. However, this code snippet is invalid in CaMPL since process {\tt q} uses the channel {\tt p} more than once , thereby, violating linearity constraint. 
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			proc q :: Int | A, Neg(A) (+) A => A =
-				 counter | a, p => y -> case counter of
-				          0 -> a |=| y
-				          _ -> plug
-				          	     apply ( a, p => z )
-					               q( counter - 1 | z, p => y )
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
+\subsection{Service channels}
 
 
-Note that the above method for higher-order message passing behavior is implicit to CaMPL and uses no new instructions. This is due to the fact that the concurrent side of MPL is a $*$-autonomous category. This allows the language to inherently support (non-recursive) higher-order behavior as described by the following sequent rule,
-\[ 
-	\infer{\Lambda \vvdash A^\perp \oplus B := A \lollipop B}{\Lambda, A \vvdash B}
-\]
-
+%
+%\subsection{Higher-order message passing using {\tt store} and {\tt use}}
+%
+%CaMPL supports higher-order processes, that is, allowing {\em process}es to be packaged and passed to other processes, thereby treating processes as ``first-class citizens".  It provides two constructs for this purpose, namely,  
+%\begin{itemize}
+%	\item {\tt store} converts a concurrent process into sequential data.
+%	\item {\tt use} allow the calling of a stored process.
+%\end{itemize}
+%CaMPL provides a sequential data type {\tt Store}$(\Phi|\Lambda \vvdash \Delta)$ to represent stored processes. The following program demonstrates higher-order message passing using the Store type and the constructs. Process {\tt q} calls the stored process {\tt p}, {\tt counter} number of times.
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			proc q :: Int, Store( | A => A) | A => A = 
+%					   counter, stored_process | a1 => a2 -> 
+%					       case counter of 
+%						       0 -> x |=| y						                    -- base	case
+%						       _ -> plug 					                       -- recursive case
+%							         use(stored_process)(| x => z)				               -- using the stored process
+%							         q(counter-1, p | z => y)		         -- recurse
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center}
+%The mathematics semantics of storing concurrent processes as sequential data is given by the equivalence between a right $\A$-actegory with Hom-objects and a right $\A$-enriched category with copowers, see \cite{Melika25}.
+%
+%Another method of passing a process {\tt p} of type "{\tt | A => B}" to a process {\tt q} is using the channel type {\tt Neg(A) (+) B}. The channel type {\tt Neg(A) (+) B} encodes a process {\tt p} of type signature "{\tt | A => B}". Then, a process may "apply" the channel type "{\tt Neg(A) (+) B}" to a input channel of type {\tt A} to produce a output channel of type {\tt B}. The following code demonstrates this. 
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			proc apply :: | A, Neg(A) (+) B => B =
+%				 | a, neg_a_b => b ->
+%				        fork neg_a_b as
+%				               neg_a -> neg_a |=| neg(a)
+%				               b' -> b |=| b' 
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center}
+%However, this method does not support arbitrary recursive definitions since channels are linear resources, hence cannot be duplicated (thereby disallowing multiple invocations of a received process). For example, consider a process {\tt q} that receives two input channels: one of type {\tt A} and another of type {\tt Neg(A) (+) A} (representing a process with type signature {\tt A => A}). Additionally, the process {\tt q} has a output channel of type {\tt A} and a sequential {\tt counter} of type {\tt Int}. The goal is to apply the input process to the input channel {\tt counter} times  possibly using the below code snippet. However, this code snippet is invalid in CaMPL since process {\tt q} uses the channel {\tt p} more than once , thereby, violating linearity constraint. 
+%\begin{center}
+%	\begin{varwidth}{\linewidth}
+%		\begin{verbatim}
+%			proc q :: Int | A, Neg(A) (+) A => A =
+%				 counter | a, p => y -> case counter of
+%				          0 -> a |=| y
+%				          _ -> plug
+%				          	     apply ( a, p => z )
+%					               q( counter - 1 | z, p => y )
+%		\end{verbatim}
+%	\end{varwidth}
+%\end{center}
+%
+%
+%Note that the above method for higher-order message passing behavior is implicit to CaMPL and uses no new instructions. This is due to the fact that the concurrent side of MPL is a $*$-autonomous category. This allows the language to inherently support (non-recursive) higher-order behavior as described by the following sequent rule,
+%\[ 
+%	\infer{\Lambda \vvdash A^\perp \oplus B := A \lollipop B}{\Lambda, A \vvdash B}
+%\]
+%
 
 
 
