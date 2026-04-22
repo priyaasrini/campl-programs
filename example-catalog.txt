@@ -1,0 +1,53 @@
+CaMPL notes
+
+Meeting with Xanna April 22
+
+For each example in the Appendix refer it back to the sections where they are used in full or partial. 
+
+Catalog of examples in Appendix: 
+- HelloWorld.mpl
+
+Categories of examples:
+* HelloWorld
+* EchoServer : 
+    * version simple, version Put & Get, version will service channels, Arbitrary number of messages (isEmpty), With split and Fork, With split and Fork and race
+* Broadcast : Xanna will figure it out
+* Mutex
+* Higher order Messages
+* Codata
+
+Examples in camps-notes.tex (numbers reflect the example numbers)
+
+1. HelloWorld
+2. Client sends a string and server echoes it back
+3. Broadcast — three destinations Example: Recalled example 2   [Polarities section]
+4. Code that does not compile — example 2 without polarities 
+5. Client sends a string and server sends an integer  (Put and Get types)
+6. A client forks into two clients but we only Put, no response from the server. Type signature for broadcast  And then another snippet of type signaturewith all destinations in output polarity  Run process for the new broadcast
+7. Writing code to send to destination 1 with negPut channel
+8. The code for broadcast with all output polarity destinations
+9. Protocol PassMessages
+10. Broadcast that uses PassMessages instead of Put Channels Protocol PassMessages with confirmation — May be remove CoProtoocol and coPassMessages
+11. Rewrite the example 7 to use coprotocol instead of negPut. 
+12. Example 12 is service channels (name of the Console and the StringTerminal are not hard-coded in the compiler however the handles are hard-coded. Mention this in the document too. 
+13. Recall Example 2, give the client string terminal and server console. We get one message from the server. 
+14. Non-deterministic processes, clients are getting and putting. Example 6 Frankenstein with Example 2.  Timer coprotocol.
+15. IsEmpty?  Function  — we might want to add a example number
+16. concatenation function. 
+17. Definition of data and codata
+18. Function that produces a record for the stack — codata example
+19. Printing messages from most recent to least recent — demonstration for using a stack
+20. Sequential control, recall example 13, has a PassMessages Channel until user changes to empty string
+21. Higher order messages
+
+Process command manual
+
+5.1. Recall example 7, the run process
+       Recall example 7 but the sendToDest1 process. 
+5.2 Recall Example 11  (changed comments to point out different things)
+
+22. Example 2 Mutex protocol. 
+23. Using Mutex to pass a channel as a resource with several code snippets. 
+24. Section 5.4 closing, halting channels and broadcast  Section 5.5.1 — put and get , Recall example 5.   Section 5.5.2 —— recalling examples 9 and 11.  Section 5.5.3 — Recalling example 7 but giving the code for the sender , no confirmation messages. No proctocols, just put and get. 
+25. Section 5.5.3. Splitting the source channel. 
+26. Corresponding broadcast that forks the source channel. 
