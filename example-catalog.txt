@@ -7,7 +7,7 @@ For each example in the Appendix refer it back to the sections where they are us
 Catalog of examples in Appendix: 
 - Prelude.mpl
 - Higher order HelloWorld
-- Continuously requesting user input
+- Requesting user input continuously
 - (incomplete) Broadcast
 - Non-determinstic server
 - Memory cell 
