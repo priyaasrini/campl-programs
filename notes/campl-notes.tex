@@ -938,7 +938,7 @@ fun listStack :: [A] -> Stack(A) =
 We use a \lstinline{Stack} in the following \lstinline$reverse_print$ process to collect messages as they are received.
 Once all the messages have been received, we will \lstinline$flatten$ and print the \lstinline$stack$ from top to bottom.
 Since the most recent message will be on the top of the \lstinline$stack$, the messages will be printed in reverse order.
-\begin{lstlisting} [label=ex:codata reverse_print, caption=Printing messages from most recent to least recent, numbers=left]
+\begin{lstlisting} [label=ex:codata reverse_print, caption=Printing messages from most recent to least recent]
 fun flatten :: Stack([Char]) -> [Char] =
 	s -> case Pop(s) of			-- recursively pop strings and concat them
 		(SS(str), stack) -> str ++ " " ++ flatten(stack)
@@ -984,14 +984,14 @@ proc client :: | => PassMessages([Char]|), StringTerminal =
 				on ch do 
 					hput CloseCh
 					close 
-				on term do
+				on terminal do
 					hput StringTerminalClose	
 					halt 
 			else do							-- user has sent a message, so forward to server
 				on ch do											
 					hput SendMsg
 					put msg
-				client( | => ch, term)	-- recurse 
+				client( | => ch, terminal)	-- recurse 
 \end{lstlisting}   
 
 The above example can also be implemented using \lstinline$case$:
@@ -2140,7 +2140,8 @@ Thus, the message passing logic provides a clean separation of computation and c
 
 CaMPL has a module system that allows one to import and use code defined in other files.
 This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:}.
-We demonstrate how to import the \lstinline{Prelude} in \ref{prog:mem-cell} and \ref{prog:stack_print}.
+We demonstrate how to import the \lstinline{Prelude} in 
+\ref{prog:h.o.hello_world}, \ref{prog:user_input_client_server}, \ref{prog:broadcastmsgs}, \ref{prog:stack_print}, and \ref{prog:mem-cell}.
 
 \begin{lstlisting}
 -- from Example 12:
@@ -2172,9 +2173,11 @@ fun (++) :: [A],[A] -> [A] =
 \subsection{Higher order Hello World}
 \label{prog:h.o.hello_world}
 
-This program combines code from Examples \ref{ex:helloworld} and \ref{ex:hoprocs}.
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:helloworld} and \ref{ex:hoprocs}.
 
 \begin{lstlisting}
+import Prelude
+
 -- from Example 1:
 proc helloworld :: | Console => =
 	| console => -> do
@@ -2212,29 +2215,15 @@ proc run :: | Console => =
 \subsection{Requesting user input continuously}
 \label{prog:user_input_client_server}
 
-This program combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:servicechs}, \ref{ex:serverclientwithservices},  \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:serverclientwithservices-branching}.
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:serverclientwithservices}, \ref{ex:serverclientwithservices-branching}.
 
 \begin{lstlisting}
--- from Example 12:
-protocol StringTerminal => S =
-    StringTerminalPut :: Put([Char]|S) => S
-    StringTerminalGet :: Get([Char]|S) => S 
-    StringTerminalClose :: TopBot => S
-    
-coprotocol S => Console =
-    ConsolePut :: S => Get([Char]|S) 
-    ConsoleGet :: S => Put([Char]|S) 
-    ConsoleClose :: S => TopBot 
+import Prelude
 
--- from Example 9:
+-- from Example 8:
 protocol PassMessages (A| ) => S =
     SendMsg :: Put(A|S) => S 
     CloseCh :: TopBot => S
-
--- from Example 15:
-fun isEmpty :: [Char] -> Bool =
-	[]	-> True
-	_		-> False
 
 -- from Example 20:
 proc client :: | => PassMessages([Char]|), StringTerminal =
@@ -2249,20 +2238,14 @@ proc client :: | => PassMessages([Char]|), StringTerminal =
 				on ch do 
 					hput CloseCh
 					close 
-				on term do
+				on terminal do
 					hput StringTerminalClose	
 					halt 
 			else do
 				on ch do											
 					hput SendMsg
 					put msg
-				client( | => ch, term)
-
--- from Example 16:
-fun (++) :: [A],[A] -> [A] =
-	a,[]			-> a
-	[],a 			-> a
-	(b:bs),cs	-> b : (bs ++ cs)  
+				client( | => ch, terminal)
 
 -- from Example 13:
 proc server :: | PassMessages([Char]|), Console => =
