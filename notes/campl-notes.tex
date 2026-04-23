@@ -1996,20 +1996,206 @@ proc run :: | Console => StringTerminal =
 
 
 \newpage
-\TODO{xanna will figure out how to make one or two full programs for broadcast and make sure the examples in the main body of the paper are coherent}
-\subsection{Broadcast}
-\label{prog:broadcast}
+\subsection{Broadcasting a single message}
+\label{prog:broadcastmsg}
 
-This program combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:}, \ref{ex:},  \ref{ex:}, \ref{ex:}, \ref{ex:}.
+Note that this program will not produce observable effects when it is run.
+This program combines code from Examples \ref{ex:broadcastmsg}, \ref{ex:negdest1}, \ref{ex:sender}.
+\begin{lstlisting}
+-- from Example 24:
+proc sender :: | => Put([Char] | Get([Char] | TopBot)) =
+	| => source ->
+		on source do
+			put "Hi everyone!"
+			get confirmation_msg
+			halt
+			
+-- from Example 3:
+proc broadcast :: [Char] | Put([Char] | Get([Char] | TopBot)) 								=> Put([Char] | TopBot), Put([Char] | TopBot) =
+	confirmation_msg | source => dest1, dest2 -> do
+		get msg on source
+		put msg on dest1
+		put msg on dest2
+		put confirmation_msg on source
+		close source
+		close dest1
+		halt dest2
+		
+-- from Example 7:
+proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
+	| source, neg_dest1 => -> do
+		on source do
+			get msg
+			close
+		plug
+			neg_dest1, dest1 => ->
+				neg_dest1 |=| neg dest1
+			=> dest1 ->
+				on dest1 do	
+					put msg
+					halt
+					
+-- new code:
+proc1 :: | => Neg(Put([Char] | TopBot)) =
+	| => neg_dest1 -> plug
+		=> neg_dest1, dest1 ->
+			neg_dest1 |=| neg dest1
+		dest1 => ->
+			on dest1 do	
+				get msg
+				halt
+
+proc2 :: | Put([Char] | TopBot) => =
+	| dest2 => ->
+		on dest2 do
+			get msg
+			halt
+
+-- from Example 7:
+proc run =
+	| => -> plug
+		sender( | => source)
+		broadcast("broadcast confirmation" | source => dest1, dest2)
+		send_to_dest1( | dest1, neg_dest1 => )
+		proc1( | => neg_dest1)	
+		proc2( | dest2 =>)
+\end{lstlisting} 
+
+\newpage
+\subsection{Broadcasting an arbitrary number of messages}
+\label{prog:broadcastmsgs}
+
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:recbroadcast}, \ref{ex:coprotocolcopassmsgs},  \ref{ex:coprotocoldest1}.
 
 \begin{lstlisting}
--- from Example 9:
+import Prelude
+
+-- from Example 8:
 protocol PassMessages (A| ) => S =
-    SendMsg :: Put(A|S) => S 
-    CloseCh :: TopBot => S
+	SendMsg :: Put(A|S) => S 
+	CloseCh :: TopBot => S
 
+protocol PassMsgsWithConf (A| ) => S =
+	SendMsgWithConf :: Put(A|Get([Char]|S)) => S
+	CloseConfCh :: TopBot => S 
+	
+-- from Example 10:
+coprotocol S => CoPassMessages (A| ) =
+	CoSendMsg ::  S => Get(A|S)
+	CoCloseCh :: S => TopBot
 
+-- new code:
+proc sender :: | Console => PassMsgsWithConf([Char]| ) =
+	| console => source -> do
+		on console do	
+			hput ConsolePut
+			put "Hello User! Enter message to broadcast. Press ENTER to close."
+			hput ConsoleGet
+			get msg
+		if isEmpty(msg)
+			then do
+				on source do 
+					hput CloseConfCh
+					close 
+				on console do
+					hput ConsoleClose	
+					halt 
+			else do
+				on source do											
+					hput SendMsgWithConf
+					put msg
+					get confirmation_msg
+				on console do	
+					hput ConsolePut
+					put confirmation_msg
+				sender( | console => source)
 
+-- from Example 9:
+proc broadcast :: [Char] | PassMsgsWithConf([Char]| ) 												=> PassMessages([Char]| ), PassMessages([Char]| ) = 
+	confirmation_msg | source => dest1, dest2 -> do
+		hcase source of
+			SendMsgWithConf -> do
+				get msg on source
+				on dest1 do
+					hput SendMsg
+					put msg
+				on dest2 do
+					hput SendMsg
+					put msg
+				on source do
+					put confirmation_msg
+				broadcast(confirmation_msg | source => dest1, dest2)
+			CloseConfCh -> do
+				close source							
+				on dest1 do						
+					hput CloseCh
+					close
+				on dest2 do
+					hput CloseCh	
+					halt
+
+-- from Example 11:
+proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest1 => -> 
+		hcase source of
+			SendMsg -> do
+				get msg on source 		
+				on dest1 do
+					hput CoSendMsg
+					put msg
+				send_to_dest1( | source, dest1 => )
+			CloseCh -> do
+				close source
+				on dest1 do
+					hput CoCloseCh
+					halt
+
+-- new code:
+proc proc1 :: [Char] | => CoPassMessages([Char]| ), StringTerminal =
+	tag | => source, terminal -> do
+		hcase source of
+			CoSendMsg -> do
+				get msg on source 		
+				on terminal do
+					hput StringTerminalPut
+					put tag ++ " received message: " ++ msg
+				proc1(tag | => source, terminal)
+			CoCloseCh -> do
+				close source
+				on terminal do
+					hput StringTerminalPut
+					put "Source has finished sending messages to " ++ tag ++ ". Press ENTER to close."
+					hput StringTerminalGet
+					get _
+					hput StringTerminalClose
+					halt
+
+proc proc2 :: [Char] | PassMessages([Char]| ) => StringTerminal =
+	tag | source => terminal -> do
+		hcase source of
+			SendMsg -> do
+				get msg on source 		
+				on terminal do
+					hput StringTerminalPut
+					put tag ++ " received message: " ++ msg
+				proc2(tag | source => terminal)
+			CloseCh -> do
+				close source
+				on terminal do
+					hput StringTerminalPut
+					put "Source has finished sending messages to " ++ tag ++ ". Press ENTER to close."
+					hput StringTerminalGet
+					get _
+					hput StringTerminalClose
+					halt
+
+proc run =
+    | console => term1, term2 -> plug
+        sender( | console => source)
+        broadcast("Message has been broadcasted." | source => dest1, dest2)
+        send_to_dest1( | dest1, codest1 => )
+        proc1("Process 1" | => codest1, term1)
+        proc2("Process 2" | dest2 => term2)
 \end{lstlisting}
 
 
