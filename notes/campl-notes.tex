@@ -172,31 +172,28 @@ A {\em process} is specified by a process name, an optional type signature, and 
 In Example \ref{ex:helloworld}, the type signature of process \lstinline$helloworld$ was \lstinline$ :: | Console => $ which indicates that it only has access to one channel of type \lstinline$Console$ and this channel is given the name \lstinline$console$ indicated by \lstinline$ = | console => $ on the next line.
 We will discuss type signatures in more detail in Section~\ref{Sec:Channels} on channel types.
 
-A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. 
+The final process defined in a program, in which the program's execution begins, must have the name \lstinline$run$. 
 This process is the main process and the channels it uses must only consist of ``service channels,'' such as the \lstinline$Console$.
 We will discuss service channels in more detail in Section~\ref{Sec:ServiceChannels}.
 
 For now, we will consider the definition of process \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
-
+\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] 
 proc broadcast = 
-	confirmation_msg | source, dest1 => dest2, dest3 -> do
+	confirmation_msg | source => dest1, dest2 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- broadcast message to other process
 		put msg on dest2
-		put msg on dest3
 		put confirmation_msg on source	-- send confirmation message to source
 		close source										-- close all channels and halt
 		close dest1
-		close dest2
-		halt dest3       
+		halt dest2
 \end{lstlisting}
 Observe that line 2 in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 
 \begin{itemize}
 	\item variables, e.g. \lstinline$confirmation_msg$,
-	\item input polarity channels, e.g. \lstinline$source, dest1$, and
-	\item output polarity channels, e.g. \lstinline$dest2, dest3$.
+	\item input polarity channels, e.g. \lstinline$source$, and
+	\item output polarity channels, e.g. \lstinline$dest1, dest2$.
 \end{itemize}
 The {\em variables} are instances of sequential types and {\em channels} are instances of concurrent types.
 The channels on the left of \lstinline$ =>$ are called {\em input polarity} or {\em left polarity} channels. 
@@ -484,56 +481,50 @@ Then, we would use the other bundled channel type, \lstinline$(+)$, which is dua
 More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
 
 Finally, we have the \lstinline$Neg$ channel type which negates a given channel type.
-This means that the ``direction'' of the interaction is reversed.
+This means that the direction of the interaction is reversed.
 A \lstinline$Neg(Put)$ channel can be used like a \lstinline$Get$ channel (and vice versa), and a \lstinline$Neg((*))$ channel can be used like a \lstinline$(+)$ channel (and vice versa).
 
-Recall the process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
-We can write the type signature of \lstinline$broadcast$ as follows:
+Recall process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
+The type signature of \lstinline$broadcast$ is as follows:
 \begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source, dest1 => dest2, dest3 ->
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 										=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2 ->
 \end{lstlisting}
-Observe that the type of \lstinline$dest1$ is \lstinline$Get([Char]|TopBot)$ which is dual to the type of \lstinline$dest2$ and \lstinline$dest3$ which is \lstinline$Put([Char]|TopBot)$.
-We will refer to the process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
-Notice that \lstinline$proc1$ uses \lstinline$dest1$ with output polarity.
+Observe that the type of \lstinline$dest1$ is \lstinline$Put([Char]|TopBot)$.
+We will refer to the destination process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
+Notice that \lstinline$proc1$ must use \lstinline$dest1$ with input polarity.
 
-Suppose we want the type and polarity of all of the destination channels in \lstinline$broadcast$ to be the same, i.e. we want the type signature of  \lstinline$broadcast$ to be:
-\begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 ->
-\end{lstlisting}
-However, we still want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
-Instead of connecting \lstinline$broadcast$ with \lstinline$proc1$ directly, we can write another process, \lstinline$send_to_dest1$, that connects to  \lstinline$proc1$ with a \lstinline$Neg(Put)$ channel.
+Suppose we actually want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
+Instead of changing \lstinline$broadcast$ to connect with \lstinline$proc1$ directly, we can write another process with two input polarity channels, \lstinline$send_to_dest1$, that connects to \lstinline$proc1$.
 Our \lstinline$run$ process would be defined as follows:
 \begin{lstlisting}
 proc run =
-    | => -> plug
-        sender( | => source)
-        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
-        send_to_dest1( | dest1, neg_dest1 => )
-        proc1( | => neg_dest1)				-- neg_dest1 has Neg(Put) type 
-        proc2( | dest2 =>)
-        proc3( | dest3 =>)
+	| => -> plug
+		sender( | => source)
+		broadcast("broadcast confirmation" | source => dest1, dest2)
+		send_to_dest1( | dest1, neg_dest1 => )	-- type of dest1 is Put 
+		proc1( | => neg_dest1)									-- type of neg_dest1 is Neg(Put)
+		proc2( | dest2 =>)
 \end{lstlisting}	
-We can define process \lstinline$send_to_dest1$ as follows:
+Messages will travel along \lstinline$dest1$ from left to right and then in the opposite direction on \lstinline$neg_dest1$.
+Since \lstinline$dest1$ is type \lstinline$Put$, \lstinline$neg_dest1$ can be \lstinline$Neg(Put)$. 
+We define process \lstinline$send_to_dest1$ as follows:
 \begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
 proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
-	| source, neg_dest1 => -> do
+	| source, neg_dest1 => -> do	-- send a message on neg_dest1 like a Get type
 		on source do								-- receive message from source via broadcast
 			get msg
 			close
 		plug
-			neg_dest1, dest1 => -> 
-				neg_dest1 |=| neg dest1 -- negate and identify channels
-			=> dest1 -> 							-- use like Get channel in original broadcast
-				on dest1 do							-- forward message to proc1
+			neg_dest1, dest1 => -> 		-- create a channel dest1
+				neg_dest1 |=| neg dest1 -- negate it and identify with neg_dest1
+			=> dest1 -> 							-- use dest1 to forward message to proc1
+				on dest1 do	
 					put msg
 					halt
 \end{lstlisting}
-To connect to this process, \lstinline$proc1$ would also need to be modified to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
-Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 9 to be able to use the \lstinline$Neg(Put)$ channel.
+To connect to this process, \lstinline$proc1$ would also need to be defined to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
+Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 12 to be able to use the \lstinline$Neg(Put)$ channel.
 The \lstinline$neg$ and identification \lstinline$|=|$ process commands are described in more detail in Section~\ref{sec:neg}. 
 
 
@@ -586,61 +577,42 @@ The outer most layer is the first interaction that will take place, and after th
 \subsubsection{Custom types}
 \label{Sec:protocols}
 
-We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
-Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
+We have covered the basic channel types, but the programs we have written so far cannot send a variable number of messages.
+Recall process \lstinline$broadcast$ from Example \ref{ex:broadcastmsg}.
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels] 
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
-		get msg on source								-- receive message from source
-		put msg on dest1								-- broadcast message to other process
-		put msg on dest2
-		put msg on dest3
-		put confirmation_msg on source	-- send confirmation message to source
-		close source										-- close all channels and halt
-		close dest1
-		close dest2
-		halt dest3       
-\end{lstlisting}
-This process is only able to broadcast a single message from the source.
+This process was only able to broadcast a single message from the source.
 To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called {\em protocols} and {\em coprotocols}, which can be recursively defined.
 
 Let us consider the following example of a protocol called \lstinline$PassMessages$:  
-\begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages] 
+\begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages, name=broadcastwprotocols] 
 protocol PassMessages (A| ) => S =			-- passes messages of type A
-    SendMsg :: Put(A|S) => S 						-- handle to send another message
-    CloseCh :: TopBot => S 							-- handle to finish sending messages
+	SendMsg :: Put(A|S) => S 							-- handle to send another message
+	CloseCh :: TopBot => S 								-- handle to finish sending messages
 \end{lstlisting}
 This protocol allows an arbitrary number of messages of type \lstinline$A$ to be passed on a \lstinline$Put$ channel.
+When we use it as a channel type, we will instantiate the sequential type variable \lstinline$A$.
+In the case of  \lstinline$broadcast$, we will write \lstinline$PassMessages([Char]| )$ to pass strings.
 The two {\em handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the type of the channel to be set to either \lstinline$Put$ or \lstinline$TopBot$.
 In general, handles represent the set of valid interactions that may take place on a channel.
 They can be thought of as session types.
 
-When we use \lstinline$PassMessages$ as a channel type, we will be able to instantiate the sequential type variable \lstinline$A$.
-In the case of  \lstinline$broadcast$, we want to pass strings, so we will use the channel type \lstinline$PassMessages([Char]| )$.
-Alternatively, we could have enforced that \lstinline$PassMessages$ only passes messages of strings by omitting the type variable \lstinline$A$ and setting the channel type to \lstinline$Put([Char]|S)$ on line 2 instead.
-In that case, we would have the channel type \lstinline$PassMessages(|)$.
-
-This protocol does not use any concurrent type variables, but if it did, the list of the concurrent type variables would be on the right of the bar next to \lstinline$A$.
-For example, if it took a concurrent type variable \lstinline$X$, we would have \lstinline$PassMessages(A| X)$.
-
+If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a string in response. For example:
+ \begin{lstlisting}[name=broadcastwprotocols] 
+protocol PassMsgsWithConf (A| ) => S =
+	SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handles have new names
+	CloseConfCh :: TopBot => S 		
+\end{lstlisting}
+We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
+Neither protocol has concurrent type variables, but a concurrent type variable \lstinline$X$ would be given as \lstinline$PassMsgsWithConf(A| X)$.
 The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character. 
 
-Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
-The only difference between protocols and coprotocols is the direction that handles travel on the channel.
-For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
-This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
-
-We can further modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ protocol as follows:
-\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)] %can we change listing so that it says Example insted of Listing in the caption?
-
-proc broadcast :: [Char] | PassMessages([Char]| ) 
-	=> PassMessages([Char]| ), PassMessages([Char]| ), PassMessages([Char]| ) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+We can modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ protocols as follows:
+\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source, name=broadcastwprotocols]
+proc broadcast :: [Char] | PassMsgsWithConf([Char]| ) 												=> PassMessages([Char]| ), PassMessages([Char]| ) = 
+	confirmation_msg | source => dest1, dest2 -> do
 		hcase source of					-- check whether there is another message
-			SendMsg -> do
+			SendMsgWithConf -> do
 				get msg on source		-- receive message
 				on dest1 do					-- broadcast message to other processes
 					hput SendMsg			-- indicate there is another message
@@ -648,47 +620,41 @@ proc broadcast :: [Char] | PassMessages([Char]| )
 				on dest2 do
 					hput SendMsg
 					put msg
-				on dest3 do
-					hput SendMsg
-					put msg
-				broadcast(confirmation_msg | source => dest1, dest2, dest3) -- recurse
-			CloseCh -> do					-- close all channels and halt
+				on source do				-- send confirmation to source
+					put confirmation_msg
+				broadcast(confirmation_msg | source => dest1, dest2) -- recurse
+			CloseConfCh -> do			-- close all channels and halt
 				close source							
 				on dest1 do						
 					hput CloseCh			-- indicate source is finished
 					close							-- close channel
 				on dest2 do
-					hput CloseCh		
-					close	
-				on dest3 do
-					hput CloseCh		
+					hput CloseCh	
 					halt	
 \end{lstlisting}
+
+Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
+The only difference between protocols and coprotocols is the direction that handles travel on the channel.
+For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
+This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
+
 Since protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, \lstinline$broadcast$ is receiving handles on \lstinline$source$ and sending handles on its destination channels.
 A handle is sent on a channel using \lstinline$hput$ which {\em activates} the channel and sets its type as specified by the handle.
 A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
 More details on these process commands are given in Section~\ref{subsec:pairs}.
 
-If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
- \begin{lstlisting}
-protocol PassMsgsWithConf (A| ) => S =
-    SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
-    CloseConfCh :: TopBot => S 		
-\end{lstlisting}
-We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
-
-We can imagine that \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that is connected to \lstinline$proc1$ by a \lstinline$Neg(PassMessages([Char]| ))$ channel.
+A \lstinline$send_to_dest1$ process that forwards an arbitrary number of messages to \lstinline$proc1$ could use a \lstinline$Neg(PassMessages([Char]| ))$ channel.
 Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline$PassMessages$ instead.
 We can define a coprotocol \lstinline$CoPassMessages$ as follows:
- \begin{lstlisting}
+ \begin{lstlisting}[label=ex:coprotocolcopassmsgs, caption=Coprotocol for passing an arbitrary number of messages, name=broadcastwprotocols]
 coprotocol S => CoPassMessages (A| ) =
-    CoSendMsg ::  S => Get(A|S)
-    CoCloseCh :: S => TopBot
+	CoSendMsg ::  S => Get(A|S)
+	CoCloseCh :: S => TopBot
 \end{lstlisting}
 Notice that the state variable \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side like in the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ definitions.
 
-We can write \lstinline$send_to_dest1$ as follows:
-\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
+We can write \lstinline$send_to_dest1$ using \lstinline$CoPassMessages$ as follows:
+\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel, name=broadcastwprotocols] 
 proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 	| source, dest1 => -> 
 		hcase source of					-- check whether there is another message
@@ -754,7 +720,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 
 The examples we have considered so far, with the exception of Example~\ref{ex:helloworld}, will not produce any observable effects to a user since they have not been connected to the outside world.
 Recall and observe that Example~\ref{ex:helloworld} had the only \lstinline$run$ process that was defined with a non-empty list of channels in its scope.
-\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with. The service channel types are \lstinline$Console$, \lstinline$StringTerminal$, and \lstinline$Timer$. They are implemented the as protocols and coprotocols on which processes must always use \lstinline$hput$, and the compiler has built-in implementations of the service process which does \lstinline$hcase$
+\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with. The service channel types are \lstinline$Console$, \lstinline$StringTerminal$, and \lstinline$Timer$. They are implemented as protocols and coprotocols on which processes must always use \lstinline$hput$, and the compiler has built-in service processes which implement the corresponding \lstinline$hcase$.
 
 A \lstinline$Console$ allows a user to interact through the terminal in which the program was run.
 A \lstinline$StringTerminal$ opens a new Alacritty\footnote{https://alacritty.org} terminal for user interaction.
@@ -1106,19 +1072,18 @@ TODO: add section references
 We have seen the \lstinline$plug$ command used in most of our examples, especially in the main \lstinline$run$ processes.
 This command must be used as the last command in a process block.
 
-Recall the \lstinline$run$ process from Example \ref{ex:negdest1} that connected the \lstinline$broadcast$ process to the source and destination processes:
+Recall the \lstinline$run$ process from Example \ref{ex:negdest1} that connected \lstinline$broadcast$ to the source and destination processes:
 \begin{lstlisting}
 proc run =
-    | => -> plug							-- plug command is the last (and only) command
-        sender( | => source)
-        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
-        send_to_dest1( | dest1, neg_dest1 => )
-        proc1( | => neg_dest1)				
-        proc2( | dest2 =>)		-- proc2 cannot be connected to proc3
-        proc3( | dest3 =>)
+	| => -> plug						-- plug command is the last (and only) command
+		sender( | => source)
+		broadcast("broadcast confirmation" | source => dest1, dest2)
+		send_to_dest1( | dest1, neg_dest1 => )
+		proc1( | => neg_dest1)				
+		proc2( | dest2 =>)		-- proc2 cannot be connected to send_to_dest1
 \end{lstlisting}	
-The \lstinline$plug$ command, used on line 2 in the above example, connects any number of processes along channels such that the network of the connected processes remains acyclic.
-The processes which are plugged together run in parallel and may communicate via the channels connecting them. 
+The \lstinline$plug$ command, used on line 2 in the above example, connects any number of processes along channels such that the network of connected processes remains acyclic.
+Processes which are plugged together run in parallel and may communicate via the channels connecting them. 
 
 Notice that each channel connects exactly two processes.
 Channels are linear resources which means that they cannot be arbitrarily created, duplicated, or destroyed.
@@ -1135,7 +1100,7 @@ Two processes can be plugged to each other if and only if they satisfy the follo
 	\item both process definitions have a channel with the same type and opposite polarities.
 	\item plugging the processes will not create a cycle (they cannot already be connected).
 \end{enumerate}
-In the above example, \lstinline$proc2$ and \lstinline$proc3$ could not be connected because they both have an input polarity channel but no output polarity channels.
+In the above example, \lstinline$proc2$ and \lstinline$send_to_dest1$ could not be connected because they both have input polarity channels but no output polarity channels.
 Furthermore, changing their process definitions and adding a channel is not possible either because they are both already connected to \lstinline$broadcast$.
 
 A \lstinline$plug$ command can plug previously defined processes, as above, and/or in-line process definitions.
@@ -1186,8 +1151,7 @@ Any sequential data in scope at line 6 can be used in the in-line process defini
 
 A process can be invoked by calling it using its name and passing it valid instances of all of the variables and channels in its process definition.
 We have seen this in the \lstinline$plug$ command of a \lstinline$run$ process quite often.
-
-Recall that we also called \lstinline$send_to_dest1$ recursively in Example~\ref{ex:coprotocoldest1}:
+Recall that we called \lstinline$send_to_dest1$ recursively in Example~\ref{ex:coprotocoldest1}:
 \begin{lstlisting} 
 proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 	| source, dest1 => -> 
@@ -1309,20 +1273,18 @@ Again, we use  \lstinline$neg$ to identify with a \lstinline$Neg$ channel on lin
 
 The \lstinline$close$ and \lstinline$halt$ commands terminate the interaction along a channel and remove it from scope. 
 These commands are the only way a channel can be destroyed, and they can only be used on a channel with type \lstinline$TopBot$.
-Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1}.
+Recall process \lstinline$broadcast$ from Example \ref{ex:broadcastmsg}.
 We can reorder the process commands without changing the functionality of the process as follows:
-% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting} [label=ex:closehalt, caption=Closing and halting channels in broadcast] 
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+
+% [label=ex:closehalt, caption=Closing and halting channels in broadcast] 
+\begin{lstlisting} 
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 										=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2 -> do
 		get msg on source						
 		put msg on dest1		-- the type of dest1 is TopBot after this line
 		close dest1					-- close can be used on a TopBot channel at any point
 		put msg on dest2
-		close dest2
-		put msg on dest3
-		close dest3      
+		close dest2    
 		put confirmation_msg on source	
 		halt source					-- halt is used to close the last channel and halt
 \end{lstlisting}
@@ -1464,7 +1426,7 @@ Table \ref{Table: Usage of get and put process commands} describes the usage of 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
 Custom channel types, called protocols and coprotocols, allow processes to change the type of a channel dynamically at run-time.
-Recall the protocol \lstinline$PassMessages$, coprotocol \lstinline$CoPassMessages$, and modified \lstinline$send_to_dest1$ process from Examples~\ref{ex:protocolpassmsgs} and \ref{ex:coprotocoldest1}:
+Recall the protocol \lstinline$PassMessages$, coprotocol \lstinline$CoPassMessages$, and modified \lstinline$send_to_dest1$ process from Examples~\ref{ex:protocolpassmsgs}, \ref{ex:coprotocolcopassmsgs} and \ref{ex:coprotocoldest1}:
 \begin{lstlisting}
 protocol PassMessages (A| ) => S =		
     SendMsg :: Put(A|S) => S 				
@@ -1585,74 +1547,73 @@ This would not work if the handles belong to an existing coprotocol; in that cas
 \label{sec:split-fork}
 
 The \lstinline$fork$ and \lstinline$split$ commands are used to make changes to the network of processes at run-time while ensuring no cycles are introduced.
-We will consider another example using these commands.
-Recall the \lstinline$broadcast$ process from Example \ref{ex:negdest1}.
+In Example~\ref{ex:clientfork}, we used these commands to \lstinline$fork$ the process on the left end of a channel into two processes that were both connected to the process on the right.
+We will consider another example using these commands in which the process on the left uses \lstinline$split$ to talk to two new processes on the right instead.
+
+Recall process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
 We will consider the corresponding \lstinline$sender$ process that is connected along the \lstinline$source$ channel:
-\begin{lstlisting}
+\begin{lstlisting}[label=ex:sender, caption=Process that sends messages to broadcast] 
 proc sender =
-    | => source ->
-        on source do
-            put "Hi everyone!"
-            halt
+	| => source ->
+		on source do
+			put "Hi everyone!"
+			get confirmation_msg
+			halt
 \end{lstlisting} 
 
-Suppose we want this process to first send a message that every other process will receive and then split the channel and send different messages to some processes:
-%We can define this modified version of \lstinline$sender$ as follows:
-\begin{lstlisting} [label=ex:sendersplit, caption=Splitting the source channel] 
+Suppose we want \lstinline$sender$ to first send a message that both destination processes will receive and then split the channel and send different messages to each process.
+We will omit confirmation messages in this modified example for simplicity.
+\begin{lstlisting} [label=ex:sendersplit, caption=Splitting the source channel, name=splitforksource] 
 proc sender =
 	| => source -> do
 		on source do
-			put "Hi everyone!"										-- msg sent to every proc
+			put "Hi everyone!"										-- msg sent to both procs
 		split source into source1, source2			-- unbundle channels
-		on source1 do														-- first send msg to 1 and 2
-			put "Hello proc1 and proc2"
+		on source1 do														-- first send msg to 1
+			put "Hello proc1"
 			close
-		on source2 do														-- then send msg to 3 and halt
-			put "Hello proc3"
+		on source2 do														-- then send msg to 2 and halt
+			put "Hello proc2"
 			halt
 \end{lstlisting} 
-The \lstinline$split$ command on line 6 removes the channel \lstinline$source$ from scope, creates two new channels \lstinline$source1$ and \lstinline$source2$ in scope, and blocks \lstinline$sender$ until two new processes are created and connected on the new channels.
-After the \lstinline$split$ command, \lstinline$sender$ will proceed down the process command block, which means the process commands used on the two new channels in lines 7 - 10 and 11 - 14 will be executed sequentially.
-The \lstinline$source$ is {\em used} in the \lstinline$split$ command, so it must be in scope at line 6, but the command removes it from scope.
+The \lstinline$split$ command on line 5 removes the channel \lstinline$source$ from scope, creates two new channels \lstinline$source1$ and \lstinline$source2$ in scope, and blocks \lstinline$sender$ until two new processes are created and connected on the new channels.
+After the \lstinline$split$ command unblocks, \lstinline$sender$ will proceed down the process command block, which means the process commands used on the two new channels in lines 6 - 8 and 9 - 11 will be executed sequentially.
+The \lstinline$source$ is {\em used} in the \lstinline$split$ command, so it must be in scope at line 5, but the command removes it from scope.
 The two new channels will have the same polarity as the original channel.
 The \lstinline$split$ command cannot be the last command in a process block. 
 
 The corresponding \lstinline$broadcast$ process will need to \lstinline$fork$ its \lstinline$source$ channel and create two new processes to concurrently broadcast the second round of messages:
 %We can define this modified \lstinline$broadcast$ process as follows:
-\begin{lstlisting} [label=ex:broadcastfork, caption=Forking the source channel] 
+\begin{lstlisting} [label=ex:broadcastfork, caption=Forking the source channel, name=splitforksource] 
 proc broadcast = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+	confirmation_msg | source => dest1, dest2 -> do
 		get msg1 on source				
-		put msg1 on dest1									-- broadcast msg1 to every process
+		put msg1 on dest1									-- broadcast msg1 to both processes
 		put msg1 on dest2
-		put msg1 on dest3
 		fork source as										-- unbundle channels
-			source1 with dest1, dest2 -> do	-- send same msg2 to 1 and 2
-				get msg2 on source1
+			source1 with dest1 -> do				-- send msg2a to 1
+				get msg2a on source1
 				on dest1 do
-					put msg2
-					close
-				on dest2 do
-					put msg2
+					put msg2a
 					close
 				halt source1
-			source2 with dest3 -> do				-- send different msg2 to 3
-				get msg2 on source2
-				on dest3 do
-					put msg2
+			source2 with dest2 -> do				-- send msg2b to 2
+				get msg2b on source2
+				on dest2 do
+					put msg2b
 					close
 				halt source2
 \end{lstlisting} 
-The \lstinline$fork$ command on line 7 removes the channel \lstinline$source$ from scope and creates two new channels that are each passed into one of the two process bodies on lines 8 - 16 and 17 - 22.
+The \lstinline$fork$ command on line 17 removes the channel \lstinline$source$ from scope and creates two new channels that are each passed into one of the two process bodies on lines 18 - 23 and 24 - 29.
 After the \lstinline$fork$ command, the two process bodies each have one of the two new channels in scope and process commands in each process body will be executed concurrently.
-The \lstinline$source$ is {\em used} in the \lstinline$fork$ command, so it must be in scope at line 7, but it is removed from scope by the command.
+The \lstinline$source$ is {\em used} in the \lstinline$fork$ command, so it must be in scope at line 17, but it is removed from scope by the command.
 The two new channels will have the same polarity as the original channel.
 
-The \lstinline$fork$ command must be the last command in a process block. 
-This means that all existing open channels in scope at line 7, i.e. \lstinline$dest1$, \lstinline$dest2$, and \lstinline$dest3$, must be passed into the process bodies.
-On line 8, \lstinline$dest1$ and \lstinline$dest2$ are passed into the the first process body, and on line 17, \lstinline$dest3$ is passed into the second process body.
-All variables that are in scope when the \lstinline$fork$ command is made are also in scope for each process block.
-For example, if this broadcast process was sending confirmation messages, the variable \lstinline$confirmation_msg$ could be used in both process bodies.
+The \lstinline$fork$ command must be the last command in a command block. 
+This means that all existing open channels in scope at line 17, i.e. \lstinline$dest1$ and \lstinline$dest2$, must be passed into the process bodies.
+On line 18, \lstinline$dest1$ is passed into the the first process body, and on line 24, \lstinline$dest2$ is passed into the second process body.
+All variables that are in scope when the \lstinline$fork$ command is made are also in scope for each process body.
+For example, if this process was sending confirmation messages, the variable \lstinline$confirmation_msg$ could be used in both process bodies.
 
 These commands can be used on channels with type \lstinline$(*)$, ``tensor,'' or \lstinline$(+)$, ``par,'' depending on which end of the channel has one process \lstinline$fork$ into two processes.
 Recall that a \lstinline$(*)$ channel means the process on the left forks (using the channel with output polarity), and a \lstinline$(+)$ channel means the process on the right forks (using the channel with input polarity).
@@ -1846,7 +1807,7 @@ The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the chang
 
 Again, if the type of a channel is not explicitly defined, using \lstinline$fork$ on the output polarity end and \lstinline$split$ on the input polarity end will force the type of the channel to be \lstinline$(*)$.
 Dually, using \lstinline$split$ on the output polarity end and \lstinline$fork$ on the input polarity end will force the type of the channel to be \lstinline$(+)$.
-In the above example, \ref{ex:sendersplit}, the type of channel \lstinline$source$ is \lstinline$(+)$ because the process that uses the \lstinline$fork$ command is \lstinline$broadcast$, which is on the input polarity end.
+In Example \ref{ex:sendersplit}, the type of \lstinline$source$ is \lstinline$(+)$ because \lstinline$sender$ is on the output polarity end and \lstinline$broadcast$ is on the input polarity end.
 Table \ref{Table: Usage of fork and split process commands} describes the usage of the \lstinline$fork$ and \lstinline$split$ commands on a channel based on its type and polarity.
 \begin{table}[h]
 \begin{center}
