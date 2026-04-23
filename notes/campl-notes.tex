@@ -215,32 +215,6 @@ We explain channel types and polarities in Section \ref{Sec:Channels}.
 The process commands that a process performs on a channel are governed by both the type and polarity of the channel.
 We specifically discuss the complementary process commands that are performed on each polarity of a channel, e.g. sending and receiving a message, in Section~\ref{subsec:pairs}.
 
-%A CaMPL process is defined using the following syntax (the CaMPL tokens are specified by {\tt typewriter} font and in red color):
-%  \begin{center}
-%    \textcolor{red}{\tt proc} {\em procName} \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$ \textcolor{red}{ \tt = }
-%    
-%    \quad \quad \quad \quad \quad \quad   $~a_{11}, \ldots, a_{1k}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_1$} \\
-%    ... \\ 
-%    ... \\ 
-%    \quad \quad \quad \quad \quad \quad   $~a_{p1}, ..., a_{pk}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_p$}
-%  \end{center}
-%The type signature, \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$, is optional and may be omitted. 
-
-
-
-%% i think the polarity of channels is more than just information flow.
-%The polarity of the channels encode the bidirectional flow of information. Two processes are connected by a channel of same {\em type} but of opposite polarities. We explain channel types and polarities in Section \ref{Sec:Channels}. 
-
-%% i think that we don't need this amount of detail yet and instead we should be forward referencing the process commands section and the complementary pairs section.
-%When a process sends message over an output channel (to another process which then receives the message over an input polarity channels), the information flows from left to right. When a process receives message over an output channel (from another process which then send the message over an input channel), the information flows from right to left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
-
-
-
-
-
-%The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
-
-
 We can depict processes using diagrams. 
 We will use diagrams to illustrate the effect of each process command on the processes involved.
 The \lstinline$broadcast$ process can be expressed as follows (note that sequential data are not shown):
@@ -527,28 +501,6 @@ To connect to this process, \lstinline$proc1$ would also need to be defined to h
 Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 12 to be able to use the \lstinline$Neg(Put)$ channel.
 The \lstinline$neg$ and identification \lstinline$|=|$ process commands are described in more detail in Section~\ref{sec:neg}. 
 
-
-
-%
-%We can again modify Example~\ref{ex:serverecho} to use a \lstinline$Neg(Get)$ channel instead of a \lstinline$Put$ channel:
-%\begin{lstlisting} [label=ex:negclient, caption=Client uses a Neg(Get) channel instead of a Put channel] 
-%proc client :: | => Neg(Get([Char] | TopBot)) = 		-- Neg(Get) = Put
-%    | => neg_ch ->                                    
-%        plug
-%            ch => ->                                -- create a new non-neg channel
-%                on ch do                            -- use like Put channel in original client
-%                    put "Hello Server!"	
-%                    get echo	
-%                    halt                 
-%            => ch, neg_ch -> neg_ch |=| neg ch          -- negate and identify with original
-%\end{lstlisting}
-%The \lstinline$server$ process would also need to be modified in the same way to be connected to this \lstinline$client$ because the \lstinline$Neg(Get)$ type is not the same as the \lstinline$Put$ type, but they can act in the same way.
-%The \lstinline$neg$ and identification \lstinline$|=|$  process commands are described in Section \ref{sec:neg}. 
-
-%In CaMPL, processes send and receive messages from one another via channels. 
-%CaMPL provides built-in channel types from which one may build custom channel types. 
-%Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
-
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
 We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
@@ -566,13 +518,7 @@ The outer most layer is the first interaction that will take place, and after th
 \end{tabular}
 
 \noindent 
-%The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
-%The {\tt TopBot} type is used to end communication on a channel, and its corresponding operations are given in Section \ref{sec:close}. 
-%The {\tt Neg} type swaps the polarity of a channel so two channels of the same polarity can be identified as the same channel, and the corresponding operations are given in Section \ref{sec:neg}. 
-%The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
-%The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
-\comment{Ask Xanna if we can move controlled non-determinism here. Even though this order is not chronologically accurate, the example is a natural continuation of split and fork.}
 
 \subsubsection{Custom types}
 \label{Sec:protocols}
@@ -671,49 +617,6 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					halt
  \end{lstlisting}
  From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
- 
-%In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
-%  \begin{center}
-%    \textcolor{red}{\tt protocol} {\em <ProtocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
-%    
-%    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$ \\
-%    ... \\ 
-%    ... \\ 
-%    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$
-%   \end{center}
-%The protocol, the handle and the (sequential and concurrent) type names MUST begin with an uppercase alphabet. The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types. 
-%   
-%Let us consider the following example of a protocol:  
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}
-%protocol EchoSimple (A | ) => S =
-%    EchoSend :: Put(A | S) => S
-%    EchoClose :: TopBot => S
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-%
-%In the above code, {\tt EchoSimple} is a protocol that has an output concurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} which are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel by a process connected to it.
-%
-%\[ \xymatrix{ A~\blackman \ar@{-}@<-5pt>[rrr]^{(+) ~~ {\tt ch: EchoSimple} ~~ (-)} & & & \blackman~B } \]
-%
-%Consider two processes $A$ and $B$ connected by a channel {\tt ch} of protocol type {\tt EchoSimple}. In the above picture, $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
-%
-%Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. The following code snippet shows {\tt EchoSimple} as a coprotocol. 
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}    
-%coprotocol S => coEchoSimple (A | ) =
-%    coEchoSend ::  S => Put(A | S)
-%    coEchoClose :: S => TopBot
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-%
-%Suppose {\tt ch} is a channel with the handle {\tt EchoSend} connecting process $A$ on the left and process $B$ on the right. Then, a message is sent from output polarity to input polarity, as shown in (1) and (2) in the following figure. One can use a coprotocol to avoid bending wires as shown in (3).
-%\[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
-%A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
 \subsubsection{Interacting with the outside world using service channels}
 \label{Sec:ServiceChannels}
