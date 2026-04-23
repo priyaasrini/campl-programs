@@ -26,7 +26,16 @@ Categories of examples:
     * split and Fork 
         * only client sends, (full code in line)
         * X race version, server echos (only server given (and does not work with previous clients))
-* Broadcast : Xanna will figure it out
+* Broadcast : 
+    * original version (just broadcast, later type signature, in manual sender)
+    * only output polarity destinations (type signature, run code, send to dest1 code, then broadcast code, also a different implementation in manual for close and halt)
+        i think that we can combine these two versions to have just 2 output pol destinations 
+        because we can say that proc 1 has an output polarity channel and that we *don't* want to change broadcast and then intro send to dest1
+        ** then we will have given basically all the code at some point (except for the receiving procs) and we can put them together in appendix?
+    ** protocol version w/ no confirmation, but we do give a protocol for confirmation. (broadcast and send to dest1)
+        maybe we can introduce both at the same time and then broadcast can always have conf?
+        and in the appendix, we can make sender proc interact through the console and destination procs have terminals
+    * split and fork version (sender with 3 messages, broadcast for 3 messages) also we should emphasize that this interaction is dual to the client/server split fork.
 * X Mutex (no memCell or MemCh code given)
 * X Codata (no main or process that sends the messages. maybe full version can take user input)
 
