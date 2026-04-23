@@ -2249,6 +2249,83 @@ proc run :: | => =
 
 
 \newpage
+\subsection{Pushing messages onto a Stack codata type}
+\label{prog:stack_print}
+
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:codata stack}, \ref{ex:record}, \ref{ex:codata reverse_print}, and \ref{ex:serverclientwithservices-branching}.
+
+\begin{lstlisting}
+import Prelude
+
+-- from Example 17:
+data SF(A) -> C =
+	SS :: A -> C
+	FF :: -> C
+	
+codata S -> Stack(A) = 
+	Push :: A, S -> S
+	Pop :: S -> (SF(A),S)	
+
+-- from Example 18:	
+fun listStack :: [A] -> Stack(A) = 
+	cs -> (
+		Push := c -> listStack(c:cs),
+		Pop := -> case cs of	
+			b:bs -> (SS(b), listStack(bs))
+			[] -> (FF, listStack([]))
+		)
+
+-- from Example 19:
+fun flatten :: Stack([Char]) -> [Char] =
+	s -> case Pop(s) of
+		(SS(str), stack) -> str ++ " " ++ flatten(stack)
+		(FF, stack) -> ""
+        
+proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
+	stack | source, console => -> do
+		hcase source of
+			SendMsg -> do
+				get msg on source
+				reverse_print(Push(msg, stack) | source, console => )
+			CloseCh -> do
+				close source
+				on console do
+					hput ConsolePut
+					put "Printing stack from top to bottom: " ++ flatten(stack)
+					hput ConsoleClose
+					halt
+
+-- from Example 20:
+proc client :: | => PassMessages([Char]|), StringTerminal =
+	| => ch, terminal -> do
+		on terminal do	
+			hput StringTerminalPut
+			put "Hello User! Enter message in terminal. Press ENTER to close."
+			hput StringTerminalGet
+			get msg
+		if isEmpty(msg)
+			then do
+				on ch do 
+					hput CloseCh
+					close 
+				on terminal do
+					hput StringTerminalClose	
+					halt 
+			else do
+				on ch do											
+					hput SendMsg
+					put msg
+				client( | => ch, terminal)
+
+-- new code:
+proc run :: | Console => StringTerminal = 
+    | console => terminal -> plug
+        client( | => ch, terminal)
+        reverse_print(listStack([]) | ch, console => )		-- initializes stack
+\end{lstlisting}
+
+
+\newpage
 \subsection{Memory cell}
 \label{prog:mem-cell}
 
@@ -2361,82 +2438,6 @@ proc run =
 We visualize the process network for the memory cell program in the following schematic:
 \[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \] 
 
-
-\newpage
-\subsection{Pushing messages onto a Stack codata type}
-\label{prog:stack_print}
-
-This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:codata stack}, \ref{ex:record}, \ref{ex:codata reverse_print}, and \ref{ex:serverclientwithservices-branching}.
-
-\begin{lstlisting}
-import Prelude
-
--- from Example 17:
-data SF(A) -> C =
-	SS :: A -> C
-	FF :: -> C
-	
-codata S -> Stack(A) = 
-	Push :: A, S -> S
-	Pop :: S -> (SF(A),S)	
-
--- from Example 18:	
-fun listStack :: [A] -> Stack(A) = 
-	cs -> (
-		Push := c -> listStack(c:cs),
-		Pop := -> case cs of	
-			b:bs -> (SS(b), listStack(bs))
-			[] -> (FF, listStack([]))
-		)
-
--- from Example 19:
-fun flatten :: Stack([Char]) -> [Char] =
-	s -> case Pop(s) of
-		(SS(str), stack) -> str ++ " " ++ flatten(stack)
-		(FF, stack) -> ""
-        
-proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
-	stack | source, console => -> do
-		hcase source of
-			SendMsg -> do
-				get msg on source
-				reverse_print(Push(msg, stack) | source, console => )
-			CloseCh -> do
-				close source
-				on console do
-					hput ConsolePut
-					put "Printing stack from top to bottom: " ++ flatten(stack)
-					hput ConsoleClose
-					halt
-
--- from Example 20:
-proc client :: | => PassMessages([Char]|), StringTerminal =
-	| => ch, terminal -> do
-		on terminal do	
-			hput StringTerminalPut
-			put "Hello User! Enter message in terminal. Press ENTER to close."
-			hput StringTerminalGet
-			get msg
-		if isEmpty(msg)
-			then do
-				on ch do 
-					hput CloseCh
-					close 
-				on term do
-					hput StringTerminalClose	
-					halt 
-			else do
-				on ch do											
-					hput SendMsg
-					put msg
-				client( | => ch, term)
-
--- new code:
-proc run :: | Console => StringTerminal = 
-    | console => terminal -> plug
-        client( | => ch, terminal)
-        reverse_print(listStack([]) | ch, console => )		-- initializes stack
-\end{lstlisting}
 
 \end{appendix}
 
