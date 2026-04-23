@@ -1052,25 +1052,12 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \comment{the idea is the type system parts can focus on the concepts and be like a nice paper to read and then the proc commands section can be more like a manual because we don't really have a manual manual. they should be able to write some programs after the concurrent and sequential type system sections, and if they have compiler errors or ``why isn't this working'' questions then they can go to the process commands section.}
 
 We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
-TODO: add section references
+\TODO{check that all forward and back references are correct}
 
 \subsection{Connecting processes using {\tt plug}}
 
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}
-%	plug 
-%		    process1( .. | ch1 => ch2)
-%		    process2( .. | ch2 => ch3)
-%		    process3( .. | ch3 => ch4)
-%		    ...
-%		    processn( .. | chn => last_ch)
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-
-We have seen the \lstinline$plug$ command used in most of our examples, especially in the main \lstinline$run$ processes.
-This command must be used as the last command in a process block.
+We have seen the \lstinline$plug$ command used in most of our examples, especially in \lstinline$run$ processes.
+This command must be used as the last command in a command block.
 
 Recall the \lstinline$run$ process from Example \ref{ex:negdest1} that connected \lstinline$broadcast$ to the source and destination processes:
 \begin{lstlisting}
@@ -1089,11 +1076,8 @@ Notice that each channel connects exactly two processes.
 Channels are linear resources which means that they cannot be arbitrarily created, duplicated, or destroyed.
 A channel can only be created in a \lstinline$plug$ command and each end must be plugged into a process.
 A channel cannot appear more than twice in a \lstinline$plug$ command either.
-Since the \lstinline$plug$ command is the last command in the process block, all existing open channels in scope must be passed to the processes being plugged.
-
-Sequential data is not a linear resource, so it can be duplicated and passed into and used by any number of processes in a \lstinline$plug$ command.
-
-%A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. 
+Since the \lstinline$plug$ command is the last command in the command block, all existing open channels in scope must be passed to the processes being plugged.
+Sequential data is not a linear resource, so it can be duplicated, passed into, and used by any number of processes in a \lstinline$plug$ command.
 
 Two processes can be plugged to each other if and only if they satisfy the following conditions:
 \begin{enumerate}[(1)]
@@ -1122,31 +1106,6 @@ proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
 Notice that on lines 7 and 9, the input and output channels used by each process are given, but sequential variables are not given.
 Any sequential data in scope at line 6 can be used in the in-line process definitions.
 
-%
-%The following code demonstrates a usage of the {\tt plug} command. 
-%
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}
-%	1. proc pulgDemo :: A | X => Z = 
-%	2.	    a | x => z -> 
-%	3.		    plug 
-%				       processA(a | x => y)
-%				       processB(a | y => z)
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-%
-%A detailed explanation of the code is as follows:
-%
-%\begin{itemize}
-%\item Line {\tt 1.} provides the type signature of the process {\tt plugDemo}. The process has a sequential argument of type {\tt A}, an input polarity channel of type {\tt X}, and an output polarity channel of type {\tt Z}.
-%
-%\item Line {\tt 2.} provides variable names to the sequential and concurrent types.
-%
-%\item Line {\tt 3.} causes {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channel types (since channels are linear resources).
-%\end{itemize}
-
 \subsection{Calling processes}
 
 A process can be invoked by calling it using its name and passing it valid instances of all of the variables and channels in its process definition.
@@ -1170,7 +1129,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 				
  \end{lstlisting}
  Notice that when we make the process call on line 9, it is the last command in the \lstinline$do$ block that starts on line 4.
- When a process is called outside of a \lstinline$plug$ command, it must be the last command in the process block.
+ When a process is called outside of a \lstinline$plug$ command, it must be the last command in the command block.
 This means that all existing open channels in scope at the time the process is called must be passed to the process.
 
 
@@ -1179,7 +1138,7 @@ This means that all existing open channels in scope at the time the process is c
 
 The identification command, written as \lstinline$|=|$, equates two channels of the same type and opposite polarities.
 This command can be thought of as calling an identity process that ``does nothing'' to a channel.
-It must be used as the last command in a process block.
+It must be used as the last command in a command block.
 
 The \lstinline$neg$ command is used to equate two channels of the same polarity if one of them has a \lstinline$Neg$ type.
 The \lstinline$neg$ command changes a channel of type \lstinline$X$ to type \lstinline$Neg(X)$ and flips its polarity. 
@@ -1187,8 +1146,6 @@ Thus, after using \lstinline$neg$, both channels will have type \lstinline$Neg(X
 The \lstinline$neg$ command can only be used within an identification command.
 
 Negation and identification are particularly useful when channels are passed as resources between multiple processes. 
-%\textcolor{purple}{See example ... for a case study.} 
-%\comment{TODO: make an example using passer protocol that is not 100 lines long.}
 For example, consider the protocol \lstinline$Mutex$ which coordinates exclusive access to a resource between processes:
 \begin{lstlisting}[label=ex:mutex-protocol, caption=Mutex protocol which uses a Neg channel, numbers=left]
 protocol Mutex( |M) => S =		-- coordinates access to a channel of type M
@@ -1225,11 +1182,6 @@ defn
 \end{lstlisting}
 However, for clearer explanations, we will consider the process definitions separately.
 
-% this description helped me to realize that the accessing process should not block until the other process requests a Pass before it even starts accessing the memory cell lmao
-%{\tt memWait} sends {\tt Pass} handle over {\tt mutex} to {\tt memAccess}. 
-%On receiving the handle, {\tt memAccess} reads and writes to the memory over the {\tt mem} channel. 
-%Once it completes, it forks over the {\tt mutex} channel and invokes {\tt memWait} using {\tt plug}. 
-%The input {\tt Neg(Mutex)} needs to be negated to get an output {\tt Mutex} channel type, which is then used in the invocation of {\tt memWait}.
 First, we will consider \lstinline$memAccess$:
 \begin{lstlisting}
 proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
@@ -1251,9 +1203,6 @@ proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
 We demonstrate how identification can be used to pass a channel as a resource on line 11.
 We demonstrate how a channel can be identified with a \lstinline$Neg$ channel using \lstinline$neg$ on line 14.
 
-%The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} type channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
-
-%Process {\tt memWait} activates the {\tt mutex} channel by sending {\tt Pass} handle over it. Then it blocks itself using {\tt split} command. When {\tt memAccess} executes {\tt fork} command, the {\tt memWait} is unblocked and invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
 Next, consider \lstinline$memWait$:
 \begin{lstlisting}
 proc memWait :: [Char] | => Mutex( |MemCh([Char]| )) =
@@ -1288,33 +1237,8 @@ proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 										=> Put([Char
 		put confirmation_msg on source	
 		halt source					-- halt is used to close the last channel and halt
 \end{lstlisting}
-Notice that the \lstinline$close$ command cannot be used as the last command in a process block, but it can be used at any other point to close \lstinline$TopBot$ channels.
-The \lstinline$halt$ command must be used for the last command of a process block because it halts a process after closing the last \lstinline$TopBot$ channel.
-
-
-%The following is a simple process demonstrating the usage of {\tt close} and {\tt halt}.
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. proc noInteraction :: | TopBot => TopBot = 
-%			2. 	| chA => chB -> do
-%			3.		close chA
-%			4.		halt chB	 
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%A detailed explanation of the code is as follows:
-%
-%\begin{itemize}
-%\item Line {\tt 1.} provides the type signature of the process {\tt noInteraction}. The process has no sequential arguments, an input polarity channel of type {\tt TopBot}, and an output polarity channel of type {\tt TopBot}.
-%
-%\item Line {\tt 2.} provides variable names to the concurrent types. Since {\tt chA} and {\tt chB} are channels of type {\tt TopBot}, all interactions on these channels can be stopped.
-%
-%\item Line {\tt 3.} closes {\tt chA} which mean it will be out of scope in the rest of the process code.
-%
-%\item Line {\tt 4.} closes {\tt chB} and terminates the process.
-%
-%\end{itemize}
+Notice that the \lstinline$close$ command cannot be used as the last command in a command block, but it can be used at any other point to close \lstinline$TopBot$ channels.
+The \lstinline$halt$ command must be used as the last command in a command block because it halts a process after closing the last \lstinline$TopBot$ channel.
  
 \subsection{Complementary pairs }
 \label{subsec:pairs}
@@ -1350,7 +1274,6 @@ Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands an
 % what about race? store? use?
 
 
-
 \subsubsection{{\tt put} and {\tt get}: Send and receive messages}
 \label{subsec:put-get}
 
@@ -1374,11 +1297,11 @@ proc server =
 The \lstinline$get$ command on line 11 blocks \lstinline$server$ until a value is received on channel \lstinline$ch$.
 When the value is received, it binds the value to the variable \lstinline$msg$ and proceeds down the process command block. 
 We say that \lstinline$ch$ is {\em used} in the \lstinline$get$ command, and hence, it must be in scope. 
-The \lstinline$get$ command cannot be the last command in a process block. 
+The \lstinline$get$ command cannot be the last command in a command block. 
 
 The \lstinline$put$ command on line 4 sends the value \lstinline$"Hello Server!"$ on channel \lstinline$ch$ and proceeds down the process command block. 
 This will allow the \lstinline$server$ process to unblock from its complementary \lstinline$get$ command on line 11.
-Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in scope, and the \lstinline$put$ command cannot be the last command in a process block. 
+Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in scope, and the \lstinline$put$ command cannot be the last command in a command block. 
 
 These commands can be used on channels with type \lstinline$Put$ or \lstinline$Get$ depending on the direction the message is travelling on the channel.
 Recall that messages travel on \lstinline$Put$ channels from left to right (output to input polarity), and messages travel on \lstinline$Get$ channels from right to left (input to output polarity).
@@ -1454,94 +1377,25 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
  \end{lstlisting}
 The \lstinline$hput$ command on line 15 {\em activates} channel \lstinline$dest1$ by setting its type according to the handle \lstinline$CoSendMsg$ and proceeds down the process command block.
 Since \lstinline$dest1$ is used in the \lstinline$hput$ command, it must be in scope. 
-The \lstinline$hput$ command cannot be the last command in a process block. 
+The \lstinline$hput$ command cannot be the last command in a command block. 
 Since protocols and coprotocols are concurrent analogues of inductive and coinductive data types, we can think of \lstinline$hput$ as constructing the handle on the channel.
 We can also think of the handle as a session type and that the \lstinline$hput$ command initializes a session.
 
 The \lstinline$hcase$ command on line 11 blocks \lstinline$send_to_dest1$ until a handle is received on channel \lstinline$source$.
 When the handle is received, \lstinline$send_to_dest1$ proceeds according to the corresponding process command block, i.e. either lines 12 - 17 or lines 18 - 22.
 Since \lstinline$source$ is used in the \lstinline$hcase$ command, it must be in scope. 
-All variables and channels that are in scope at line 11 are also in scope for each process block.
-The \lstinline$hcase$ command must be the last command in a process block. 
+All variables and channels that are in scope at line 11 are also in scope for each command block.
+The \lstinline$hcase$ command must be the last command in a command block. 
 This means that all existing open channels in scope, i.e. \lstinline$source$ and \lstinline$dest1$, must be closed or passed into other processes by the end of each block.
 
-The handles used in a \lstinline$hput$ or \lstinline$hcase$ must belong to the type of the channel, and which command each process uses depends on whether the channel type is defined as a protocol or coprotocol.
-TODO: mention above example here.
+The handles used on a channel in a \lstinline$hput$ or \lstinline$hcase$ must be defined with the channel's type. 
+Whether a process uses \lstinline$hput$ or \lstinline$hcase$ on a channel depends on its polarity and if the channel type is a protocol or coprotocol.
 Recall that handles travel on a protocol channel from left to right (output to input polarity which is the same as \lstinline$Put$), and handles travel on a coprotocol channel from right to left (input to output polarity which is the same as \lstinline$Get$).
+Since \lstinline$send_to_dest1$ uses the protocol channel \lstinline$source$ with input polarity, it receives handles using \lstinline$hcase$.
+It also uses the coprotocol channel \lstinline$dest1$ with input polarity, so it sends handles using \lstinline$hput$.
 
 If the type of a channel is not explicitly defined, using the handles of an existing protocol in an \lstinline$hput$ command on the output polarity end and an \lstinline$hcase$ command on the input polarity end will force the channel type to be that protocol.
 This would not work if the handles belong to an existing coprotocol; in that case, the \lstinline$hput$ and \lstinline$hcase$ commands would need to be used on the opposite ends.
-%Examples using \lstinline$hput$ and \lstinline$hcase$ are given in Section~\ref{Sec:protocols}.
-
-%Let us look at a sample usage of ({\tt hput}, {\tt hcase})) process commands using the following protocol:
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. protocol Echo => S =
-%			2.    EchoSend :: Put( [Char] | S)) => S
-%			3.    EchoClose :: TopBot => S
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%The protocol {\tt Echo} has two handles namely {\tt EchoSend} and {\tt EchoClose}. We will upgrade the client-server communication shown in the previous section using these protocol handles, allowing the server to receive message any number of times.
-%
-%\noindent
-%\begin{minipage}{0.48\textwidth}
-%%%% Code for client
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			 1. proc client :: | => Echo = 
-%			 2.	| => ch -> do 
-%			 3.      hput EchoSend on ch
-%			 4.      put "Hello" on ch
-%			 5.	     hput EchoClose on ch
-%			 6.	     halt ch
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%\vfill
-%\end{minipage}
-%%%% Code for server
-%\begin{minipage}{0.48\textwidth}
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%		
-%			1. proc server :: | Echo => = 
-%			2. 	| => ch -> do 
-%			3.	     hcase ch of  
-%			4.	     	EchoSend -> do 
-%			4a. 				    get message on ch 
-%			4b          server( | ch =>) -- recursion
-%			5.	     	EchoClose -> halt ch
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%\end{minipage}
-%
-%In the {\tt client} process,
-%\begin{itemize}
-%\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, no input concurrent type, and one output polarity channel of type {\tt Echo}.
-%\item Line 2. assigns variable name {\tt ch} to the output concurrent type.
-%\item Line 3. places the handle {\tt EchoSend} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt Put([Char] | Echo)}.
-%\item Line 4. puts a message at which the {\tt ch} proceeds with type {\tt Echo)}.
-%\item Line 5. places the handle {\tt EchoClose} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt TopBot}.
-%\item Line 6. close {\tt ch} and halts the process.
-%\end{itemize}
-%Note that the client process sends a static message "Hello". Instead, the client process can read a message from a {\tt StringTerminal} and relay it to the server process, any number of times by recursively. 
-%In the {\tt server} process,
-%\begin{itemize}
-%\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, one input polarity channel of type {\tt Echo}, and no output concurrent type.
-%\item Line 2. assigns variable name {\tt ch} to the input concurrent type.
-%\item Line 3. executes {\tt hcase} process command causing the server process to wait to receive a handle from the client process.
-%\item Line 4. does case matching. In case, the server receives the handle {\tt EchoSend}, then it proceeds with Lines 4a and 4b.
-%\item Line 4a. receives a message over {\tt ch}.
-%\item Line 4b. calls the server process (recursively) allowing it receive another handle from the client process.
-%\item Line 5. does case matching. In case, the server receives the handle {\tt EchoClose}, then closes the channel and halts the process.
-%\end{itemize}
-
-%See section \ref{Sec:Simple EchoServer} for a fully-developed example of {\tt EchoServer} using the {\tt Echo} protocol. 
 
 \subsubsection{{\tt split} and {\tt fork}: Multi-process communication}
 \label{sec:split-fork}
@@ -1580,7 +1434,7 @@ The \lstinline$split$ command on line 5 removes the channel \lstinline$source$ f
 After the \lstinline$split$ command unblocks, \lstinline$sender$ will proceed down the process command block, which means the process commands used on the two new channels in lines 6 - 8 and 9 - 11 will be executed sequentially.
 The \lstinline$source$ is {\em used} in the \lstinline$split$ command, so it must be in scope at line 5, but the command removes it from scope.
 The two new channels will have the same polarity as the original channel.
-The \lstinline$split$ command cannot be the last command in a process block. 
+The \lstinline$split$ command cannot be the last command in a command block. 
 
 The corresponding \lstinline$broadcast$ process will need to \lstinline$fork$ its \lstinline$source$ channel and create two new processes to concurrently broadcast the second round of messages:
 %We can define this modified \lstinline$broadcast$ process as follows:
@@ -1832,38 +1686,6 @@ Table \ref{Table: Usage of fork and split process commands} describes the usage 
 	\label{Table: Usage of fork and split process commands}
 \end{center}
 \end{table}
-%
-%Let us look at an example usage of the {\tt split} and {\tt fork} commands where a client process forks into two processes and a server process splits its channel to the client to connect to the two new clients. 
-%
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. proc client :: | => P (*) P =
-%			2.    | => _2_ch 
-%			3.		-> fork _2_ch as
-%			        	ch1 -> client_helper("Client 1: " | => ch1)
-%			        	ch2 -> client_helper("Client 2: " | => ch2)
-%			
-%			4. proc server :: | P (*) P => =
-%			5.    | _2_ch => -> do
-%			6.        split _2_ch into ch1, ch2
-%			7.        server_helper( | ch1, ch2 => )
-%			         
-%			8. proc run :: | => =
-%			9.    | => -> 
-%			10.		plug
-%			 	       client( | => _2_ch )
-%			         server( | _2_ch => )
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center}
-%
-%\begin{itemize}
-%	\item In line 10, the {\tt run} process creates a {\tt server} and a {\tt client} process and plugs them via channel. The {\tt client} and the {\tt server} processes run in parallel. From the type signature of server and the client process, we know that this channel is of type {\tt P(*)P}.
-%	\item In line 3, the client process forks on the output channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. The fork command creates two new {\tt client\_helper} processes and run them in parallel.
-%	\item In line 6, the {\tt server} process splits the input channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. At this point the {\tt server} process will be blocked, until the client runs the {\tt fork} command.
-%	\item The {\tt server} resumes execution in line 7, and invokes a {\tt server\_helper} process with the two new channels given by the {\tt split} process command.
-%\end{itemize}
 
 {\bf Note on logic:} The {\tt split} and the {\tt fork} process commands arise directly from the two-sidedness of the rules of the linear logic. The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. The rule $\otimes_R$ is same as {\tt fork}ing over an input channel, and the rule $\oplus_L$ is same as {\tt fork}ing over an output channel.
 \begin{figure}[h]
@@ -1885,14 +1707,14 @@ The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules fo
 \comment{TODO: recall example?}
 %In Example ??, 
 
-The \lstinline$race$ command can be used to race channels on which a blocking \lstinline$get$ command is the next command that can be used on the channel \footnote{ We are working on adding support to race on other blocking process commands, i.e. \lstinline$hcase$, \lstinline$split$. Current compiler support is only for \lstinline$get$ on \lstinline$Put$ or \lstinline$Get$ channels.}. 
+The \lstinline$race$ command can be used to race channels on which a blocking \lstinline$get$ command is the next command that can be used on the channel.\footnote{ We are working on adding support to race on other blocking process commands, i.e. \lstinline$hcase$, \lstinline$split$. Current compiler support is only for \lstinline$get$ on \lstinline$Put$ or \lstinline$Get$ channels.}
 That is, input polarity \lstinline$Put$ channels or output polarity \lstinline$Get$ channels.
 A race allows the process to unblock when any channel in the race unblocks, i.e. when the first message is received on any of the channels in the race.
 We call this channel the {\em winner} of the race.
 When the process unblocks, the process will execute the winner's corresponding process command block.
 The rest of the process bodies are ignored.
 Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
-The \lstinline$race$ command must be the last command in a process block.
+The \lstinline$race$ command must be the last command in a command block.
 
 
 
