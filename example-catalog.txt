@@ -8,7 +8,8 @@ Catalog of examples in Appendix:
 - Prelude.mpl
 - Higher order HelloWorld
 - Requesting user input continuously
-- (incomplete) Broadcast
+- Broadcast (single message)
+- Broadcast (arbitrarily many taken from user input)
 - Non-determinstic server
 - Memory cell 
 - Pushing messages onto a Stack.
@@ -26,13 +27,13 @@ Categories of examples:
     * split and Fork 
         * only client sends, (full code in line)
         * X race version, server echos (only server given (and does not work with previous clients))
-* Broadcast : 
-    * original version (just broadcast, later type signature, in manual sender)
-    * only output polarity destinations (type signature, run code, send to dest1 code, then broadcast code, also a different implementation in manual for close and halt)
-        i think that we can combine these two versions to have just 2 output pol destinations 
-        because we can say that proc 1 has an output polarity channel and that we *don't* want to change broadcast and then intro send to dest1
-        ** then we will have given basically all the code at some point (except for the receiving procs) and we can put them together in appendix?
-    ** protocol version w/ no confirmation, but we do give a protocol for confirmation. (broadcast and send to dest1)
+* X Broadcast : 
+    * X original version, two output polarity dest chs with confirmation msg 
+        (just code, later type signature, run, send to dest1, sender in manual
+        also a different implementation of broadcast in manual for close and halt)
+        (combines two versions to have just 2 output pol destinations) 
+        ** we have given basically all the code at some point (except for the receiving procs) and we can put them together in appendix?
+    * X protocol version w/ no confirmation, but we do give a protocol for confirmation. (broadcast and send to dest1)
         maybe we can introduce both at the same time and then broadcast can always have conf?
         and in the appendix, we can make sender proc interact through the console and destination procs have terminals
     * split and fork version (sender with 3 messages, broadcast for 3 messages) also we should emphasize that this interaction is dual to the client/server split fork.
@@ -43,19 +44,19 @@ Examples in camps-notes.tex (numbers reflect the example numbers)
 
 1. HelloWorld
 2. Client sends a string and server echoes it back (in-line code is out of order)
-3. Broadcast — three destinations
+3. Broadcast — two output polarity destinations
    Recalled example 2 in Polarities section (full code is now given)
 4. Code that does not compile — example 2 without polarities 
 5. Client sends a string and server sends an integer  (Put and Get types)
-6. A client forks into two clients but we only Put, no response from the server. Type signature for broadcast 
-   And then another snippet of type signaturewith all destinations in output polarity 
-   Run process for the new broadcast
+6. A client forks into two clients but we only Put, no response from the server. 
+   Type signature for broadcast 
+   Run process for broadcast and send to dest1
 7. Writing code to send to destination 1 with negPut channel
-8. The code for broadcast with all output polarity destinations
-9. Protocol PassMessages
-10. Broadcast that uses PassMessages instead of Put Channels
-   Protocol PassMessages with confirmation — May be remove
-   CoProtoocol and coPassMessages
+    -- removed The code for broadcast with all output polarity destinations as it was redundant
+8. Protocol PassMessages
+   Protocol PassMsgsWithConf 
+9. Broadcast that uses PassMessages and PassMsgsWithConf
+10. CoProtocol CoPassMessages
 11. Rewrite the example 7 to use coprotocol instead of negPut. 
 12. Example 12 is service channels (name of the Console and the StringTerminal are not hard-coded in the compiler however the handles are hard-coded. Mention this in the document too. 
 13. Recall Example 2, give the client string terminal and server console. We get one message from the server. (pass messages protocol not in line)
@@ -77,6 +78,9 @@ Process command manual
 
 22. Example 2 Mutex protocol. 
 23. Using Mutex to pass a channel as a resource with several code snippets. 
-24. Section 5.4 closing, halting channels and broadcast  Section 5.5.1 — put and get , Recall example 5.   Section 5.5.2 —— recalling examples 9 and 11.  Section 5.5.3 — Recalling example 7 but giving the code for the sender , no confirmation messages. No proctocols, just put and get. 
-25. Section 5.5.3. Splitting the source channel. 
-26. Corresponding broadcast that forks the source channel. 
+24. Section 5.4 closing, halting channels and broadcast 
+    Section 5.5.1 — put and get , Recall example 5.  
+    Section 5.5.2 —— recalling examples 9 and 11. 
+25. Section 5.5.3 — Recalling example 3 but giving the code for the sender. No proctocols, just put and get. 
+26. Section 5.5.3. Splitting the source channel, no confirmation messages.
+27. Corresponding broadcast that forks the source channel, no confirmation messages. 
