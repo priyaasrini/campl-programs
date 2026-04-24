@@ -72,7 +72,7 @@ and that we will mention things like there is a beautiful type system and that w
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, show in Example \ref{ex:helloworld}.
 We demonstrate a process named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a channel named \lstinline$console$. 
 The \lstinline$console$ channel has the type \lstinline$Console$ which is a special channel type hard-coded in the compiler to connect the program to the terminal from which it is run.
-\begin{lstlisting}[label=ex:helloworld, caption=Hello World!] %can we change listing so that it says Example insted of Listing in the caption?
+\begin{lstlisting}[label=ex:helloworld, caption=Hello World!, name=helloworld] %can we change listing so that it says Example insted of Listing in the caption?
 
 proc helloworld :: | Console => = 
 	| console => -> do
@@ -82,7 +82,7 @@ proc helloworld :: | Console => =
 		halt console                     -- closes console channel and halts               
 \end{lstlisting}
 The \lstinline$helloworld$ process can be invoked by calling it in the main process, \lstinline$run$, and giving it the \lstinline$console$ channel as follows:
-\begin{lstlisting}
+\begin{lstlisting}[name=helloworld]
 proc run = 
 	| console => -> helloworld( | console => )  -- creates helloworld process
 \end{lstlisting}
@@ -172,31 +172,28 @@ A {\em process} is specified by a process name, an optional type signature, and 
 In Example \ref{ex:helloworld}, the type signature of process \lstinline$helloworld$ was \lstinline$ :: | Console => $ which indicates that it only has access to one channel of type \lstinline$Console$ and this channel is given the name \lstinline$console$ indicated by \lstinline$ = | console => $ on the next line.
 We will discuss type signatures in more detail in Section~\ref{Sec:Channels} on channel types.
 
-A CaMPL program must have a process with the name \lstinline$run$ in which the execution of the program begins. 
+The final process defined in a program, in which the program's execution begins, must have the name \lstinline$run$. 
 This process is the main process and the channels it uses must only consist of ``service channels,'' such as the \lstinline$Console$.
 We will discuss service channels in more detail in Section~\ref{Sec:ServiceChannels}.
 
 For now, we will consider the definition of process \lstinline$broadcast$ in Example \ref{ex:broadcastmsg}:
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] %can we change listing so that it says Example insted of Listing in the caption?
-
+\begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] 
 proc broadcast = 
-	confirmation_msg | source, dest1 => dest2, dest3 -> do
+	confirmation_msg | source => dest1, dest2 -> do
 		get msg on source								-- receive message from source
 		put msg on dest1								-- broadcast message to other process
 		put msg on dest2
-		put msg on dest3
 		put confirmation_msg on source	-- send confirmation message to source
 		close source										-- close all channels and halt
 		close dest1
-		close dest2
-		halt dest3       
+		halt dest2
 \end{lstlisting}
 Observe that line 2 in the definition of \lstinline$broadcast$ consists of three comma-seperated lists of variables and channels used by the process: 
 \begin{itemize}
 	\item variables, e.g. \lstinline$confirmation_msg$,
-	\item input polarity channels, e.g. \lstinline$source, dest1$, and
-	\item output polarity channels, e.g. \lstinline$dest2, dest3$.
+	\item input polarity channels, e.g. \lstinline$source$, and
+	\item output polarity channels, e.g. \lstinline$dest1, dest2$.
 \end{itemize}
 The {\em variables} are instances of sequential types and {\em channels} are instances of concurrent types.
 The channels on the left of \lstinline$ =>$ are called {\em input polarity} or {\em left polarity} channels. 
@@ -217,32 +214,6 @@ Two processes can be connected by a channel if their process definitions both ha
 We explain channel types and polarities in Section \ref{Sec:Channels}. 
 The process commands that a process performs on a channel are governed by both the type and polarity of the channel.
 We specifically discuss the complementary process commands that are performed on each polarity of a channel, e.g. sending and receiving a message, in Section~\ref{subsec:pairs}.
-
-%A CaMPL process is defined using the following syntax (the CaMPL tokens are specified by {\tt typewriter} font and in red color):
-%  \begin{center}
-%    \textcolor{red}{\tt proc} {\em procName} \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$ \textcolor{red}{ \tt = }
-%    
-%    \quad \quad \quad \quad \quad \quad   $~a_{11}, \ldots, a_{1k}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_1$} \\
-%    ... \\ 
-%    ... \\ 
-%    \quad \quad \quad \quad \quad \quad   $~a_{p1}, ..., a_{pk}~$ \textcolor{red}{ \tt | } $~i_{1},\ldots,i_{n}~$ \textcolor{red}{  \tt => } $~{o_{1}, \ldots, o_{m}}~$ \textcolor{red}{ \tt -> } {\em procBody$_p$}
-%  \end{center}
-%The type signature, \textcolor{red}{\tt ::} $~A_1, \ldots, A_k~$ \textcolor{red}{ \tt | } $~I_1, \ldots, I_n~$ \textcolor{red}{  \tt => } $~O_1, \ldots, O_m~$, is optional and may be omitted. 
-
-
-
-%% i think the polarity of channels is more than just information flow.
-%The polarity of the channels encode the bidirectional flow of information. Two processes are connected by a channel of same {\em type} but of opposite polarities. We explain channel types and polarities in Section \ref{Sec:Channels}. 
-
-%% i think that we don't need this amount of detail yet and instead we should be forward referencing the process commands section and the complementary pairs section.
-%When a process sends message over an output channel (to another process which then receives the message over an input polarity channels), the information flows from left to right. When a process receives message over an output channel (from another process which then send the message over an input channel), the information flows from right to left. We explain sending and receiving messages over input and output polarity channels in more detail in Section \ref{subsec:put-get}.
-
-
-
-
-
-%The process commands facilitated by CaMPL are elaborated in Section \ref{Sec:concurrent-commands}.
-
 
 We can depict processes using diagrams. 
 We will use diagrams to illustrate the effect of each process command on the processes involved.
@@ -484,79 +455,51 @@ Then, we would use the other bundled channel type, \lstinline$(+)$, which is dua
 More details about the corresponding process commands of these types are given in Section~\ref{sec:split-fork}.
 
 Finally, we have the \lstinline$Neg$ channel type which negates a given channel type.
-This means that the ``direction'' of the interaction is reversed.
+This means that the direction of the interaction is reversed.
 A \lstinline$Neg(Put)$ channel can be used like a \lstinline$Get$ channel (and vice versa), and a \lstinline$Neg((*))$ channel can be used like a \lstinline$(+)$ channel (and vice versa).
 
-Recall the process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
-We can write the type signature of \lstinline$broadcast$ as follows:
+Recall process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
+The type signature of \lstinline$broadcast$ is as follows:
 \begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)), Get([Char]|TopBot) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source, dest1 => dest2, dest3 ->
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 										=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2 ->
 \end{lstlisting}
-Observe that the type of \lstinline$dest1$ is \lstinline$Get([Char]|TopBot)$ which is dual to the type of \lstinline$dest2$ and \lstinline$dest3$ which is \lstinline$Put([Char]|TopBot)$.
-We will refer to the process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
-Notice that \lstinline$proc1$ uses \lstinline$dest1$ with output polarity.
+Observe that the type of \lstinline$dest1$ is \lstinline$Put([Char]|TopBot)$.
+We will refer to the destination process on the other end of  \lstinline$dest1$ as \lstinline$proc1$.
+Notice that \lstinline$proc1$ must use \lstinline$dest1$ with input polarity.
 
-Suppose we want the type and polarity of all of the destination channels in \lstinline$broadcast$ to be the same, i.e. we want the type signature of  \lstinline$broadcast$ to be:
-\begin{lstlisting}
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 ->
-\end{lstlisting}
-However, we still want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
-Instead of connecting \lstinline$broadcast$ with \lstinline$proc1$ directly, we can write another process, \lstinline$send_to_dest1$, that connects to  \lstinline$proc1$ with a \lstinline$Neg(Put)$ channel.
+Suppose we actually want \lstinline$proc1$ to use \lstinline$dest1$ with output polarity.
+Instead of changing \lstinline$broadcast$ to connect with \lstinline$proc1$ directly, we can write another process with two input polarity channels, \lstinline$send_to_dest1$, that connects to \lstinline$proc1$.
 Our \lstinline$run$ process would be defined as follows:
 \begin{lstlisting}
 proc run =
-    | => -> plug
-        sender( | => source)
-        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
-        send_to_dest1( | dest1, neg_dest1 => )
-        proc1( | => neg_dest1)				-- neg_dest1 has Neg(Put) type 
-        proc2( | dest2 =>)
-        proc3( | dest3 =>)
+	| => -> plug
+		sender( | => source)
+		broadcast("broadcast confirmation" | source => dest1, dest2)
+		send_to_dest1( | dest1, neg_dest1 => )	-- type of dest1 is Put 
+		proc1( | => neg_dest1)									-- type of neg_dest1 is Neg(Put)
+		proc2( | dest2 =>)
 \end{lstlisting}	
-We can define process \lstinline$send_to_dest1$ as follows:
+Messages will travel along \lstinline$dest1$ from left to right and then in the opposite direction on \lstinline$neg_dest1$.
+Since \lstinline$dest1$ is type \lstinline$Put$, \lstinline$neg_dest1$ can be \lstinline$Neg(Put)$. 
+We define process \lstinline$send_to_dest1$ as follows:
 \begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
 proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
-	| source, neg_dest1 => -> do
+	| source, neg_dest1 => -> do	-- send a message on neg_dest1 like a Get type
 		on source do								-- receive message from source via broadcast
 			get msg
 			close
 		plug
-			neg_dest1, dest1 => -> 
-				neg_dest1 |=| neg dest1 -- negate and identify channels
-			=> dest1 -> 							-- use like Get channel in original broadcast
-				on dest1 do							-- forward message to proc1
+			neg_dest1, dest1 => -> 		-- create a channel dest1
+				neg_dest1 |=| neg dest1 -- negate it and identify with neg_dest1
+			=> dest1 -> 							-- use dest1 to forward message to proc1
+				on dest1 do	
 					put msg
 					halt
 \end{lstlisting}
-To connect to this process, \lstinline$proc1$ would also need to be modified to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
-Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 9 to be able to use the \lstinline$Neg(Put)$ channel.
+To connect to this process, \lstinline$proc1$ would also need to be defined to have a \lstinline$Neg(Put)$ channel instead of a \lstinline$Get$ channel because they are not actually the {\em same} type.
+Additionally, \lstinline$proc1$ would need to include code similar to lines 6 - 12 to be able to use the \lstinline$Neg(Put)$ channel.
 The \lstinline$neg$ and identification \lstinline$|=|$ process commands are described in more detail in Section~\ref{sec:neg}. 
-
-
-
-%
-%We can again modify Example~\ref{ex:serverecho} to use a \lstinline$Neg(Get)$ channel instead of a \lstinline$Put$ channel:
-%\begin{lstlisting} [label=ex:negclient, caption=Client uses a Neg(Get) channel instead of a Put channel] 
-%proc client :: | => Neg(Get([Char] | TopBot)) = 		-- Neg(Get) = Put
-%    | => neg_ch ->                                    
-%        plug
-%            ch => ->                                -- create a new non-neg channel
-%                on ch do                            -- use like Put channel in original client
-%                    put "Hello Server!"	
-%                    get echo	
-%                    halt                 
-%            => ch, neg_ch -> neg_ch |=| neg ch          -- negate and identify with original
-%\end{lstlisting}
-%The \lstinline$server$ process would also need to be modified in the same way to be connected to this \lstinline$client$ because the \lstinline$Neg(Get)$ type is not the same as the \lstinline$Put$ type, but they can act in the same way.
-%The \lstinline$neg$ and identification \lstinline$|=|$  process commands are described in Section \ref{sec:neg}. 
-
-%In CaMPL, processes send and receive messages from one another via channels. 
-%CaMPL provides built-in channel types from which one may build custom channel types. 
-%Given a channel of certain type, the commands that can be performed on that channel depends on the polarity, see Section \ref{sec:concurrent-operators}.
 
 %The following are the built-in channel types provided by CaMPL \cite[Section 3.3.2]{Prashanth-thesis}.
 The following table summarizes the interactions provided by the built-in channel types \cite[Section 3.3.2]{Prashanth-thesis}.
@@ -575,72 +518,47 @@ The outer most layer is the first interaction that will take place, and after th
 \end{tabular}
 
 \noindent 
-%The {\tt Get} and {\tt Put} types are used by a process to send and receive messages. Section \ref{subsec:put-get} explains the operations that may be performed on these types. The {\tt Neg} is used for identifying to two channels of same polarity as the same, see Section \ref{sec:neg} for more information. The {\tt TopBot} type is used to end communication over a channel, see \ref{sec:close}. The operators ${\tt (+)}$ and ${\tt (*)}$ are used to bundle channels. The usage of ${\tt (+)}$ and ${\tt (*)}$ types are explained in Section \ref{sec:split-fork}. 
-%The {\tt TopBot} type is used to end communication on a channel, and its corresponding operations are given in Section \ref{sec:close}. 
-%The {\tt Neg} type swaps the polarity of a channel so two channels of the same polarity can be identified as the same channel, and the corresponding operations are given in Section \ref{sec:neg}. 
-%The {\tt Get} and {\tt Put} types are used to send and receive messages, and the operations that are performed on each polarity are given in Section \ref{subsec:put-get}. 
-%The ${\tt (+)}$ and ${\tt (*)}$ types indicate a bundle of channels, and the operations that are performed on each polarity are given in Section \ref{sec:split-fork}. 
 
-\comment{Ask Xanna if we can move controlled non-determinism here. Even though this order is not chronologically accurate, the example is a natural continuation of split and fork.}
 
 \subsubsection{Custom types}
 \label{Sec:protocols}
 
-We have covered the basic channel types, but the programs we have written so far notably lack the ability to send a variable number of messages.
-Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1} in which the destination channels all have the same polarity and type:
+We have covered the basic channel types, but the programs we have written so far cannot send a variable number of messages.
+Recall process \lstinline$broadcast$ from Example \ref{ex:broadcastmsg}.
 % priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting}[label=ex:modbroadcast, caption=Process that broadcasts a message on output channels] 
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
-		get msg on source								-- receive message from source
-		put msg on dest1								-- broadcast message to other process
-		put msg on dest2
-		put msg on dest3
-		put confirmation_msg on source	-- send confirmation message to source
-		close source										-- close all channels and halt
-		close dest1
-		close dest2
-		halt dest3       
-\end{lstlisting}
-This process is only able to broadcast a single message from the source.
+This process was only able to broadcast a single message from the source.
 To allow the process to call itself recursively until the source is finished sending messages, we need a way for a channel type to change from \lstinline$Put$ to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called {\em protocols} and {\em coprotocols}, which can be recursively defined.
 
 Let us consider the following example of a protocol called \lstinline$PassMessages$:  
-\begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages] 
+\begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages, name=broadcastwprotocols] 
 protocol PassMessages (A| ) => S =			-- passes messages of type A
-    SendMsg :: Put(A|S) => S 						-- handle to send another message
-    CloseCh :: TopBot => S 							-- handle to finish sending messages
+	SendMsg :: Put(A|S) => S 							-- handle to send another message
+	CloseCh :: TopBot => S 								-- handle to finish sending messages
 \end{lstlisting}
 This protocol allows an arbitrary number of messages of type \lstinline$A$ to be passed on a \lstinline$Put$ channel.
+When we use it as a channel type, we will instantiate the sequential type variable \lstinline$A$.
+In the case of  \lstinline$broadcast$, we will write \lstinline$PassMessages([Char]| )$ to pass strings.
 The two {\em handles}, \lstinline$SendMsg$ and \lstinline$CloseCh$, allow the type of the channel to be set to either \lstinline$Put$ or \lstinline$TopBot$.
 In general, handles represent the set of valid interactions that may take place on a channel.
 They can be thought of as session types.
 
-When we use \lstinline$PassMessages$ as a channel type, we will be able to instantiate the sequential type variable \lstinline$A$.
-In the case of  \lstinline$broadcast$, we want to pass strings, so we will use the channel type \lstinline$PassMessages([Char]| )$.
-Alternatively, we could have enforced that \lstinline$PassMessages$ only passes messages of strings by omitting the type variable \lstinline$A$ and setting the channel type to \lstinline$Put([Char]|S)$ on line 2 instead.
-In that case, we would have the channel type \lstinline$PassMessages(|)$.
-
-This protocol does not use any concurrent type variables, but if it did, the list of the concurrent type variables would be on the right of the bar next to \lstinline$A$.
-For example, if it took a concurrent type variable \lstinline$X$, we would have \lstinline$PassMessages(A| X)$.
-
+If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a string in response. For example:
+ \begin{lstlisting}[name=broadcastwprotocols] 
+protocol PassMsgsWithConf (A| ) => S =
+	SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handles have new names
+	CloseConfCh :: TopBot => S 		
+\end{lstlisting}
+We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
+Neither protocol has concurrent type variables, but a concurrent type variable \lstinline$X$ would be given as \lstinline$PassMsgsWithConf(A| X)$.
 The name of a protocol, its handles, and its sequential and concurrent type variables are required to begin with an uppercase alphabet character. 
 
-Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
-The only difference between protocols and coprotocols is the direction that handles travel on the channel.
-For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
-This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
-
-We can further modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ protocol as follows:
-\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source (without confirmation)] %can we change listing so that it says Example insted of Listing in the caption?
-
-proc broadcast :: [Char] | PassMessages([Char]| ) 
-	=> PassMessages([Char]| ), PassMessages([Char]| ), PassMessages([Char]| ) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+We can modify \lstinline$broadcast$ to use the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ protocols as follows:
+\begin{lstlisting}[label=ex:recbroadcast, caption=Process that broadcasts messages from a single source, name=broadcastwprotocols]
+proc broadcast :: [Char] | PassMsgsWithConf([Char]| ) 												=> PassMessages([Char]| ), PassMessages([Char]| ) = 
+	confirmation_msg | source => dest1, dest2 -> do
 		hcase source of					-- check whether there is another message
-			SendMsg -> do
+			SendMsgWithConf -> do
 				get msg on source		-- receive message
 				on dest1 do					-- broadcast message to other processes
 					hput SendMsg			-- indicate there is another message
@@ -648,47 +566,41 @@ proc broadcast :: [Char] | PassMessages([Char]| )
 				on dest2 do
 					hput SendMsg
 					put msg
-				on dest3 do
-					hput SendMsg
-					put msg
-				broadcast(confirmation_msg | source => dest1, dest2, dest3) -- recurse
-			CloseCh -> do					-- close all channels and halt
+				on source do				-- send confirmation to source
+					put confirmation_msg
+				broadcast(confirmation_msg | source => dest1, dest2) -- recurse
+			CloseConfCh -> do			-- close all channels and halt
 				close source							
 				on dest1 do						
 					hput CloseCh			-- indicate source is finished
 					close							-- close channel
 				on dest2 do
-					hput CloseCh		
-					close	
-				on dest3 do
-					hput CloseCh		
+					hput CloseCh	
 					halt	
 \end{lstlisting}
+
+Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
+The only difference between protocols and coprotocols is the direction that handles travel on the channel.
+For a protocol, handles travel in the same direction as messages on a \lstinline$Put$ channel, and for coprotocols, handles travel in the same direction as a \lstinline$Get$ channel.
+This means that a coprotocol is essentially a negated protocol, which is not true for sequential inductive and coinductive data types.
+
 Since protocol handles travel in the same direction as messages on a \lstinline$Put$ channel, \lstinline$broadcast$ is receiving handles on \lstinline$source$ and sending handles on its destination channels.
 A handle is sent on a channel using \lstinline$hput$ which {\em activates} the channel and sets its type as specified by the handle.
 A handle is received on a channel using \lstinline$hcase$ which allows a process to define a different process body for each possible channel type.
 More details on these process commands are given in Section~\ref{subsec:pairs}.
 
-If we want \lstinline$broadcast$ to also send a confirmation message on \lstinline$source$, as it did originally, we need to define another protocol with a handle that sets the channel to send a message and receive a response. For example:
- \begin{lstlisting}
-protocol PassMsgsWithConf (A| ) => S =
-    SendMsgWithConf :: Put(A|Get([Char]|S)) => S 	-- handle to send another message and receive a confirmation message
-    CloseConfCh :: TopBot => S 		
-\end{lstlisting}
-We need to use different handle names than we did in \lstinline$PassMessages$ because all handle names must be globally unique.
-
-We can imagine that \lstinline$dest1$ connects \lstinline$broadcast$ to a \lstinline$send_to_dest1$ process that is connected to \lstinline$proc1$ by a \lstinline$Neg(PassMessages([Char]| ))$ channel.
+A \lstinline$send_to_dest1$ process that forwards an arbitrary number of messages to \lstinline$proc1$ could use a \lstinline$Neg(PassMessages([Char]| ))$ channel.
 Since coprotocols are the dual of protocols, we could use a coprotocol version of \lstinline$PassMessages$ instead.
 We can define a coprotocol \lstinline$CoPassMessages$ as follows:
- \begin{lstlisting}
+ \begin{lstlisting}[label=ex:coprotocolcopassmsgs, caption=Coprotocol for passing an arbitrary number of messages, name=broadcastwprotocols]
 coprotocol S => CoPassMessages (A| ) =
-    CoSendMsg ::  S => Get(A|S)
-    CoCloseCh :: S => TopBot
+	CoSendMsg ::  S => Get(A|S)
+	CoCloseCh :: S => TopBot
 \end{lstlisting}
 Notice that the state variable \lstinline$S$ is on the left side of \lstinline$=>$ in the \lstinline$CoPassMessages$ definition instead of the right side like in the \lstinline$PassMessages$ and \lstinline$PassMsgsWithConf$ definitions.
 
-We can write \lstinline$send_to_dest1$ as follows:
-\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel] 
+We can write \lstinline$send_to_dest1$ using \lstinline$CoPassMessages$ as follows:
+\begin{lstlisting} [label=ex:coprotocoldest1, caption=Using a CoPassMessages channel instead of a Neg(PassMessages) channel, name=broadcastwprotocols] 
 proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 	| source, dest1 => -> 
 		hcase source of					-- check whether there is another message
@@ -705,63 +617,20 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					halt
  \end{lstlisting}
  From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
- 
-%In CaMPL, a programmer may build custom types from the built-in types using {\tt protocol} keyword. The syntax for a protocol is as follows:-
-%  \begin{center}
-%    \textcolor{red}{\tt protocol} {\em <ProtocolName>} \textcolor{red}{(}$~[A_1, \ldots, A_k]~$ \textcolor{red}{ \tt | } $~[I_1, \ldots, I_n]~$ \textcolor{red}{  \tt ) => } $P$ \textcolor{red}{ \tt = }
-%    
-%    \quad \quad   {\em <Handle\_1>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$ \\
-%    ... \\ 
-%    ... \\ 
-%    \quad \quad   {\em <Handle\_n>}  \textcolor{red}{::} {\em <Type definition> } \textcolor{red}{  \tt => } $P$
-%   \end{center}
-%The protocol, the handle and the (sequential and concurrent) type names MUST begin with an uppercase alphabet. The input sequential types and input concurrent types are optional. Type definitions are given by composing the built-in channel types. 
-%   
-%Let us consider the following example of a protocol:  
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}
-%protocol EchoSimple (A | ) => S =
-%    EchoSend :: Put(A | S) => S
-%    EchoClose :: TopBot => S
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-%
-%In the above code, {\tt EchoSimple} is a protocol that has an output concurrent type {\tt S}, an input sequential type A, but no input concurrent types. {\tt EchoSend} and {\tt EchoClose} are called {\bf protocol handles} which are analogous to session types. They represent a valid sequence of process commands that may be performed on a channel by a process connected to it.
-%
-%\[ \xymatrix{ A~\blackman \ar@{-}@<-5pt>[rrr]^{(+) ~~ {\tt ch: EchoSimple} ~~ (-)} & & & \blackman~B } \]
-%
-%Consider two processes $A$ and $B$ connected by a channel {\tt ch} of protocol type {\tt EchoSimple}. In the above picture, $(+)$ refers to output polarity and $(-)$ refers to input polarity. A channel of protocol type {\tt EchoSimple} is {\em activated} when the process in the output end places a handle on the channel using {\tt hput} command, see Section \ref{subsec:pairs}. Once a channel activated, the channel may be used for communication in accordance to the handle  defintion. For example, process $A$ can send a message to process $B$ after it places the {\tt EchoSend} handle. Once the send is complete, the channel goes back to the concurrent type $S$. The {\tt EchoClose} handle takes in a concurrent type {\tt S} and converts it into {\tt TopBot} type (thereby disallowing any further communication).
-%
-%Dual to protocols, CaMPL supports {\tt coprotocol}s signifying the inherent duality in direction of information flow between two processes --- from left to right, or from right to left. The following code snippet shows {\tt EchoSimple} as a coprotocol. 
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}    
-%coprotocol S => coEchoSimple (A | ) =
-%    coEchoSend ::  S => Put(A | S)
-%    coEchoClose :: S => TopBot
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-%
-%Suppose {\tt ch} is a channel with the handle {\tt EchoSend} connecting process $A$ on the left and process $B$ on the right. Then, a message is sent from output polarity to input polarity, as shown in (1) and (2) in the following figure. One can use a coprotocol to avoid bending wires as shown in (3).
-%\[ \includegraphics[scale=0.12]{figs/coprotocol.jpeg} \]
-%A coprotocol is an added functionality rather than being a unique feature. All our examples use {\tt protocol} keyword to construct custom types.
 
 \subsubsection{Interacting with the outside world using service channels}
 \label{Sec:ServiceChannels}
 
 The examples we have considered so far, with the exception of Example~\ref{ex:helloworld}, will not produce any observable effects to a user since they have not been connected to the outside world.
 Recall and observe that Example~\ref{ex:helloworld} had the only \lstinline$run$ process that was defined with a non-empty list of channels in its scope.
-\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with. The service channel types are \lstinline$Console$, \lstinline$StringTerminal$, and \lstinline$Timer$. They are implemented the as protocols and coprotocols on which processes must always use \lstinline$hput$, and the compiler has built-in implementations of the service process which does \lstinline$hcase$
+\tc{Service channels} are the channels that a \lstinline$run$ process can be defined with. The service channel types are \lstinline$Console$, \lstinline$StringTerminal$, and \lstinline$Timer$. They are implemented as protocols and coprotocols on which processes must always use \lstinline$hput$, and the compiler has built-in service processes which implement the corresponding \lstinline$hcase$.
 
 A \lstinline$Console$ allows a user to interact through the terminal in which the program was run.
-A \lstinline$StringTerminal$ opens a new Alacritty terminal for user interaction.
+A \lstinline$StringTerminal$ opens a new Alacritty\footnote{https://alacritty.org} terminal for user interaction.
 A \lstinline$Timer$ can be used to implement time-out features using controlled non-determinism, which we will discuss in more detail in Section~\ref{Sec:races}.
 A complete list of the handles for these types is included in Section~\ref{}.
 For now, we will focus on the following handles:
-\begin{lstlisting} [label=ex:servicechs, caption=Service channels] 
+\begin{lstlisting} [label=ex:servicechs, caption=Service channels, name=services] 
 protocol StringTerminal => S =
     StringTerminalPut :: Put([Char]|S) => S
     StringTerminalGet :: Get([Char]|S) => S 
@@ -774,7 +643,7 @@ coprotocol S => Console =
 \end{lstlisting}
 
 Consider a modification of Example~\ref{ex:serverecho} in which \lstinline$client$ has a \lstinline$StringTerminal$ to receive user input and \lstinline$server$ has a  \lstinline$Console$ to log the messages it receives:
-\begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels] 
+\begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels, name=services]  
 proc client :: | => PassMessages([Char]|), StringTerminal =
     | => ch, terminal -> do
         on terminal do								
@@ -972,7 +841,7 @@ fun listStack :: [A] -> Stack(A) =
 We use a \lstinline{Stack} in the following \lstinline$reverse_print$ process to collect messages as they are received.
 Once all the messages have been received, we will \lstinline$flatten$ and print the \lstinline$stack$ from top to bottom.
 Since the most recent message will be on the top of the \lstinline$stack$, the messages will be printed in reverse order.
-\begin{lstlisting} [label=ex:codata reverse_print, caption=Printing messages from most recent to least recent, numbers=left]
+\begin{lstlisting} [label=ex:codata reverse_print, caption=Printing messages from most recent to least recent]
 fun flatten :: Stack([Char]) -> [Char] =
 	s -> case Pop(s) of			-- recursively pop strings and concat them
 		(SS(str), stack) -> str ++ " " ++ flatten(stack)
@@ -1018,14 +887,14 @@ proc client :: | => PassMessages([Char]|), StringTerminal =
 				on ch do 
 					hput CloseCh
 					close 
-				on term do
+				on terminal do
 					hput StringTerminalClose	
 					halt 
 			else do							-- user has sent a message, so forward to server
 				on ch do											
 					hput SendMsg
 					put msg
-				client( | => ch, term)	-- recurse 
+				client( | => ch, terminal)	-- recurse 
 \end{lstlisting}   
 
 The above example can also be implemented using \lstinline$case$:
@@ -1065,7 +934,7 @@ proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
 			close
 		on console do
 			hput ConsolePut
-			put ("Server says: Running the stored process")
+			put ("Higher order receiver says: Running the stored process")
 		use(stored_process)( | console => )		-- decode and invoke helloworld
 \end{lstlisting}
 Observe that \lstinline$ho_sender$ and \lstinline$ho_receiver$ are connected along a \lstinline$Put(Store(|Console=>) | TopBot)$ type channel.
@@ -1086,56 +955,39 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \comment{the idea is the type system parts can focus on the concepts and be like a nice paper to read and then the proc commands section can be more like a manual because we don't really have a manual manual. they should be able to write some programs after the concurrent and sequential type system sections, and if they have compiler errors or ``why isn't this working'' questions then they can go to the process commands section.}
 
 We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
-TODO: add section references
+\TODO{check that all forward and back references are correct}
 
 \subsection{Connecting processes using {\tt plug}}
 
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}
-%	plug 
-%		    process1( .. | ch1 => ch2)
-%		    process2( .. | ch2 => ch3)
-%		    process3( .. | ch3 => ch4)
-%		    ...
-%		    processn( .. | chn => last_ch)
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
+We have seen the \lstinline$plug$ command used in most of our examples, especially in \lstinline$run$ processes.
+This command must be used as the last command in a command block.
 
-We have seen the \lstinline$plug$ command used in most of our examples, especially in the main \lstinline$run$ processes.
-This command must be used as the last command in a process block.
-
-Recall the \lstinline$run$ process from Example \ref{ex:negdest1} that connected the \lstinline$broadcast$ process to the source and destination processes:
+Recall the \lstinline$run$ process from Example \ref{ex:negdest1} that connected \lstinline$broadcast$ to the source and destination processes:
 \begin{lstlisting}
 proc run =
-    | => -> plug							-- plug command is the last (and only) command
-        sender( | => source)
-        broadcast("broadcast confirmation" | source => dest1, dest2, dest3)
-        send_to_dest1( | dest1, neg_dest1 => )
-        proc1( | => neg_dest1)				
-        proc2( | dest2 =>)		-- proc2 cannot be connected to proc3
-        proc3( | dest3 =>)
+	| => -> plug						-- plug command is the last (and only) command
+		sender( | => source)
+		broadcast("broadcast confirmation" | source => dest1, dest2)
+		send_to_dest1( | dest1, neg_dest1 => )
+		proc1( | => neg_dest1)				
+		proc2( | dest2 =>)		-- proc2 cannot be connected to send_to_dest1
 \end{lstlisting}	
-The \lstinline$plug$ command, used on line 2 in the above example, connects any number of processes along channels such that the network of the connected processes remains acyclic.
-The processes which are plugged together run in parallel and may communicate via the channels connecting them. 
+The \lstinline$plug$ command, used on line 2 in the above example, connects any number of processes along channels such that the network of connected processes remains acyclic.
+Processes which are plugged together run in parallel and may communicate via the channels connecting them. 
 
 Notice that each channel connects exactly two processes.
 Channels are linear resources which means that they cannot be arbitrarily created, duplicated, or destroyed.
 A channel can only be created in a \lstinline$plug$ command and each end must be plugged into a process.
 A channel cannot appear more than twice in a \lstinline$plug$ command either.
-Since the \lstinline$plug$ command is the last command in the process block, all existing open channels in scope must be passed to the processes being plugged.
-
-Sequential data is not a linear resource, so it can be duplicated and passed into and used by any number of processes in a \lstinline$plug$ command.
-
-%A process is not allowed to create new channel except in the {\tt plug} command, for example, in the above code channel {\tt y} in line 3 is a new channel. 
+Since the \lstinline$plug$ command is the last command in the command block, all existing open channels in scope must be passed to the processes being plugged.
+Sequential data is not a linear resource, so it can be duplicated, passed into, and used by any number of processes in a \lstinline$plug$ command.
 
 Two processes can be plugged to each other if and only if they satisfy the following conditions:
 \begin{enumerate}[(1)]
 	\item both process definitions have a channel with the same type and opposite polarities.
 	\item plugging the processes will not create a cycle (they cannot already be connected).
 \end{enumerate}
-In the above example, \lstinline$proc2$ and \lstinline$proc3$ could not be connected because they both have an input polarity channel but no output polarity channels.
+In the above example, \lstinline$proc2$ and \lstinline$send_to_dest1$ could not be connected because they both have input polarity channels but no output polarity channels.
 Furthermore, changing their process definitions and adding a channel is not possible either because they are both already connected to \lstinline$broadcast$.
 
 A \lstinline$plug$ command can plug previously defined processes, as above, and/or in-line process definitions.
@@ -1157,37 +1009,11 @@ proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
 Notice that on lines 7 and 9, the input and output channels used by each process are given, but sequential variables are not given.
 Any sequential data in scope at line 6 can be used in the in-line process definitions.
 
-%
-%The following code demonstrates a usage of the {\tt plug} command. 
-%
-%\begin{center}
-%\begin{varwidth}{\linewidth}
-%\begin{verbatim}
-%	1. proc pulgDemo :: A | X => Z = 
-%	2.	    a | x => z -> 
-%	3.		    plug 
-%				       processA(a | x => y)
-%				       processB(a | y => z)
-%\end{verbatim}
-%\end{varwidth}
-%\end{center}
-%
-%A detailed explanation of the code is as follows:
-%
-%\begin{itemize}
-%\item Line {\tt 1.} provides the type signature of the process {\tt plugDemo}. The process has a sequential argument of type {\tt A}, an input polarity channel of type {\tt X}, and an output polarity channel of type {\tt Z}.
-%
-%\item Line {\tt 2.} provides variable names to the sequential and concurrent types.
-%
-%\item Line {\tt 3.} causes {\tt processA} and {\tt process B} to be connected by  channel {\tt y} and to be run in parallel. The channel {\tt y} is of output polarity for {\tt processA} and input polarity for {\tt processB}. Note that, the sequential argument of type {\tt A} is duplicated, and passed to both {\tt ProcessA} in line {\tt 3} and {\tt ProcessB} in line {\tt 4}. Such duplication is not allowed for channel types (since channels are linear resources).
-%\end{itemize}
-
 \subsection{Calling processes}
 
 A process can be invoked by calling it using its name and passing it valid instances of all of the variables and channels in its process definition.
 We have seen this in the \lstinline$plug$ command of a \lstinline$run$ process quite often.
-
-Recall that we also called \lstinline$send_to_dest1$ recursively in Example~\ref{ex:coprotocoldest1}:
+Recall that we called \lstinline$send_to_dest1$ recursively in Example~\ref{ex:coprotocoldest1}:
 \begin{lstlisting} 
 proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 	| source, dest1 => -> 
@@ -1206,7 +1032,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 				
  \end{lstlisting}
  Notice that when we make the process call on line 9, it is the last command in the \lstinline$do$ block that starts on line 4.
- When a process is called outside of a \lstinline$plug$ command, it must be the last command in the process block.
+ When a process is called outside of a \lstinline$plug$ command, it must be the last command in the command block.
 This means that all existing open channels in scope at the time the process is called must be passed to the process.
 
 
@@ -1215,7 +1041,7 @@ This means that all existing open channels in scope at the time the process is c
 
 The identification command, written as \lstinline$|=|$, equates two channels of the same type and opposite polarities.
 This command can be thought of as calling an identity process that ``does nothing'' to a channel.
-It must be used as the last command in a process block.
+It must be used as the last command in a command block.
 
 The \lstinline$neg$ command is used to equate two channels of the same polarity if one of them has a \lstinline$Neg$ type.
 The \lstinline$neg$ command changes a channel of type \lstinline$X$ to type \lstinline$Neg(X)$ and flips its polarity. 
@@ -1223,8 +1049,6 @@ Thus, after using \lstinline$neg$, both channels will have type \lstinline$Neg(X
 The \lstinline$neg$ command can only be used within an identification command.
 
 Negation and identification are particularly useful when channels are passed as resources between multiple processes. 
-%\textcolor{purple}{See example ... for a case study.} 
-%\comment{TODO: make an example using passer protocol that is not 100 lines long.}
 For example, consider the protocol \lstinline$Mutex$ which coordinates exclusive access to a resource between processes:
 \begin{lstlisting}[label=ex:mutex-protocol, caption=Mutex protocol which uses a Neg channel, numbers=left]
 protocol Mutex( |M) => S =		-- coordinates access to a channel of type M
@@ -1261,11 +1085,6 @@ defn
 \end{lstlisting}
 However, for clearer explanations, we will consider the process definitions separately.
 
-% this description helped me to realize that the accessing process should not block until the other process requests a Pass before it even starts accessing the memory cell lmao
-%{\tt memWait} sends {\tt Pass} handle over {\tt mutex} to {\tt memAccess}. 
-%On receiving the handle, {\tt memAccess} reads and writes to the memory over the {\tt mem} channel. 
-%Once it completes, it forks over the {\tt mutex} channel and invokes {\tt memWait} using {\tt plug}. 
-%The input {\tt Neg(Mutex)} needs to be negated to get an output {\tt Mutex} channel type, which is then used in the invocation of {\tt memWait}.
 First, we will consider \lstinline$memAccess$:
 \begin{lstlisting}
 proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
@@ -1287,9 +1106,6 @@ proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
 We demonstrate how identification can be used to pass a channel as a resource on line 11.
 We demonstrate how a channel can be identified with a \lstinline$Neg$ channel using \lstinline$neg$ on line 14.
 
-%The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} type channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
-
-%Process {\tt memWait} activates the {\tt mutex} channel by sending {\tt Pass} handle over it. Then it blocks itself using {\tt split} command. When {\tt memAccess} executes {\tt fork} command, the {\tt memWait} is unblocked and invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
 Next, consider \lstinline$memWait$:
 \begin{lstlisting}
 proc memWait :: [Char] | => Mutex( |MemCh([Char]| )) =
@@ -1309,50 +1125,23 @@ Again, we use  \lstinline$neg$ to identify with a \lstinline$Neg$ channel on lin
 
 The \lstinline$close$ and \lstinline$halt$ commands terminate the interaction along a channel and remove it from scope. 
 These commands are the only way a channel can be destroyed, and they can only be used on a channel with type \lstinline$TopBot$.
-Recall the modified version of \lstinline$broadcast$ from Example \ref{ex:negdest1}.
+Recall process \lstinline$broadcast$ from Example \ref{ex:broadcastmsg}.
 We can reorder the process commands without changing the functionality of the process as follows:
-% priyaa suggested to make note of the observation that it would be great if we could define this recursively, but we can't without protocols because we need to be able to be able to change the type of the channel in the base case.
-\begin{lstlisting} [label=ex:closehalt, caption=Closing and halting channels in broadcast] 
-proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 
-	=> Put([Char]|TopBot), Put([Char]|TopBot), Put([Char]|TopBot) = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+
+% [label=ex:closehalt, caption=Closing and halting channels in broadcast] 
+\begin{lstlisting} 
+proc broadcast :: [Char] | Put([Char]|Get([Char]|TopBot)) 										=> Put([Char]|TopBot), Put([Char]|TopBot) = 
+	confirmation_msg | source => dest1, dest2 -> do
 		get msg on source						
 		put msg on dest1		-- the type of dest1 is TopBot after this line
 		close dest1					-- close can be used on a TopBot channel at any point
 		put msg on dest2
-		close dest2
-		put msg on dest3
-		close dest3      
+		close dest2    
 		put confirmation_msg on source	
 		halt source					-- halt is used to close the last channel and halt
 \end{lstlisting}
-Notice that the \lstinline$close$ command cannot be used as the last command in a process block, but it can be used at any other point to close \lstinline$TopBot$ channels.
-The \lstinline$halt$ command must be used for the last command of a process block because it halts a process after closing the last \lstinline$TopBot$ channel.
-
-
-%The following is a simple process demonstrating the usage of {\tt close} and {\tt halt}.
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. proc noInteraction :: | TopBot => TopBot = 
-%			2. 	| chA => chB -> do
-%			3.		close chA
-%			4.		halt chB	 
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%A detailed explanation of the code is as follows:
-%
-%\begin{itemize}
-%\item Line {\tt 1.} provides the type signature of the process {\tt noInteraction}. The process has no sequential arguments, an input polarity channel of type {\tt TopBot}, and an output polarity channel of type {\tt TopBot}.
-%
-%\item Line {\tt 2.} provides variable names to the concurrent types. Since {\tt chA} and {\tt chB} are channels of type {\tt TopBot}, all interactions on these channels can be stopped.
-%
-%\item Line {\tt 3.} closes {\tt chA} which mean it will be out of scope in the rest of the process code.
-%
-%\item Line {\tt 4.} closes {\tt chB} and terminates the process.
-%
-%\end{itemize}
+Notice that the \lstinline$close$ command cannot be used as the last command in a command block, but it can be used at any other point to close \lstinline$TopBot$ channels.
+The \lstinline$halt$ command must be used as the last command in a command block because it halts a process after closing the last \lstinline$TopBot$ channel.
  
 \subsection{Complementary pairs }
 \label{subsec:pairs}
@@ -1388,7 +1177,6 @@ Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands an
 % what about race? store? use?
 
 
-
 \subsubsection{{\tt put} and {\tt get}: Send and receive messages}
 \label{subsec:put-get}
 
@@ -1412,11 +1200,11 @@ proc server =
 The \lstinline$get$ command on line 11 blocks \lstinline$server$ until a value is received on channel \lstinline$ch$.
 When the value is received, it binds the value to the variable \lstinline$msg$ and proceeds down the process command block. 
 We say that \lstinline$ch$ is {\em used} in the \lstinline$get$ command, and hence, it must be in scope. 
-The \lstinline$get$ command cannot be the last command in a process block. 
+The \lstinline$get$ command cannot be the last command in a command block. 
 
 The \lstinline$put$ command on line 4 sends the value \lstinline$"Hello Server!"$ on channel \lstinline$ch$ and proceeds down the process command block. 
 This will allow the \lstinline$server$ process to unblock from its complementary \lstinline$get$ command on line 11.
-Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in scope, and the \lstinline$put$ command cannot be the last command in a process block. 
+Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in scope, and the \lstinline$put$ command cannot be the last command in a command block. 
 
 These commands can be used on channels with type \lstinline$Put$ or \lstinline$Get$ depending on the direction the message is travelling on the channel.
 Recall that messages travel on \lstinline$Put$ channels from left to right (output to input polarity), and messages travel on \lstinline$Get$ channels from right to left (input to output polarity).
@@ -1464,7 +1252,7 @@ Table \ref{Table: Usage of get and put process commands} describes the usage of 
 \subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
 
 Custom channel types, called protocols and coprotocols, allow processes to change the type of a channel dynamically at run-time.
-Recall the protocol \lstinline$PassMessages$, coprotocol \lstinline$CoPassMessages$, and modified \lstinline$send_to_dest1$ process from Examples~\ref{ex:protocolpassmsgs} and \ref{ex:coprotocoldest1}:
+Recall the protocol \lstinline$PassMessages$, coprotocol \lstinline$CoPassMessages$, and modified \lstinline$send_to_dest1$ process from Examples~\ref{ex:protocolpassmsgs}, \ref{ex:coprotocolcopassmsgs} and \ref{ex:coprotocoldest1}:
 \begin{lstlisting}
 protocol PassMessages (A| ) => S =		
     SendMsg :: Put(A|S) => S 				
@@ -1492,167 +1280,97 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
  \end{lstlisting}
 The \lstinline$hput$ command on line 15 {\em activates} channel \lstinline$dest1$ by setting its type according to the handle \lstinline$CoSendMsg$ and proceeds down the process command block.
 Since \lstinline$dest1$ is used in the \lstinline$hput$ command, it must be in scope. 
-The \lstinline$hput$ command cannot be the last command in a process block. 
+The \lstinline$hput$ command cannot be the last command in a command block. 
 Since protocols and coprotocols are concurrent analogues of inductive and coinductive data types, we can think of \lstinline$hput$ as constructing the handle on the channel.
 We can also think of the handle as a session type and that the \lstinline$hput$ command initializes a session.
 
 The \lstinline$hcase$ command on line 11 blocks \lstinline$send_to_dest1$ until a handle is received on channel \lstinline$source$.
 When the handle is received, \lstinline$send_to_dest1$ proceeds according to the corresponding process command block, i.e. either lines 12 - 17 or lines 18 - 22.
 Since \lstinline$source$ is used in the \lstinline$hcase$ command, it must be in scope. 
-All variables and channels that are in scope at line 11 are also in scope for each process block.
-The \lstinline$hcase$ command must be the last command in a process block. 
+All variables and channels that are in scope at line 11 are also in scope for each command block.
+The \lstinline$hcase$ command must be the last command in a command block. 
 This means that all existing open channels in scope, i.e. \lstinline$source$ and \lstinline$dest1$, must be closed or passed into other processes by the end of each block.
 
-The handles used in a \lstinline$hput$ or \lstinline$hcase$ must belong to the type of the channel, and which command each process uses depends on whether the channel type is defined as a protocol or coprotocol.
-TODO: mention above example here.
+The handles used on a channel in a \lstinline$hput$ or \lstinline$hcase$ must be defined with the channel's type. 
+Whether a process uses \lstinline$hput$ or \lstinline$hcase$ on a channel depends on its polarity and if the channel type is a protocol or coprotocol.
 Recall that handles travel on a protocol channel from left to right (output to input polarity which is the same as \lstinline$Put$), and handles travel on a coprotocol channel from right to left (input to output polarity which is the same as \lstinline$Get$).
+Since \lstinline$send_to_dest1$ uses the protocol channel \lstinline$source$ with input polarity, it receives handles using \lstinline$hcase$.
+It also uses the coprotocol channel \lstinline$dest1$ with input polarity, so it sends handles using \lstinline$hput$.
 
 If the type of a channel is not explicitly defined, using the handles of an existing protocol in an \lstinline$hput$ command on the output polarity end and an \lstinline$hcase$ command on the input polarity end will force the channel type to be that protocol.
 This would not work if the handles belong to an existing coprotocol; in that case, the \lstinline$hput$ and \lstinline$hcase$ commands would need to be used on the opposite ends.
-%Examples using \lstinline$hput$ and \lstinline$hcase$ are given in Section~\ref{Sec:protocols}.
-
-%Let us look at a sample usage of ({\tt hput}, {\tt hcase})) process commands using the following protocol:
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. protocol Echo => S =
-%			2.    EchoSend :: Put( [Char] | S)) => S
-%			3.    EchoClose :: TopBot => S
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%The protocol {\tt Echo} has two handles namely {\tt EchoSend} and {\tt EchoClose}. We will upgrade the client-server communication shown in the previous section using these protocol handles, allowing the server to receive message any number of times.
-%
-%\noindent
-%\begin{minipage}{0.48\textwidth}
-%%%% Code for client
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			 1. proc client :: | => Echo = 
-%			 2.	| => ch -> do 
-%			 3.      hput EchoSend on ch
-%			 4.      put "Hello" on ch
-%			 5.	     hput EchoClose on ch
-%			 6.	     halt ch
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%\vfill
-%\end{minipage}
-%%%% Code for server
-%\begin{minipage}{0.48\textwidth}
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%		
-%			1. proc server :: | Echo => = 
-%			2. 	| => ch -> do 
-%			3.	     hcase ch of  
-%			4.	     	EchoSend -> do 
-%			4a. 				    get message on ch 
-%			4b          server( | ch =>) -- recursion
-%			5.	     	EchoClose -> halt ch
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center} 
-%\end{minipage}
-%
-%In the {\tt client} process,
-%\begin{itemize}
-%\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, no input concurrent type, and one output polarity channel of type {\tt Echo}.
-%\item Line 2. assigns variable name {\tt ch} to the output concurrent type.
-%\item Line 3. places the handle {\tt EchoSend} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt Put([Char] | Echo)}.
-%\item Line 4. puts a message at which the {\tt ch} proceeds with type {\tt Echo)}.
-%\item Line 5. places the handle {\tt EchoClose} on {\tt ch} at which the {\tt ch} proceeds with the type {\tt TopBot}.
-%\item Line 6. close {\tt ch} and halts the process.
-%\end{itemize}
-%Note that the client process sends a static message "Hello". Instead, the client process can read a message from a {\tt StringTerminal} and relay it to the server process, any number of times by recursively. 
-%In the {\tt server} process,
-%\begin{itemize}
-%\item Line 1. specifies the type signature of the {\tt client}. The process has no input sequential types, one input polarity channel of type {\tt Echo}, and no output concurrent type.
-%\item Line 2. assigns variable name {\tt ch} to the input concurrent type.
-%\item Line 3. executes {\tt hcase} process command causing the server process to wait to receive a handle from the client process.
-%\item Line 4. does case matching. In case, the server receives the handle {\tt EchoSend}, then it proceeds with Lines 4a and 4b.
-%\item Line 4a. receives a message over {\tt ch}.
-%\item Line 4b. calls the server process (recursively) allowing it receive another handle from the client process.
-%\item Line 5. does case matching. In case, the server receives the handle {\tt EchoClose}, then closes the channel and halts the process.
-%\end{itemize}
-
-%See section \ref{Sec:Simple EchoServer} for a fully-developed example of {\tt EchoServer} using the {\tt Echo} protocol. 
 
 \subsubsection{{\tt split} and {\tt fork}: Multi-process communication}
 \label{sec:split-fork}
 
 The \lstinline$fork$ and \lstinline$split$ commands are used to make changes to the network of processes at run-time while ensuring no cycles are introduced.
-We will consider another example using these commands.
-Recall the \lstinline$broadcast$ process from Example \ref{ex:negdest1}.
+In Example~\ref{ex:clientfork}, we used these commands to \lstinline$fork$ the process on the left end of a channel into two processes that were both connected to the process on the right.
+We will consider another example using these commands in which the process on the left uses \lstinline$split$ to talk to two new processes on the right instead.
+
+Recall process \lstinline$broadcast$ from Example~\ref{ex:broadcastmsg}.
 We will consider the corresponding \lstinline$sender$ process that is connected along the \lstinline$source$ channel:
-\begin{lstlisting}
+\begin{lstlisting}[label=ex:sender, caption=Process that sends messages to broadcast] 
 proc sender =
-    | => source ->
-        on source do
-            put "Hi everyone!"
-            halt
+	| => source ->
+		on source do
+			put "Hi everyone!"
+			get confirmation_msg
+			halt
 \end{lstlisting} 
 
-Suppose we want this process to first send a message that every other process will receive and then split the channel and send different messages to some processes:
-%We can define this modified version of \lstinline$sender$ as follows:
-\begin{lstlisting} [label=ex:sendersplit, caption=Splitting the source channel] 
+Suppose we want \lstinline$sender$ to first send a message that both destination processes will receive and then split the channel and send different messages to each process.
+We will omit confirmation messages in this modified example for simplicity.
+\begin{lstlisting} [label=ex:sendersplit, caption=Splitting the source channel, name=splitforksource] 
 proc sender =
 	| => source -> do
 		on source do
-			put "Hi everyone!"										-- msg sent to every proc
+			put "Hi everyone!"										-- msg sent to both procs
 		split source into source1, source2			-- unbundle channels
-		on source1 do														-- first send msg to 1 and 2
-			put "Hello proc1 and proc2"
+		on source1 do														-- first send msg to 1
+			put "Hello proc1"
 			close
-		on source2 do														-- then send msg to 3 and halt
-			put "Hello proc3"
+		on source2 do														-- then send msg to 2 and halt
+			put "Hello proc2"
 			halt
 \end{lstlisting} 
-The \lstinline$split$ command on line 6 removes the channel \lstinline$source$ from scope, creates two new channels \lstinline$source1$ and \lstinline$source2$ in scope, and blocks \lstinline$sender$ until two new processes are created and connected on the new channels.
-After the \lstinline$split$ command, \lstinline$sender$ will proceed down the process command block, which means the process commands used on the two new channels in lines 7 - 10 and 11 - 14 will be executed sequentially.
-The \lstinline$source$ is {\em used} in the \lstinline$split$ command, so it must be in scope at line 6, but the command removes it from scope.
+The \lstinline$split$ command on line 5 removes the channel \lstinline$source$ from scope, creates two new channels \lstinline$source1$ and \lstinline$source2$ in scope, and blocks \lstinline$sender$ until two new processes are created and connected on the new channels.
+After the \lstinline$split$ command unblocks, \lstinline$sender$ will proceed down the process command block, which means the process commands used on the two new channels in lines 6 - 8 and 9 - 11 will be executed sequentially.
+The \lstinline$source$ is {\em used} in the \lstinline$split$ command, so it must be in scope at line 5, but the command removes it from scope.
 The two new channels will have the same polarity as the original channel.
-The \lstinline$split$ command cannot be the last command in a process block. 
+The \lstinline$split$ command cannot be the last command in a command block. 
 
 The corresponding \lstinline$broadcast$ process will need to \lstinline$fork$ its \lstinline$source$ channel and create two new processes to concurrently broadcast the second round of messages:
 %We can define this modified \lstinline$broadcast$ process as follows:
-\begin{lstlisting} [label=ex:broadcastfork, caption=Forking the source channel] 
+\begin{lstlisting} [label=ex:broadcastfork, caption=Forking the source channel, name=splitforksource] 
 proc broadcast = 
-	confirmation_msg | source => dest1, dest2, dest3 -> do
+	confirmation_msg | source => dest1, dest2 -> do
 		get msg1 on source				
-		put msg1 on dest1									-- broadcast msg1 to every process
+		put msg1 on dest1									-- broadcast msg1 to both processes
 		put msg1 on dest2
-		put msg1 on dest3
 		fork source as										-- unbundle channels
-			source1 with dest1, dest2 -> do	-- send same msg2 to 1 and 2
-				get msg2 on source1
+			source1 with dest1 -> do				-- send msg2a to 1
+				get msg2a on source1
 				on dest1 do
-					put msg2
-					close
-				on dest2 do
-					put msg2
+					put msg2a
 					close
 				halt source1
-			source2 with dest3 -> do				-- send different msg2 to 3
-				get msg2 on source2
-				on dest3 do
-					put msg2
+			source2 with dest2 -> do				-- send msg2b to 2
+				get msg2b on source2
+				on dest2 do
+					put msg2b
 					close
 				halt source2
 \end{lstlisting} 
-The \lstinline$fork$ command on line 7 removes the channel \lstinline$source$ from scope and creates two new channels that are each passed into one of the two process bodies on lines 8 - 16 and 17 - 22.
+The \lstinline$fork$ command on line 17 removes the channel \lstinline$source$ from scope and creates two new channels that are each passed into one of the two process bodies on lines 18 - 23 and 24 - 29.
 After the \lstinline$fork$ command, the two process bodies each have one of the two new channels in scope and process commands in each process body will be executed concurrently.
-The \lstinline$source$ is {\em used} in the \lstinline$fork$ command, so it must be in scope at line 7, but it is removed from scope by the command.
+The \lstinline$source$ is {\em used} in the \lstinline$fork$ command, so it must be in scope at line 17, but it is removed from scope by the command.
 The two new channels will have the same polarity as the original channel.
 
-The \lstinline$fork$ command must be the last command in a process block. 
-This means that all existing open channels in scope at line 7, i.e. \lstinline$dest1$, \lstinline$dest2$, and \lstinline$dest3$, must be passed into the process bodies.
-On line 8, \lstinline$dest1$ and \lstinline$dest2$ are passed into the the first process body, and on line 17, \lstinline$dest3$ is passed into the second process body.
-All variables that are in scope when the \lstinline$fork$ command is made are also in scope for each process block.
-For example, if this broadcast process was sending confirmation messages, the variable \lstinline$confirmation_msg$ could be used in both process bodies.
+The \lstinline$fork$ command must be the last command in a command block. 
+This means that all existing open channels in scope at line 17, i.e. \lstinline$dest1$ and \lstinline$dest2$, must be passed into the process bodies.
+On line 18, \lstinline$dest1$ is passed into the the first process body, and on line 24, \lstinline$dest2$ is passed into the second process body.
+All variables that are in scope when the \lstinline$fork$ command is made are also in scope for each process body.
+For example, if this process was sending confirmation messages, the variable \lstinline$confirmation_msg$ could be used in both process bodies.
 
 These commands can be used on channels with type \lstinline$(*)$, ``tensor,'' or \lstinline$(+)$, ``par,'' depending on which end of the channel has one process \lstinline$fork$ into two processes.
 Recall that a \lstinline$(*)$ channel means the process on the left forks (using the channel with output polarity), and a \lstinline$(+)$ channel means the process on the right forks (using the channel with input polarity).
@@ -1846,7 +1564,7 @@ The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the chang
 
 Again, if the type of a channel is not explicitly defined, using \lstinline$fork$ on the output polarity end and \lstinline$split$ on the input polarity end will force the type of the channel to be \lstinline$(*)$.
 Dually, using \lstinline$split$ on the output polarity end and \lstinline$fork$ on the input polarity end will force the type of the channel to be \lstinline$(+)$.
-In the above example, \ref{ex:sendersplit}, the type of channel \lstinline$source$ is \lstinline$(+)$ because the process that uses the \lstinline$fork$ command is \lstinline$broadcast$, which is on the input polarity end.
+In Example \ref{ex:sendersplit}, the type of \lstinline$source$ is \lstinline$(+)$ because \lstinline$sender$ is on the output polarity end and \lstinline$broadcast$ is on the input polarity end.
 Table \ref{Table: Usage of fork and split process commands} describes the usage of the \lstinline$fork$ and \lstinline$split$ commands on a channel based on its type and polarity.
 \begin{table}[h]
 \begin{center}
@@ -1871,38 +1589,6 @@ Table \ref{Table: Usage of fork and split process commands} describes the usage 
 	\label{Table: Usage of fork and split process commands}
 \end{center}
 \end{table}
-%
-%Let us look at an example usage of the {\tt split} and {\tt fork} commands where a client process forks into two processes and a server process splits its channel to the client to connect to the two new clients. 
-%
-%\begin{center}
-%	\begin{varwidth}{\linewidth}
-%		\begin{verbatim}
-%			1. proc client :: | => P (*) P =
-%			2.    | => _2_ch 
-%			3.		-> fork _2_ch as
-%			        	ch1 -> client_helper("Client 1: " | => ch1)
-%			        	ch2 -> client_helper("Client 2: " | => ch2)
-%			
-%			4. proc server :: | P (*) P => =
-%			5.    | _2_ch => -> do
-%			6.        split _2_ch into ch1, ch2
-%			7.        server_helper( | ch1, ch2 => )
-%			         
-%			8. proc run :: | => =
-%			9.    | => -> 
-%			10.		plug
-%			 	       client( | => _2_ch )
-%			         server( | _2_ch => )
-%		\end{verbatim}
-%	\end{varwidth}
-%\end{center}
-%
-%\begin{itemize}
-%	\item In line 10, the {\tt run} process creates a {\tt server} and a {\tt client} process and plugs them via channel. The {\tt client} and the {\tt server} processes run in parallel. From the type signature of server and the client process, we know that this channel is of type {\tt P(*)P}.
-%	\item In line 3, the client process forks on the output channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. The fork command creates two new {\tt client\_helper} processes and run them in parallel.
-%	\item In line 6, the {\tt server} process splits the input channel {\tt 2\_ch} of type {\tt P(*)P} to get to new channels {\tt ch1} and {\tt ch2}. At this point the {\tt server} process will be blocked, until the client runs the {\tt fork} command.
-%	\item The {\tt server} resumes execution in line 7, and invokes a {\tt server\_helper} process with the two new channels given by the {\tt split} process command.
-%\end{itemize}
 
 {\bf Note on logic:} The {\tt split} and the {\tt fork} process commands arise directly from the two-sidedness of the rules of the linear logic. The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. The rule $\otimes_R$ is same as {\tt fork}ing over an input channel, and the rule $\oplus_L$ is same as {\tt fork}ing over an output channel.
 \begin{figure}[h]
@@ -1924,14 +1610,14 @@ The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules fo
 \comment{TODO: recall example?}
 %In Example ??, 
 
-The \lstinline$race$ command can be used to race channels on which a blocking \lstinline$get$ command is the next command that can be used on the channel \footnote{ We are working on adding support to race on other blocking process commands, i.e. \lstinline$hcase$, \lstinline$split$. Current compiler support is only for \lstinline$get$ on \lstinline$Put$ or \lstinline$Get$ channels.}. 
+The \lstinline$race$ command can be used to race channels on which a blocking \lstinline$get$ command is the next command that can be used on the channel.\footnote{ We are working on adding support to race on other blocking process commands, i.e. \lstinline$hcase$, \lstinline$split$. Current compiler support is only for \lstinline$get$ on \lstinline$Put$ or \lstinline$Get$ channels.}
 That is, input polarity \lstinline$Put$ channels or output polarity \lstinline$Get$ channels.
 A race allows the process to unblock when any channel in the race unblocks, i.e. when the first message is received on any of the channels in the race.
 We call this channel the {\em winner} of the race.
 When the process unblocks, the process will execute the winner's corresponding process command block.
 The rest of the process bodies are ignored.
 Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
-The \lstinline$race$ command must be the last command in a process block.
+The \lstinline$race$ command must be the last command in a command block.
 
 
 
@@ -2115,509 +1801,6 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 \end{itemize}
 
 
-
-
-
-	
-\section{Example programs}
-
-\comment{we need to see what to do about this section.}
-
-In all the examples, the processes interact with the outside world using two special channels ---  a protocol called {\tt StringTerminal} and a coprotocol {\tt Console} --- which are hard-coded in the compiler. 
-\begin{itemize}
-	\item The {\tt Console} type channels allow communication with the outside world via the console in which the CaMPL program is executed. The console coprotocol provides handles {\tt ConsolePut}, {\tt ConsoleGet}, and {\tt ConsoleClose} which is used to send string, receive string from console, and to close console respectively. 
-	
-	\item Each {\tt StringTerminal} channel, on the other hand, is connected to an {\em Alacritty}\footnote{https://alacritty.org/} terminal process, and allows reading and writing to the terminal. 
-\end{itemize}
-  
-Both the special (co)protocol declarations are available in the Prelude file, see Appendix \ref{prog:prelude}.
-
-\subsection{Hello World}
-\label{sec:Hello World}
-
-In this example, we demonstrate a CaMPL process printing ``Hello World" on the console via an input channel named {\tt console}. The console is a special coprotocol channel hard-coded in the compiler which connects to the  terminal from which the program is run.
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc helloworld :: | Console => = 
-			2.    | console => -> do
-			3.        hput ConsolePut on console              
-			4.        put "Hello World" on console.      -- sends message to the console        
-			
-			5.        hput ConsoleClose on console       
-			6.        halt console	                      -- closes console channel and halts               
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-The {\tt helloworld} process is invoked as follows:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc run = 
-			2.    | console => -> helloworld( |console=>)  -- create a process helloworld
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-
-A sample output from the console is as follows:
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		> CaMPL helloWorld.mpl 
-			 Hello World
-	 >
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-	
-
-\subsection{GetUntil}		   
-This example extends the "Hello World" example by reading input from the console and printing it to the console. In this example, a process named {\tt getSomethingUntil} reads an input string from the console recursively and prints it (on the console). When the user enters the string {\tt q}, the process halts.
-
-Reading an input string uses {\tt ConsoleGet} handle while printing the string uses {\tt ConsolePut} handle. The code for the process is as follows:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc getSomethingUntil :: | Console =>  = 
-			2.    | console => -> do 
-			3.        on console do
-			4.            hput ConsolePut 
-			5.            put "Enter any string (Enter q to exit)" 
-			
-			6.            hput ConsoleGet 
-			7.            get input
-			
-			8.        case isExit(input) of 
-			9.            True -> do 
-			10.                on console do 
-			11.                    hput ConsolePut 
-			12.                    put "Exiting..." 
-			13.                    hput ConsoleClose
-			14.                    halt  
-			15.            False -> do 
-			16.                on console do 
-			17.                    hput ConsolePut 
-			18.                    put ("I received " ++ input) 
-			19.                getSomethingUntil( | console => )   --recursive call
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-
-The {\tt getSomethingUntil} process is invoked as follows:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc run = 
-			2.    | console => -> getSomethingUntil( | console => )
-		\end{verbatim}
-	\end{varwidth}
-\end{center}	
-
-Full version of the program is available in Appendix \ref{prog:getUntil}. A sample output from the console is as follows:
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		> CaMPL getUntil.mpl 
-			 Enter any string (Enter q to exit)
-			 Apple
-			 I received Apple
-			 Enter any string (Enter q to exit)
-			 Orange
-			 I received Orange
-			 Enter any string (Enter q to exit)
-			 q
-			 Exiting...
-		>
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-\subsection{Simple EchoServer}
-\label{Sec:Simple EchoServer}
-The examples so far demonstrated communication between a process and the outside world via the console. In this example, we have two user-defined processes -- a client and a server. A client reads input string from the terminal, and sends it to the server. The server on listens to the client and on receiving an input string, it prints it to the console. When the user enters {\tt q}, the client and the server halt.
-\[ \includegraphics[scale=0.08]{figs/echo-topology.jpeg} \]
-
-The processes use \texttt{Echo} protocol for communication. It provides a handle \texttt{EchoSend} which constructs a channel of {\tt Put( [Char] | S} type. A channel of {\tt Put( [Char] | S)} type means that a process may send/receive a message of type {\tt [Char]} over this channel after which the channel becomes of type {\tt S}. The handle \texttt{EchoClosed} is used to close a channel of \texttt{Echo} type. 
-
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. protocol Echo => S =
-			2.    EchoSend :: Put( [Char] | S)) => S
-			3.    EchoClose :: TopBot => S
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-
-The main process creates a client and a server process as follows which are plugged together by a channel:
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc run = 
-			2.    | console => term -> plug 
-			3.        client( | => ch, term )
-			4.        server( | ch, console => )
-		\end{verbatim}
-	\end{varwidth}
-\end{center}	
-
-The client process is connected to an output channel of type \texttt{Echo}. It first reads a string (provided by the user) from the terminal. If the input string is not {\tt q}, then the client will place the \texttt{EchoSend} handle on the channel and \texttt{put} the string. Otherwise, it will place the \texttt{EchoClose} handle on the channel and halt.
-
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc client :: | => Echo, StringTerminal =
-			2.    | => ch, term -> do
-			3.        on term do 
-			4.            hput StringTerminalPut 
-			5.            put "Enter any string (Enter q to exit)" 
-			6.            hput StringTerminalGet 
-			7.            get input 
-			
-			8.        case isExit(input) of 
-			9.            True -> do                               
-			10.                on term do 
-			11.                    hput StringTerminalClose
-			12.                    close 
-			13.                on ch do 
-			14.                    hput EchoClose
-			15.                    halt 
-			16.            False -> do                             
-			17.                on ch do 
-			18.                    hput EchoSend 
-			19.                    put input 
-			20.                client( |  => ch, term )            -- recursion
-		\end{verbatim}
-	\end{varwidth}
-\end{center}
-
-The server process is connected to an input channel of type \texttt{Echo}. It first listens to handles from the client using \texttt{hcase}. If the handle received is \texttt{EchoSend}, then it receives data (sent by the client) using \texttt{get}. If the handle received is \texttt{EchoClose} then it closes it connection with the channel and halts. 
-\begin{center}
-	\begin{varwidth}{\linewidth}
-		\begin{verbatim}
-			1. proc server :: | Echo, Console => =
-			2.    | ch, console => -> do
-			3.        hcase ch of
-			4.            EchoSend -> do
-			5.                get input on ch 
-			6.                on console do
-			7.                    hput ConsolePut 
-			8.                    put ("I received " ++ input) 
-			
-			9.                server( | ch, console => )                 
-			10.            EchoClose -> do
-			11.                on console do 
-			12.                    hput ConsolePut
-			13.                    put "Done"
-			14.                    hput ConsoleClose
-			15.                    close 
-			16.                halt ch
-		\end{verbatim}
-	\end{varwidth}
-\end{center}	
-
-A full version of the program is available in Appendix \ref{prog:echo}. A sample output is shown below. The screenshot shows the client terminal. The server output on the console is as follows:-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		> CaMPL echoServer.mpl 
-		  I received Apple
-		  I received Orange
-		  Done
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-\[ \includegraphics[scale=0.5]{figs/echo-server.png} \]
-
-\subsection{Echo Server 2.0: Non-deterministic communication}
-
-This example demonstrates two clients racing to send a message to an echo server. The server prints the messages in the order it receives those messages. The server halts after printing both the messages. The clients halt as soon as they send. 
-\[ \includegraphics[scale=0.1]{figs/non-det.jpeg} \]
-
-The {\tt run} process initiates two clients tagged by {\tt"1"} and {\tt"2"} and a server:
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc run :: | Console => StringTerminal, StringTerminal =
-		2.    | console => term1, term2 -> plug
-		3.        client("1:"| => ch1, term1 )
-		4.        client("2:"| => ch2, term2)
-		5.        server( |ch1, ch2, console => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-The server sets up a race between the client processes using {\tt race} command. When one of the client wins, it calls a helper process to receive message from the winning client. The server has two input channels of type {\tt Put([Char] | TopBot)} --- this means that the server may {\tt get} a message of {\tt [Char]} type over this channel after which the channel becomes of the type {\tt TopBot}.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
-		2.    | ch1, ch2, console => -> race
-		3.        ch1 -> do
-		4.            receive_message_and_continue( | ch1, ch2, console => )
-		5.        ch2 -> do 
-		6.            receive_message_and_continue( | ch2, ch1, console => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-When one of the clients win the race, the server invokes a helper process to get message from the winning client, to outputs the message on the console, and to then get message from the losing client, and output the message on the console.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc receive_message_and_continue :: 
-		2.	| Put([Char] | TopBot), Put([Char] | TopBot), Console => = 
-		3.    | winner, loser, console => -> do
-		4.        get message on winner
-		5.        hput ConsolePut on console
-		6.        put message on console
-		7.        close winner 
-		
-		8.        get message on loser
-		9.        hput ConsolePut on console
-		10.        put message on console
-		11.        close loser  
-		
-		12.        on console do
-		13.            hput ConsolePut 
-		14.            put "Done. Halting server."   
-		15.            hput ConsoleClose
-		16.            halt
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-Each client is connected to its own StringTerminal. When a client receives an input from user in its terminal, it sends it to the server.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
-		2.    tag | => ch, term -> do
-		3.        on term do
-		4.            hput StringTerminalPut
-		5.            put tag ++ "Input a string"
-		6.            hput StringTerminalGet
-		7.            get message
-		
-		8.        on ch do
-		9.            put tag ++ message
-		10.            close
-		
-		11.        on term do 
-		12.            hput StringTerminalClose
-		13.            halt 
-	\end{verbatim}
-\end{varwidth}
-\end{center}	
-
-A full version of the program is available in Appendix \ref{prog:EchoServer-2.0}. When the program is run, it opens two Alacrity windows (one for each client tagged by client number) waiting for input from user. 
-\[ \includegraphics[scale=0.45]{figs/race-output.PNG}\]
-
-\subsection{Echo Server 3.0: Higher-order message passing}
-
-In this extended example, we demonstrate higher-order message passing, that is, how a process can be encoded as a message and sent to another process, which can then decodes the message and runs the process it has received.
-
-In this example, we will encode {\tt proc helloworld} from Section \ref{sec:Hello World} into a sequential message. A client process sends this message to its server, which then runs the {\tt Hello World}.
-
-The main process creates a {\tt client} and a {\tt server} process. 
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc run = 
-		2.    | console =>  -> plug 
-		3.        client( | => ch )
-		4.        server( | ch, console => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-The {\tt client} process has an output channel of type {\tt Put( Store(|Console=>) | TopBot}, that the client can send a sequential type {\tt Store(|Console=>)} over this channel using {\tt put} command after which the channel assumes the type {\tt TopBot}. Recall that only channels of {\tt TopBot} type can be {\tt close}d or {\tt halt}ed. The sequential type {\tt Store(|Console=>)} refers to the encoding of a process with type signature {\tt ( |Console=> )}, that is the process has a single output channel of type {\tt Console}.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc client :: | => Put( Store( | Console => ) | TopBot  ) =
-		2.    | => ch -> do
-		3.        on ch do 
-		4.            put store(hello_world) 
-		5.            halt
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-The {\tt server} process has two input channels of type {\tt Put(Store(|Console =>)| TopBot)} and {\tt Console}. The server and the client are plugged via the {\tt Put} type channel. The server receives the stored process, in this case, {\tt helloworld}, over channel {\tt ch} and closes {\tt ch}. In its last line of 4, it invokes the {\tt stored\_process} with required arguments using the {\tt use} command.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc server :: | Put( Store( | Console => ) | TopBot  ), Console => =
-		2.    | ch, console => -> do
-		3.        on ch do
-		4.            get stored_process 
-		5.            close 
-		
-		6.        on console do 
-		7.            hput ConsolePut 
-		8.            put ("Server says: Running the stored process")
-		        
-		9.        use(stored_process)( | console => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-On running the program, the {\tt server} and the {\tt helloworld} prints the following message on the console:
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		> CaMPL echoServer-higher-order.mpl 
-		  Server says: Running the stored process
-		  Stored process says: Hello World
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-	
-Full version of the program is available in Appendix \ref{appendix: stored process example}.
-
-\subsection{Memory Cell: Mutual Exclusive access of shared memory}
-\label{sec:memcell}
-
-This example simulates mutual exclusive access of a memory cell between two CaMPL processes tagged {\tt "A"} and {\tt "B"}. The example uses {\tt fork} and {\tt split} to pass a {\tt Mutex} channel type. The {\tt fork} creates new processes are created during program execution.
-
-\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \] 
-
-The code primarily has three processes:- 
-\begin{enumerate}
-	\item a process {\tt memAccess} which reads and writes to the memory, 
-	\item a process {\tt memWait}, and a Memory cell process, and 
-	\item a process {\tt memCell}, which is the memory cell.
-\end{enumerate}
-
-Process {\tt memAccess} is connected to {\tt memCell} via an output channel using {\tt MemCh} protocol, defined as follows. The protocol provides to read, write and close a memory cell.
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. protocol MemCh (A | ) => S =
-		2.     MemPut :: Put(A|S) => S
-		3.     MemGet :: Get(A|S) => S
-		4.     MemCls :: TopBot => S
-			\end{verbatim}
-\end{varwidth}
-\end{center}
-
-{\tt Mutex} protocol is used communication for between the {\tt MemWait} (at output end) and {\tt MemAccess} processes (at input end). 
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. protocol Mutex( | M ) => S =
-		2.    Pass :: M (+) Neg(S)  => S
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-The {\tt Neg} type is used to convert an input {\tt Mutex} channel into an output {\tt Mutex} channel, and vice versa. For example, {\tt memAccess} uses the {\tt Neg} type to convert an input {\tt Mutex} channel into an output {\tt Mutex} channel, and invoke {\tt memWait} using the converted type. 
-
-The program begins execution with the main process defined as follows:-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-		1. proc run =
-		2.    | => _strterm0, _strterm1 -> do
-		3.        plug 
-		4.            memAccess("A:" | mutex => mem, _strterm0)
-		5.            memWait("B:" |        => mutex, _strterm1)
-		6.            memCell( "I like dogs" | mem => )
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-We have two processes named {\tt "A"} and {\tt "B"} competing to access the memory cell. Each of these processes access a string terminal to read user input which is stored in memory. To begin with Process {\tt A} starts by running {\tt memAccess} and process {\tt B} starts by running {\tt memWait}.
-
-{\tt memWait} and {\tt memAccess} are mutually recursive processes. The process running {\tt memAccess} calls {\tt memWait} (once the read/write is complete), and vice versa.
-
-{\tt memWait} sends {\tt Pass} handle over {\tt mutex} to {\tt memAccess}. On receiving the handle, {\tt memAccess} reads and writes to the memory over the {\tt mem} channel. Once it completes, it forks over the {\tt mutex} channel and invokes {\tt memWait} using {\tt plug}. The input {\tt Neg(Mutex)} needs to be negated to get an output {\tt Mutex} channel type, which is then used in the invocation of {\tt memWait}.
-
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-    1. proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) 
-    2.	=> MemCh([Char]| ), StringTerminal =
-    3.    tag | mutex => mem, _strterm -> hcase mutex of 
-    4.        Pass -> do 
-    5.            hput MemGet on mem
-    6.            get inp on mem
-
-    7.            hput StringTerminalPut on _strterm
-    8.            put append(tag, " Receiving: ") on _strterm
-
-    9.            hput StringTerminalPut on _strterm
-    10.            put inp on _strterm
-
-    11.            hput StringTerminalPut on _strterm
-    12.            put append(tag, " Enter a string: ") on _strterm
-
-    13.            hput StringTerminalGet on _strterm
-    14.            get ninp on _strterm
-
-    15.            hput MemPut on mem
-    16.            put ninp on mem
-
-    17.            fork mutex as
-    18.                mmem with mem -> mmem |=| mem
-
-    19.                negmutex with _strterm -> do
-    20.                    plug
-    21.                        memWait(tag | => nmutex, _strterm)
-    22.                        nmutex, negmutex => -> negmutex |=| neg nmutex
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-
-
-
-
-%The protocol {\tt Mutex} has an input channel type {\tt M} and an output channel type {\tt S}. The handle {\tt Pass} type constructs from {\tt S} a compound {\tt (+)} type channel. The protocol {\tt MemCh} is used communication between {\tt MemAccess} and Memory cell for reading, writing and closing a memory cell.
-
-Process {\tt memWait} activates the {\tt mutex} channel by sending {\tt Pass} handle over it. Then it blocks itself using {\tt split} command. When {\tt memAccess} executes {\tt fork} command, the {\tt memWait} is unblocked and invokes {\tt memAccess} using {\tt plug}. The output {\tt Neg(Mutex)} needs to be negated to get an input {\tt Mutex} channel.
-\begin{center}
-\begin{varwidth}{\linewidth}
-	 \begin{verbatim}
-	1.    proc memWait :: [Char] |  => Mutex( | MemCh([Char] | )), StringTerminal =
-	2.        tag | => mutex, _strterm -> do
-	3.            hput Pass on mutex
-	4.            split mutex into mem, negmutex
-	
-	5.            plug
-	6.                memAccess(tag | nmutex => mem, _strterm)
-	7.                => negmutex, nmutex -> negmutex |=| neg nmutex
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-The process {\tt memCell} takes an input {\tt MemCh} channel, reads and writes to it.
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-	1.	proc memCell :: A | MemCh(A | ) => =
-	2.	    val | ch => -> hcase ch of
-	3.	        MemPut -> do
-	4.	            get nval on ch
-	5.	            memCell(nval | ch => )
-	6. 	        MemGet -> do
-	7.	            put val on ch
-	8.	            memCell(val | ch => )
-	9.	        MemCls -> do
-	10.	            halt ch
-	\end{verbatim}
-\end{varwidth}
-\end{center}
-
-The full version of the code is available in Appendix \ref{prog:mem-cell}. A screenshot of the output is given below. To begin with process {\tt A} reads ``I like dogs" from the memory cell and writes ``Apple" to the memory cell. Process  {\tt B} reads ``Apple" from memory cell and writes ``Orange" to it. Process then {\tt A} reads ``Orange" from the memory cell.
-\[ \includegraphics[scale=0.35]{figs/memcell-output.png} \]
-
-
-
 \section{Mathematical Underpinning}
 
 % convey that these constructs are coming from a mathematical foundation and not just ``out of thin air'' 
@@ -2646,8 +1829,8 @@ This tier concerned with generation of messages represents the logic of computat
 \[ \Phi \vdash A \]
 where the {\em antecedent} (which we will also call the {\em context}) of $\Phi$ is a comma-separated list of formulas and the {\em succedent} $A$ is a single formula. The term calculus for this logic is given in Figure \ref{Fig:MsgRules}. In the inference rules, {\em subs} stands for substitution and is the cut rule. 
 
-\begin{figure}
-\centering
+\begin{figure}[h]
+	\centering
 	\includegraphics[scale=0.5]{figs/MsgRules.PNG}
 	\caption{Inference rules for {\bf Msg}}
 	\label{Fig:MsgRules}
@@ -2658,21 +1841,21 @@ where the {\em antecedent} (which we will also call the {\em context}) of $\Phi$
 	The logic of message, {\bf PMsg}, passing concerned with communication over channels represents the logic of communication, and is concerned with channels over which processes communicate messages. A sequent of {\bf PMsg} has three components all of which are unordered lists: list $\Phi$ of message types, list $\Lambda$ of left polarity channels, and list $\Delta$ of right polarity channels which, together define a sequent of PMsg: 
 \[ \Phi ~|~ \Lambda \vvdash \Delta \]	
 The inference rules for {\bf PMsg} are presented in Figure \ref{Fig:PMsgRules}. Most of the rules of this calculus are standard ones for two-sided multiplicative linear logic except the {\em action} rules $\circ_l$, $\circ_r$, $\bullet_l$, and $\bullet_r$ which allow messages to be bound to channels of interaction.
-\begin{figure}
-\centering
+\begin{figure}[p]
+	\centering
 	\includegraphics[scale=0.6]{figs/PMsgRules.PNG}
-	\caption{Inference rules for {\bf PMsg}}
-	\label{Fig:PMsgRules}
+	\caption{Inference rules for {\bf PMsg} \label{Fig:PMsgRules}}
 \end{figure}
 	
 Thus, the message passing logic provides a clean separation of computation and communication layers thereby allowing the complexities associated with each layer to be addressed effectively. Figure \ref{Fig:programming-syntax} provides the programming syntax for CaMPL.
-\begin{figure}
-\centering
+\begin{figure}[p]
+	\centering
 	\includegraphics[scale=0.6]{figs/programming-syntax.png}
-	\caption{Programming syntax for {\bf PMsg}}
-	\label{Fig:programming-syntax}
+	\caption{Programming syntax for {\bf PMsg} \label{Fig:programming-syntax}}
 \end{figure}
 
+
+\newpage
 
 \begin{appendix}
 \section{Examples: Complete programs}
@@ -2680,315 +1863,592 @@ Thus, the message passing logic provides a clean separation of computation and c
 \subsection{Prelude}
 \label{prog:prelude}
 
-\textcolor{red}{Todo: Add Prelude file.}
+CaMPL has a module system that allows one to import and use code defined in other files.
+This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:}.
+We demonstrate how to import the \lstinline{Prelude} in 
+\ref{prog:h.o.hello_world}, \ref{prog:user_input_client_server}, \ref{prog:broadcastmsgs}, \ref{prog:stack_print}, and \ref{prog:mem-cell}.
 
-\subsection{Get Until}
-\label{prog:getUntil}
-\begin{center}
-\begin{varwidth}{\linewidth}
-	\begin{verbatim}
-	include Prelude 
-	
-	fun isExit :: [Char] -> Bool = 
-	    [] -> False
-	    x:xs -> if x == 'q' then True else False
-	
-	proc getSomethingUntil :: | Console =>  = 
-	    | console => -> do 
-	        on console do
-	            hput ConsolePut 
-	            put "Enter any string (Enter q to exit)" 
-	
-	            hput ConsoleGet 
-	            get input
-	
-	        case isExit(input) of 
-	            True -> do 
-	                on console do 
-	                    hput ConsolePut 
-	                    put "Exiting..." 
-	                    hput ConsoleClose
-	                    halt  
-	            False -> do 
-	                on console do 
-	                    hput ConsolePut 
-	                    put ("I received " ++ input) 
-	                getSomethingUntil( | console => )
-	
-	proc run = 
-	    | console =>  -> getSomethingUntil( | console => )	
-	
-	\end{verbatim}
-\end{varwidth}
-	------
-\end{center}
-\newpage
+\begin{lstlisting}
+-- from Example 12:
+protocol StringTerminal => S =
+    StringTerminalPut :: Put([Char]|S) => S
+    StringTerminalGet :: Get([Char]|S) => S 
+    StringTerminalClose :: TopBot => S
 
-\subsection{Simple Echo Server}
-\label{prog:echo}
+coprotocol S => Console =
+    ConsolePut :: S => Get([Char]|S) 
+    ConsoleGet :: S => Put([Char]|S) 
+    ConsoleClose :: S => TopBot 
 
-\begin{center}
-	\begin{Verbatim}
-	include Prelude 
+-- from Example 15:
+fun isEmpty :: [Char] -> Bool =
+	[]	-> True
+	_		-> False
 	
-	fun isExit :: [Char] -> Bool = 
-	    [] -> False
-	    x:xs -> if x == 'q' then True else False
+-- from Example 16:
+fun (++) :: [A],[A] -> [A] =
+	a,[]			-> a
+	[],a 			-> a
+	(b:bs),cs	-> b : (bs ++ cs)  
+\end{lstlisting}
 	
-	protocol Echo => S =
-	    EchoSend :: Put( [Char] | S) => S
-	    EchoClose :: TopBot => S
-	
-	proc client :: | => Echo, StringTerminal =
-	    | => ch, term -> do
-	        on term do 
-	            hput StringTerminalPut 
-	            put "Enter any string (Enter q to exit)" 
-	            hput StringTerminalGet 
-	            get input 
-	
-	        case isExit(input) of 
-	            True -> do 
-	                on term do 
-	                    hput StringTerminalClose
-	                    close 
-	                on ch do 
-	                    hput EchoClose
-	                    halt 
-	            False -> do 
-	                on ch do 
-	                    hput EchoSend 
-	                    put input 
-	                client( |  => ch, term )
-	                
-	proc server :: | Echo, Console => =
-	    | ch, console => -> do
-	        hcase ch of
-	            EchoSend -> do
-	                get input on ch 
-	                on console do
-	                    hput ConsolePut 
-	                    put ("I received " ++ input) 
-	
-	                server( | ch, console => )                 
-	            EchoClose -> do
-	                on console do 
-	                    hput ConsolePut
-	                    put "Done"
-	                    hput ConsoleClose
-	                    close 
-	                halt ch
-	
-	proc run = 
-	    | console => term -> plug 
-	        client( | => ch, term )
-	        server( | ch, console => )
-	\end{Verbatim}
-		------
-\end{center}
+\TODO{complete Prelude file.}
 
 \newpage
+\subsection{Higher order Hello World}
+\label{prog:h.o.hello_world}
 
-\subsection{EchoServer 2.0}
-\label{prog:EchoServer-2.0}
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:helloworld} and \ref{ex:hoprocs}.
 
-\begin{center}
-	\begin{Verbatim}
-		include Prelude
-		
-		proc client :: [Char] | => Put( [Char] | TopBot), StringTerminal =
-		    tag | => ch, term -> do
-		        on term do
-		            hput StringTerminalPut
-		            put tag ++ "Input a string"
-		            hput StringTerminalGet
-		            get message
-		
-		        on ch do
-		            put tag ++ message
-		            close
-		
-		        on term do 
-		            hput StringTerminalClose
-		            halt 
-		
-		proc receive_message_and_continue :: | Put([Char] | TopBot), 
-		Put([Char] | TopBot), Console => = 
-		    | winner, loser, console => -> do
-		        get message on winner
-		        hput ConsolePut on console
-		        put message on console
-		        close winner 
-		
-		        get message on loser
-		        hput ConsolePut on console
-		        put message on console
-		        close loser  
-		
-		        on console do
-		            hput ConsolePut 
-		            put "Done. Halting server."   
-		            hput ConsoleClose
-		            halt
-		                       
-		proc server :: | Put([Char] | TopBot), Put([Char] | TopBot), Console => =
-		    | ch1, ch2, console => -> race
-		        ch1 -> do
-		            receive_message_and_continue( | ch1, ch2, console => )
-		        ch2 -> do 
-		            receive_message_and_continue( | ch2, ch1, console => )
-		
-		proc run :: | Console => StringTerminal, StringTerminal =
-		    | console => term1, term2 -> plug
-		        client("1:"| => ch1, term1 )
-		        client("2:"| => ch2, term2)
-		        server( |ch1, ch2, console => )
-	\end{Verbatim}
-	------
-\end{center}
-\newpage 
+\begin{lstlisting}
+import Prelude
 
-\subsection{EchoServer 3.0}
-\label{appendix: stored process example}
+-- from Example 1:
+proc helloworld :: | Console => =
+	| console => -> do
+		hput ConsolePut on console
+		put "Hello World!" on console
+		hput ConsoleClose on console
+		halt console
 
-\begin{center}
-	\begin{Verbatim}
-		include Prelude
-		
-		proc hello_world :: | Console =>  =
-		     | console =>  ->  do 
-		        on console do 
-		            hput ConsolePut
-		            put "Stored process says: Hello World "
-		            hput ConsoleClose 
-		            halt
-		
-		proc client :: | => Put( Store( | Console => ) | TopBot  ) =
-		    | => ch -> do
-		        on ch do 
-		            put store(hello_world) 
-		            halt
-		
-		proc server :: | Put( Store( | Console => ) | TopBot  ), Console => =
-		    | ch, console => -> do
-		        on ch do
-		            get stored_process 
-		            close 
-		
-		        on console do 
-		            hput ConsolePut 
-		            put ("Server says: Running the stored process")
-		        
-		        use(stored_process)( | console => )
-		
-		proc run = 
-		    | console =>  -> plug 
-		        client( | => ch )
-		        server( | ch, console => )
-	\end{Verbatim}
-		------
-\end{center}
+-- from Example 21:
+proc ho_sender :: | => Put( Store(|Console=>) | TopBot) = 
+	| => ch -> do
+		on ch do
+			put store(helloworld)	
+			halt
+			
+proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
+	| ch, console => -> do
+		on ch do
+			get stored_process
+			close
+		on console do
+			hput ConsolePut
+			put ("Higher order receiver says: Running the stored process")
+		use(stored_process)( | console => )
+
+-- new code:
+proc run :: | Console => = 
+	| console => -> plug
+		ho_sender( | => ch)
+		ho_receiver( | ch, console => )
+\end{lstlisting}
+
+
 \newpage
+\subsection{Requesting user input continuously}
+\label{prog:user_input_client_server}
 
-\subsection{Memory Cell}
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:serverclientwithservices}, \ref{ex:serverclientwithservices-branching}.
+
+\begin{lstlisting}
+import Prelude
+
+-- from Example 8:
+protocol PassMessages (A| ) => S =
+    SendMsg :: Put(A|S) => S 
+    CloseCh :: TopBot => S
+
+-- from Example 20:
+proc client :: | => PassMessages([Char]|), StringTerminal =
+	| => ch, terminal -> do
+		on terminal do	
+			hput StringTerminalPut
+			put "Hello User! Enter message in terminal. Press ENTER to close."
+			hput StringTerminalGet
+			get msg
+		if isEmpty(msg)
+			then do
+				on ch do 
+					hput CloseCh
+					close 
+				on terminal do
+					hput StringTerminalClose	
+					halt 
+			else do
+				on ch do											
+					hput SendMsg
+					put msg
+				client( | => ch, terminal)
+
+-- from Example 13:
+proc server :: | PassMessages([Char]|), Console => =
+    | ch, console => -> do
+        hcase ch of
+            SendMsg -> do
+                get msg on ch
+                on console do
+                    hput ConsolePut
+                    put "message from user: " ++ msg
+                server( | ch, console => )
+            CloseCh -> do
+                close ch
+                on console do
+                    hput ConsoleClose
+                    halt
+                    
+proc run :: | Console => StringTerminal = 
+    | console => terminal -> plug
+        client( | => ch, terminal)
+        server( | ch, console => )
+\end{lstlisting}
+
+
+\newpage
+\subsection{Broadcasting a single message}
+\label{prog:broadcastmsg}
+
+Note that this program will not produce observable effects when it is run.
+This program combines code from Examples \ref{ex:broadcastmsg}, \ref{ex:negdest1}, \ref{ex:sender}.
+\begin{lstlisting}
+-- from Example 24:
+proc sender :: | => Put([Char] | Get([Char] | TopBot)) =
+	| => source ->
+		on source do
+			put "Hi everyone!"
+			get confirmation_msg
+			halt
+			
+-- from Example 3:
+proc broadcast :: [Char] | Put([Char] | Get([Char] | TopBot)) 								=> Put([Char] | TopBot), Put([Char] | TopBot) =
+	confirmation_msg | source => dest1, dest2 -> do
+		get msg on source
+		put msg on dest1
+		put msg on dest2
+		put confirmation_msg on source
+		close source
+		close dest1
+		halt dest2
+		
+-- from Example 7:
+proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
+	| source, neg_dest1 => -> do
+		on source do
+			get msg
+			close
+		plug
+			neg_dest1, dest1 => ->
+				neg_dest1 |=| neg dest1
+			=> dest1 ->
+				on dest1 do	
+					put msg
+					halt
+					
+-- new code:
+proc1 :: | => Neg(Put([Char] | TopBot)) =
+	| => neg_dest1 -> plug
+		=> neg_dest1, dest1 ->
+			neg_dest1 |=| neg dest1
+		dest1 => ->
+			on dest1 do	
+				get msg
+				halt
+
+proc2 :: | Put([Char] | TopBot) => =
+	| dest2 => ->
+		on dest2 do
+			get msg
+			halt
+
+-- from Example 7:
+proc run =
+	| => -> plug
+		sender( | => source)
+		broadcast("broadcast confirmation" | source => dest1, dest2)
+		send_to_dest1( | dest1, neg_dest1 => )
+		proc1( | => neg_dest1)	
+		proc2( | dest2 =>)
+\end{lstlisting} 
+
+\newpage
+\subsection{Broadcasting an arbitrary number of messages}
+\label{prog:broadcastmsgs}
+
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:recbroadcast}, \ref{ex:coprotocolcopassmsgs},  \ref{ex:coprotocoldest1}.
+
+\begin{lstlisting}
+import Prelude
+
+-- from Example 8:
+protocol PassMessages (A| ) => S =
+	SendMsg :: Put(A|S) => S 
+	CloseCh :: TopBot => S
+
+protocol PassMsgsWithConf (A| ) => S =
+	SendMsgWithConf :: Put(A|Get([Char]|S)) => S
+	CloseConfCh :: TopBot => S 
+	
+-- from Example 10:
+coprotocol S => CoPassMessages (A| ) =
+	CoSendMsg ::  S => Get(A|S)
+	CoCloseCh :: S => TopBot
+
+-- new code:
+proc sender :: | Console => PassMsgsWithConf([Char]| ) =
+	| console => source -> do
+		on console do	
+			hput ConsolePut
+			put "Hello User! Enter message to broadcast. Press ENTER to close."
+			hput ConsoleGet
+			get msg
+		if isEmpty(msg)
+			then do
+				on source do 
+					hput CloseConfCh
+					close 
+				on console do
+					hput ConsoleClose	
+					halt 
+			else do
+				on source do											
+					hput SendMsgWithConf
+					put msg
+					get confirmation_msg
+				on console do	
+					hput ConsolePut
+					put confirmation_msg
+				sender( | console => source)
+
+-- from Example 9:
+proc broadcast :: [Char] | PassMsgsWithConf([Char]| ) 												=> PassMessages([Char]| ), PassMessages([Char]| ) = 
+	confirmation_msg | source => dest1, dest2 -> do
+		hcase source of
+			SendMsgWithConf -> do
+				get msg on source
+				on dest1 do
+					hput SendMsg
+					put msg
+				on dest2 do
+					hput SendMsg
+					put msg
+				on source do
+					put confirmation_msg
+				broadcast(confirmation_msg | source => dest1, dest2)
+			CloseConfCh -> do
+				close source							
+				on dest1 do						
+					hput CloseCh
+					close
+				on dest2 do
+					hput CloseCh	
+					halt
+
+-- from Example 11:
+proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
+	| source, dest1 => -> 
+		hcase source of
+			SendMsg -> do
+				get msg on source 		
+				on dest1 do
+					hput CoSendMsg
+					put msg
+				send_to_dest1( | source, dest1 => )
+			CloseCh -> do
+				close source
+				on dest1 do
+					hput CoCloseCh
+					halt
+
+-- new code:
+proc proc1 :: [Char] | => CoPassMessages([Char]| ), StringTerminal =
+	tag | => source, terminal -> do
+		hcase source of
+			CoSendMsg -> do
+				get msg on source 		
+				on terminal do
+					hput StringTerminalPut
+					put tag ++ " received message: " ++ msg
+				proc1(tag | => source, terminal)
+			CoCloseCh -> do
+				close source
+				on terminal do
+					hput StringTerminalPut
+					put "Source has finished sending messages to " ++ tag ++ ". Press ENTER to close."
+					hput StringTerminalGet
+					get _
+					hput StringTerminalClose
+					halt
+
+proc proc2 :: [Char] | PassMessages([Char]| ) => StringTerminal =
+	tag | source => terminal -> do
+		hcase source of
+			SendMsg -> do
+				get msg on source 		
+				on terminal do
+					hput StringTerminalPut
+					put tag ++ " received message: " ++ msg
+				proc2(tag | source => terminal)
+			CloseCh -> do
+				close source
+				on terminal do
+					hput StringTerminalPut
+					put "Source has finished sending messages to " ++ tag ++ ". Press ENTER to close."
+					hput StringTerminalGet
+					get _
+					hput StringTerminalClose
+					halt
+
+proc run =
+    | console => term1, term2 -> plug
+        sender( | console => source)
+        broadcast("Message has been broadcasted." | source => dest1, dest2)
+        send_to_dest1( | dest1, codest1 => )
+        proc1("Process 1" | => codest1, term1)
+        proc2("Process 2" | dest2 => term2)
+\end{lstlisting}
+
+
+\newpage
+\subsection{Non-deterministic server interacts with two clients}
+\label{prog:user_input_client_server}
+
+Note that this program will not produce observable effects when it is run.
+This program combines code from Examples \ref{ex:serverecho}, \ref{ex:clientfork}, \ref{ex:nondetserver}.
+
+\begin{lstlisting}
+-- from Example 14:
+proc server_deterministic =
+	| winner, loser => -> do
+		on winner do
+			get msg
+			put msg
+			close
+		on loser do
+			get msg
+			put msg
+			halt
+			
+proc server =
+	| two_ch => -> do
+		split two_ch into ch1, ch2
+		race
+			ch1 -> server_deterministic( | ch1, ch2 => )	
+			ch2 -> server_deterministic( | ch2, ch1 => )	
+
+-- from Example 2:
+proc client = 
+	| => ch ->
+		on ch do 
+			put "Hello Server!"
+			get echo	
+			halt
+
+-- from Example 6:
+proc two_clients =
+	| => two_ch ->
+		fork two_ch as	
+			ch1 -> client( | => ch1)
+			ch2 -> client( | => ch2)
+			
+proc run :: | => = 
+ 	| => -> plug						
+ 		two_clients( | => two_ch)	
+ 		server( | two_ch => )
+\end{lstlisting}
+
+
+\newpage
+\subsection{Pushing messages onto a Stack codata type}
+\label{prog:stack_print}
+
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:codata stack}, \ref{ex:record}, \ref{ex:codata reverse_print}, and \ref{ex:serverclientwithservices-branching}.
+
+\begin{lstlisting}
+import Prelude
+
+-- from Example 17:
+data SF(A) -> C =
+	SS :: A -> C
+	FF :: -> C
+	
+codata S -> Stack(A) = 
+	Push :: A, S -> S
+	Pop :: S -> (SF(A),S)	
+
+-- from Example 18:	
+fun listStack :: [A] -> Stack(A) = 
+	cs -> (
+		Push := c -> listStack(c:cs),
+		Pop := -> case cs of	
+			b:bs -> (SS(b), listStack(bs))
+			[] -> (FF, listStack([]))
+		)
+
+-- from Example 19:
+fun flatten :: Stack([Char]) -> [Char] =
+	s -> case Pop(s) of
+		(SS(str), stack) -> str ++ " " ++ flatten(stack)
+		(FF, stack) -> ""
+        
+proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
+	stack | source, console => -> do
+		hcase source of
+			SendMsg -> do
+				get msg on source
+				reverse_print(Push(msg, stack) | source, console => )
+			CloseCh -> do
+				close source
+				on console do
+					hput ConsolePut
+					put "Printing stack from top to bottom: " ++ flatten(stack)
+					hput ConsoleClose
+					halt
+
+-- from Example 20:
+proc client :: | => PassMessages([Char]|), StringTerminal =
+	| => ch, terminal -> do
+		on terminal do	
+			hput StringTerminalPut
+			put "Hello User! Enter message in terminal. Press ENTER to close."
+			hput StringTerminalGet
+			get msg
+		if isEmpty(msg)
+			then do
+				on ch do 
+					hput CloseCh
+					close 
+				on terminal do
+					hput StringTerminalClose	
+					halt 
+			else do
+				on ch do											
+					hput SendMsg
+					put msg
+				client( | => ch, terminal)
+
+-- new code:
+proc run :: | Console => StringTerminal = 
+    | console => terminal -> plug
+        client( | => ch, terminal)
+        reverse_print(listStack([]) | ch, console => )		-- initializes stack
+\end{lstlisting}
+
+
+\newpage
+\subsection{Memory cell}
 \label{prog:mem-cell}
 
-\TODO{add a termination condition for user input so the program doesn't need to be ctrl+C'd}
-\TODO{change code like previous example so that memAccess doesn't wait until memWait requests access before starting its own access.}
+This program imports the \lstinline{Prelude} from \ref{prog:prelude} and modifies code from Examples \ref{ex:mutex-protocol} and \ref{ex:mem-cell}.
 
-\begin{center}
-	\begin{Verbatim}
-		include Prelude
-		
-		protocol StringTerminal => S =
-		    StringTerminalGet :: Get( [Char] | S) => S 
-		    StringTerminalPut :: Put( [Char] | S) => S
-		    StringTerminalClose :: TopBot => S
-		
-		protocol Mutex( | M ) => S =
-		    Pass :: M (+) Neg(S)  => S
-		
-		protocol MemCh (A | ) => S =
-		    MemPut :: Put(A|S) => S
-		    MemGet :: Get(A|S) => S
-		    MemCls :: TopBot => S
-		
-		fun append :: [A], [A] -> [A] =
-		    [], ts -> ts
-		    s:ss, ts -> s : append(ss,ts)
-		
-		proc memCell :: A | MemCh(A | ) => =
-		    val | ch => -> hcase ch of
-		        MemPut -> do
-		            get nval on ch
-		            memCell(nval | ch => )
-		        MemGet -> do
-		            put val on ch
-		            memCell(val | ch => )
-		        MemCls -> do
-		            halt ch
+\begin{lstlisting}
+import Prelude
+    
+-- modified from Example 22:
+protocol Mutex( |M) => S =
+	Pass :: M (+) Neg(S) => S
+	Done :: TopBot => S 									-- this handle is new
+    
+-- new code:
+protocol MemCh (A | ) => S =						-- memory cell access protocol
+	MemPut :: Put(A|S) => S 							-- write
+	MemGet :: Get(A|S) => S 							-- read
+	MemCls :: TopBot => S 								-- close
 
-		defn
-		    proc memAccess :: [Char] | Mutex( | MemCh([Char] | ) ) 
-		    => MemCh([Char]| ), StringTerminal =
-		        tag | mutex => mem, _strterm -> hcase mutex of 
-		            Pass -> do 
-		                hput MemGet on mem
-		                get inp on mem
-		
-		                on _strterm do 
-		                    hput StringTerminalPut
-		                    put (tag++ " Receiving: ")
-		
-		                    hput StringTerminalPut
-		                    put inp
-		
-		                    hput StringTerminalPut
-		                    put append(tag, " Enter a string: ")
-		
-		                    hput StringTerminalGet
-		                    get ninp
-		
-		                hput MemPut on mem
-		                put ninp on mem
-		
-		                fork mutex as
-		                    mmem with mem -> mmem |=| mem
-		
-		                    negmutex with _strterm -> do
-		                        plug
-		                            memWait(tag | => nmutex, _strterm)
-		                            nmutex, negmutex => -> negmutex |=| neg nmutex
-		
-		
-		    proc memWait :: [Char] |  => Mutex( | MemCh([Char] | )), StringTerminal =
-		        tag | => mutex, _strterm -> do
-		            hput Pass on mutex
-		            split mutex into mem, negmutex
-		
-		            plug
-		                memAccess(tag | nmutex => mem, _strterm)
-		                => negmutex, nmutex -> negmutex |=| neg nmutex
-		                    
-		proc run =
-		    | => _strterm0, _strterm1 -> do
-		        plug 
-		            memAccess("A:" | mutex => mem, _strterm0)
-		            memWait("B:" |        => mutex, _strterm1)
-		            memCell( "I like dogs" | mem => )
-	\end{Verbatim}
-		------
-\end{center}
+proc memCell :: A | MemCh(A | ) => =		-- memory cell process
+	val | ch => -> hcase ch of
+		MemPut -> do 												-- overwrite existing stored value
+			get nval on ch
+			memCell(nval | ch => )
+		MemGet -> do 												-- send stored value
+			put val on ch
+			memCell(val | ch => )
+		MemCls -> do 												-- close
+			halt ch
 
-A screenshot of the output is given below. 
-First, process {\tt A} reads ``I like dogs" from the memory cell and writes ``Apple" to the memory cell. 
-Then, process  {\tt B} reads ``Apple" from memory cell and writes ``Orange" to it. 
-Finally, process {\tt A} reads ``Orange" from the memory cell.
-\[ \includegraphics[scale=0.35]{figs/memcell-output.png} \]
+proc memDone :: | Mutex( |MemCh([Char]| )) => MemCh([Char]| ),StringTerminal =
+	| mutex => mem, terminal -> do
+		on terminal do 											-- user wants to close
+			hput StringTerminalClose
+			close
+		hcase mutex of  										-- check if other proc wants mem
+			Pass -> do
+				fork mutex as
+					pass_mem with mem -> 					-- if they do, pass it back
+						pass_mem |=| mem
+					neg_mutex -> plug
+						neg_mutex, new_mutex => ->		
+							neg_mutex |=| neg new_mutex
+						=> new_mutex -> on new_mutex do
+							hput Done									-- but don't request it again
+							halt
+			Done -> do 												-- close if other proc is already done
+				close mutex
+				on mem do
+					hput MemCls
+					halt
+-- modified from Example 23:
+defn
+	proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ), StringTerminal =
+		tag | mutex => mem, terminal -> do	-- terminal is new
+			on mem do
+				hput MemGet
+				get mem_data
+			on terminal do										-- print mem data, get user input
+				hput StringTerminalPut
+				put tag ++ " read value: " ++ mem_data
+				hput StringTerminalPut
+				put tag ++ ", please enter a string or press ENTER to close."
+				hput StringTerminalGet
+				get user_input
+			if isEmpty(user_input)						-- check if user wants to close
+				then memDone( | mutex => mem, terminal)
+				else do													-- if they don't, it's the same
+					on mem do
+						hput MemPut
+						put user_input
+					hcase mutex of 
+						Pass -> do
+							fork mutex as
+								pass_mem with mem -> 
+									pass_mem |=| mem
+								neg_mutex with terminal -> plug
+									neg_mutex, new_mutex => ->		
+										neg_mutex |=| neg new_mutex
+									memWait(tag | => new_mutex, terminal)	-- and keep terminal
+						Done -> do									-- but other proc might be done
+							close mutex
+							on mem do
+								hput MemCls
+								close
+							on terminal do
+								hput StringTerminalPut
+								put "Other process is done. Press ENTER to close."
+								hput StringTerminalGet
+								get _
+								hput StringTerminalClose
+								halt
+		
+	proc memWait :: [Char] | => Mutex( |MemCh([Char]| )), StringTerminal =
+		tag | => mutex, terminal -> do			-- terminal is new
+			hput Pass on mutex
+			split mutex into mem, neg_mutex
+			plug
+				=> neg_mutex, new_mutex -> 
+					neg_mutex |=| neg new_mutex
+				memAccess(tag | new_mutex => mem, terminal)	-- we use it in memAccess
+
+proc run =
+	| => terminalPing, terminalPong -> plug 
+		memCell( "" | mem => )
+		memAccess("Ping" | mutex => mem, terminalPing)
+		memWait("Pong" | => mutex, terminalPong)
+\end{lstlisting}
+
+We visualize the process network for the memory cell program in the following schematic:
+\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \] 
+
 
 \end{appendix}
 
 \end{document}
+
+
+
+
+
+
+
 
 DEPRECATED:
 
@@ -3088,7 +2548,6 @@ proc run :: | LogConsole => ClientConsole =
 
 \end{verbatim}
 
-\section{Memory Cell}
 
 
 
