@@ -360,11 +360,10 @@ The type of a channel can either be explicitly defined in the type signature of 
 \subsubsection{\lstinline$Put$ and \lstinline$Get$ types}
 \label{Sec:putandget}
 
-As mentioned in Section~\ref{Sec:Processes}, process definitions may include a type
-signature with three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
+As mentioned in Section~\ref{Sec:Processes}, process definitions may include a type signature with three comma-separated lists of sequential types, input concurrent types, and output concurrent types.
 Variables and channels are bound to types in the order they appear.
 
-We will now modify \lstinline$server$ from Example~\ref{ex:serverecho} and include its type signature.
+We modify \lstinline$server$ from Example~\ref{ex:serverecho} and include its type signature.
 To effectively illustrate the types, we redefine \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to  \lstinline$client$:
 \begin{lstlisting}[label=ex:serverid-run, caption=Server replies to Client with server id]
 proc server :: Int | Put([Char]|Get(Int|TopBot)) => =		-- type signature
