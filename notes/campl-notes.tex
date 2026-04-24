@@ -1896,6 +1896,8 @@ fun (++) :: [A],[A] -> [A] =
 	
 \TODO{complete Prelude file.}
 
+\TODO{make schematics visualizing process networks}
+
 \newpage
 \subsection{Higher order Hello World}
 \label{prog:h.o.hello_world}
@@ -2038,7 +2040,7 @@ proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
 					halt
 					
 -- new code:
-proc1 :: | => Neg(Put([Char] | TopBot)) =
+proc proc1 :: | => Neg(Put([Char] | TopBot)) =
 	| => neg_dest1 -> plug
 		=> neg_dest1, dest1 ->
 			neg_dest1 |=| neg dest1
@@ -2047,7 +2049,7 @@ proc1 :: | => Neg(Put([Char] | TopBot)) =
 				get msg
 				halt
 
-proc2 :: | Put([Char] | TopBot) => =
+proc proc2 :: | Put([Char] | TopBot) => =
 	| dest2 => ->
 		on dest2 do
 			get msg
@@ -2086,7 +2088,7 @@ coprotocol S => CoPassMessages (A| ) =
 	CoSendMsg ::  S => Get(A|S)
 	CoCloseCh :: S => TopBot
 
--- new code:
+-- new code (combines ideas from Examples 13 and 20):
 proc sender :: | Console => PassMsgsWithConf([Char]| ) =
 	| console => source -> do
 		on console do	
@@ -2152,7 +2154,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					hput CoCloseCh
 					halt
 
--- new code:
+-- new code (combines ideas from Examples 13 and 20):
 proc proc1 :: [Char] | => CoPassMessages([Char]| ), StringTerminal =
 	tag | => source, terminal -> do
 		hcase source of
@@ -2332,6 +2334,8 @@ proc run :: | Console => StringTerminal =
 \label{prog:mem-cell}
 
 This program imports the \lstinline{Prelude} from \ref{prog:prelude} and modifies code from Examples \ref{ex:mutex-protocol} and \ref{ex:mem-cell}.
+We visualize the process network for the memory cell program in the following schematic:
+\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \] 
 
 \begin{lstlisting}
 import Prelude
@@ -2437,8 +2441,6 @@ proc run =
 		memWait("Pong" | => mutex, terminalPong)
 \end{lstlisting}
 
-We visualize the process network for the memory cell program in the following schematic:
-\[ \includegraphics[scale=0.1]{figs/MemCell.jpeg} \] 
 
 
 \end{appendix}
