@@ -346,7 +346,7 @@ The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lsti
 In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred differently compared to the previous step.
 
 Channel polarities allow one to define unambiguous interactions between processes. 
- Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time.
+Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command at the same time.
 Then, they would both wait for a message to be sent by the other, thereby causing a deadlock. 
 This scenario is illustrated in Appendix \ref{Sec: channel polarity deadlock prevention}.
 
