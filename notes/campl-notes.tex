@@ -952,10 +952,51 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
 
+Table \ref{Table:summary} summarizes the interactions provided by the built-in channel types [Kum18, Section 3.3.2]. We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
+\TODO{check that all forward and back references are correct}
+
+%\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
+
+\begin{table}[h]
+\begin{center}
+	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.2cm} | }
+	\hline
+		 Channel type & Description & Process command & Section \\
+		 \hline
+		 \hline      
+		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Neg(Ch)$ & Dual interaction of \lstinline$Ch$ by negating and identifying with another channel.  & \lstinline$neg$ and \lstinline$|=|$  &  \\
+		 \hline      
+		 \lstinline$Put(A|Ch)$ & Message of type \lstinline$A$ travels from left to right (output to input polarity).  & \lstinline$put$/\lstinline$get$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{Sec:putandget} \\
+		 \hline      
+		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{Sec:tensorandpar} \\
+		 \hline
+		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{Sec:tensorandpar} \\
+		 \hline
+		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{Sec:protocols} \\
+		 \hline
+		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{Sec:protocols} \\
+		 \hline
+		  N/A & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{Sec:overview} \\
+		 \hline
+		  \lstinline$Put(A|Ch)$ or \newline \lstinline$Get(A|Ch)$ & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{Sec:races} \\
+		 \hline
+		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \\
+		 \hline
+		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \\
+		 \hline
+	\end{tabular}
+	\caption{Summary of channel types and process commands.}
+	\label{Table:summary}
+\end{center}
+\end{table}
+
 \comment{the idea is the type system parts can focus on the concepts and be like a nice paper to read and then the proc commands section can be more like a manual because we don't really have a manual manual. they should be able to write some programs after the concurrent and sequential type system sections, and if they have compiler errors or ``why isn't this working'' questions then they can go to the process commands section.}
 
-We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
-\TODO{check that all forward and back references are correct}
+
 
 \subsection{Connecting processes using {\tt plug}}
 
@@ -1707,46 +1748,6 @@ The following table summarizes the interactions provided by the built-in channel
 We denote an argument for a sequential type with \lstinline$A$ and a concurrent channel type with \lstinline$Ch$, \lstinline$Ch1$, and \lstinline$Ch2$.
 Channel types that take another channel type as an argument are recursive cases.
 The outer most layer is the first interaction that will take place, and after that, the interaction will continue according to the type of the channel given as the argument.
-
-%\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
-
-\begin{table}[h]
-\begin{center}
-	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.2cm} | }
-	\hline
-		 Channel type & Description & Process command & Section \\
-		 \hline
-		 \hline      
-		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{Sec:putandget} \\
-		 \hline      
-		 \lstinline$Neg(Ch)$ & Dual interaction of \lstinline$Ch$ by negating and identifying with another channel.  & \lstinline$neg$ and \lstinline$|=|$  &  \\
-		 \hline      
-		 \lstinline$Put(A|Ch)$ & Message of type \lstinline$A$ travels from left to right (output to input polarity).  & \lstinline$put$/\lstinline$get$ & \ref{Sec:putandget} \\
-		 \hline      
-		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{Sec:putandget} \\
-		 \hline      
-		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{Sec:tensorandpar} \\
-		 \hline
-		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{Sec:tensorandpar} \\
-		 \hline
-		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{Sec:protocols} \\
-		 \hline
-		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{Sec:protocols} \\
-		 \hline
-		  N/A & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{Sec:overview} \\
-		 \hline
-		  \lstinline$Put(A|Ch)$ or \newline \lstinline$Get(A|Ch)$ & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{Sec:races} \\
-		 \hline
-		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \\
-		 \hline
-		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \\
-		 \hline
-	\end{tabular}
-	\caption{Summary of channel types and process commands.}
-	\label{Table:summary}
-\end{center}
-\end{table}
-
 
 
 Here are a few practical programming notes:
