@@ -127,10 +127,9 @@ proc client =
 			halt
 \end{lstlisting}
 
-The client process has an output channel \lstinline$ch$ which connects it to the server.
-It sends its message with \lstinline$put$, and it receives the server's echo with \lstinline$get$.
-Then, it uses \lstinline$halt$ to close the channel with the server and halt.
-We can define \lstinline$client$ as follows:
+The server process has an input channel \lstinline$ch$ which connects it to the client.
+It listens to the client and receives the client's message with \lstinline$get$, echos the message back with \lstinline$put$, and finally closes the channel and halts with \lstinline$halt$.
+We can define \lstinline$server$ as follows:
 \begin{lstlisting}
 proc server =  
 	| ch => ->
