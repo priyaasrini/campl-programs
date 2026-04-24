@@ -1665,6 +1665,62 @@ The \lstinline$race$ command must be the last command in a command block.
 
 \subsection{Service channels}
 
+\TODO{explain ConsoleStringTerminal handle can be used to create a new channel to a Terminal in addition to the existing channel to the Console}
+
+The complete list of service channel handles supported by CaMPL is as follows:
+\begin{lstlisting}
+protocol Terminal => S =
+    StringTerminalPut :: Put( [Char] | S) => S
+    StringTerminalGet :: Get( [Char] | S) => S 
+    StringTerminalClose :: TopBot => S
+    
+    IntTerminalPut :: Put( Int | S) => S
+    IntTerminalGet :: Get( Int | S) => S 
+    IntTerminalClose :: TopBot => S
+
+    CharTerminalPut :: Put( Char | S) => S
+    CharTerminalGet :: Get( Char | S) => S 
+    CharTerminalClose :: TopBot => S
+
+coprotocol S => Console =
+    ConsolePut :: S => Get( [Char] | S) 
+    ConsoleGet :: S => Put( [Char] | S) 
+    ConsoleClose :: S => TopBot 
+
+    ConsoleStringTerminal :: S => S (+) Neg(Terminal)
+
+    IntConsolePut :: S => Get( Int | S) 
+    IntConsoleGet :: S => Put( Int | S) 
+    IntConsoleClose :: S => TopBot 
+
+    CharConsolePut :: S => Get( Char | S) 
+    CharConsoleGet :: S => Put( Char | S) 
+    CharConsoleClose :: S => TopBot 
+
+coprotocol S => Timer =
+    Timer :: S => Get(Int | S (*) Put(() | TopBot))
+    TimerClose :: S => TopBot 
+\end{lstlisting} 
+
+Note that one can define service channels with any subset of these handles.
+However, since handles must be globally unique, each handle can only be defined for one service channel at a time.
+For example, we can define three different protocols in the place of \lstinline{Terminal}:
+\begin{lstlisting}
+protocol StringTerminal => S =
+    StringTerminalPut :: Put( [Char] | S) => S
+    StringTerminalGet :: Get( [Char] | S) => S 
+    StringTerminalClose :: TopBot => S
+
+protocol IntTerminal => S =
+    IntTerminalPut :: Put( Int | S) => S
+    IntTerminalGet :: Get( Int | S) => S 
+    IntTerminalClose :: TopBot => S
+
+protocol CharTerminal => S =
+    CharTerminalPut :: Put( Char | S) => S
+    CharTerminalGet :: Get( Char | S) => S 
+    CharTerminalClose :: TopBot => S
+\end{lstlisting} 
 
 %
 %\subsection{Higher-order message passing using {\tt store} and {\tt use}}
