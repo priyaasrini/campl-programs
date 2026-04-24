@@ -959,34 +959,34 @@ Table \ref{Table:summary} summarizes the interactions provided by the built-in c
 
 \begin{table}[h]
 \begin{center}
-	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.2cm} | }
+	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.4cm} | }
 	\hline
-		 Channel type & Description & Process command & Section \\
+		 Channel type & Description & Process command & Example \\
 		 \hline
 		 \hline      
-		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{Sec:putandget} \\
+		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{ex:serverid} \\
 		 \hline      
-		 \lstinline$Neg(Ch)$ & Dual interaction of \lstinline$Ch$ by negating and identifying with another channel.  & \lstinline$neg$ and \lstinline$|=|$  &  \\
+		 \lstinline$Neg(Ch)$ & Dual interaction of \lstinline$Ch$ by negating and identifying with another channel.  & \lstinline$neg$ and \lstinline$|=|$  &  \ref{ex:negdest1}, \ref{ex:mem-cell} \\
 		 \hline      
-		 \lstinline$Put(A|Ch)$ & Message of type \lstinline$A$ travels from left to right (output to input polarity).  & \lstinline$put$/\lstinline$get$ & \ref{Sec:putandget} \\
+		 \lstinline$Put(A|Ch)$ & Message of type \lstinline$A$ travels from left to right (output to input polarity).  & \lstinline$put$/\lstinline$get$ & \ref{ex:serverid} \\
 		 \hline      
-		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{Sec:putandget} \\
+		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{ex:serverid} \\
 		 \hline      
-		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{Sec:tensorandpar} \\
+		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{ex:clientfork}, \ref{ex:broadcastfork} \\
 		 \hline
-		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{Sec:tensorandpar} \\
+		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{ex:sendersplit} \\
 		 \hline
-		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{Sec:protocols} \\
+		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{ex:protocolpassmsgs}, \ref{ex:recbroadcast} \\
 		 \hline
-		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{Sec:protocols} \\
+		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{ex:coprotocolcopassmsgs}, \ref{ex:coprotocoldest1} \\
 		 \hline
-		  N/A & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{Sec:overview} \\
+		  N/A & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{ex:serverecho} \\
 		 \hline
-		  \lstinline$Put(A|Ch)$ or \newline \lstinline$Get(A|Ch)$ & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{Sec:races} \\
+		  \lstinline$Put(A|Ch)$ or \newline \lstinline$Get(A|Ch)$ & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{ex:nondetserver} \\
 		 \hline
-		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \\
+		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \ref{ex:hoprocs} \\
 		 \hline
-		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \\
+		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \ref{ex:hoprocs} \\
 		 \hline
 	\end{tabular}
 	\caption{Summary of channel types and process commands.}
