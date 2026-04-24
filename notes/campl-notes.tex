@@ -957,11 +957,11 @@ Table \ref{Table:summary} summarizes the interactions provided by the built-in c
 
 %\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
 
-\begin{table}[h]
+\begin{table}[!ht]
 \begin{center}
-	\quad \begin{tabular}{ |m{3.5cm} | m{7cm} | m{2cm} | m{1.4cm} | }
+	\quad \begin{tabular}{ |m{3.3cm} | m{6.75cm} | m{2.4cm} | m{1.4cm} | }
 	\hline
-		 Channel type & Description & Process command & Example \\
+		 Channel type & Description & Process \newline command & Example \\
 		 \hline
 		 \hline      
 		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{ex:serverid} \\
@@ -972,13 +972,13 @@ Table \ref{Table:summary} summarizes the interactions provided by the built-in c
 		 \hline      
 		 \lstinline$Get(A|Ch)$ & Message of type \lstinline$A$ travels from right to left (input to output polarity). & \lstinline$get$/\lstinline$put$ & \ref{ex:serverid} \\
 		 \hline      
-		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{ex:clientfork}, \ref{ex:broadcastfork} \\
+		 \lstinline$Ch1(*) Ch2$ & Left process becomes two processes both connected to the right process.  & \lstinline$fork$/\lstinline$split$ & \ref{ex:clientfork} \\
 		 \hline
-		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{ex:sendersplit} \\
+		 \lstinline$Ch1(+) Ch2$ & Right process becomes two processes both connected to the left process.  & \lstinline$split$/\lstinline$fork$ & \ref{ex:sendersplit}, \ref{ex:broadcastfork} \\
 		 \hline
-		 Custom \lstinline$protocol$ & Handles travel from left to right (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{ex:protocolpassmsgs}, \ref{ex:recbroadcast} \\
+		 Custom \lstinline$protocol$ & Handles travel from left to right \newline (output to input polarity). & \lstinline$hput$/\lstinline$hcase$ & \ref{ex:protocolpassmsgs}, \ref{ex:recbroadcast} \\
 		 \hline
-		 Custom \lstinline$coprotocol$ & Handles travel from right to left (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{ex:coprotocolcopassmsgs}, \ref{ex:coprotocoldest1} \\
+		 Custom \lstinline$coprotocol$ & Handles travel from right to left \newline (input to output polarity). & \lstinline$hcase$/\lstinline$hput$ & \ref{ex:coprotocolcopassmsgs}, \ref{ex:coprotocoldest1} \\
 		 \hline
 		  N/A & Connect pairs of processes by channels.  & \lstinline$plug$ & \ref{ex:serverecho} \\
 		 \hline
@@ -986,7 +986,9 @@ Table \ref{Table:summary} summarizes the interactions provided by the built-in c
 		 \hline
 		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \ref{ex:hoprocs} \\
 		 \hline
-		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \ref{ex:hoprocs} \\
+		  N/A & Decode and invoke the process \newline encoded in a \lstinline$Store$ type. & \lstinline$use$ & \ref{ex:hoprocs} \\
+		 \hline
+		  N/A & Conditional branching. & \lstinline$if-then-else$, \lstinline$case$, \lstinline$switch$ & \ref{ex:serverclientwithservices-branching}, \ref{ex:}\\
 		 \hline
 	\end{tabular}
 	\caption{Summary of channel types and process commands.}
@@ -1864,6 +1866,22 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 \section{Mathematical Underpinning}
 
 % convey that these constructs are coming from a mathematical foundation and not just ``out of thin air'' 
+
+FROM 8 PAGE INTRO COMMENTS:
+
+Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses message-passing concurrency.
+It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proof-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
+In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
+
+The categorical semantics of the message-passing logic is given by a {\em linear actegory} in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
+The covariant action passes messages in the forward direction, which we describe in this article as ``left to right,'' and the contravariant action passes messages in the backward direction, which we describe as ``right to left.''
+A linear actegory minimally consists of a monoidal category acting covariantly and contravariantly on a linearly distributive category, 
+%(LDC), 
+satisfying certain coherences~\cite{CoP07, CS97}. 
+
+END 8 PADE INTRO COMMENTS.
+
+
 
 The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. 
 
