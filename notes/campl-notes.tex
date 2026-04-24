@@ -1662,6 +1662,7 @@ The \lstinline$race$ command must be the last command in a command block.
 
 
 
+
 \subsection{Service channels}
 
 
@@ -1723,7 +1724,7 @@ The \lstinline$race$ command must be the last command in a command block.
 %
 
 
-
+\iffalse
 \section{Summary of compiler and interface design}
 
 CaMPL has concurrent and sequential types. Some useful tables and notes.
@@ -1800,7 +1801,7 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 	\item \texttt{on <channel> hput <handle>} instead of \texttt{hput <handle> on <channel>}. 
 	\item Currently, to halt a process, the channels are first closed and the final \texttt{halt <channel>} command takes in the name of the last channel to be closed. Instead, close all the channels followed by \texttt{halt} command.
 \end{itemize}
-
+\fi
 
 \section{Mathematical Underpinning}
 
