@@ -1722,6 +1722,8 @@ protocol CharTerminal => S =
     CharTerminalClose :: TopBot => S
 \end{lstlisting} 
 
+We have included a Prelude file in Appendix~\ref{prog:prelude} that provides service channel definitions.
+
 %
 %\subsection{Higher-order message passing using {\tt store} and {\tt use}}
 %
@@ -1927,16 +1929,41 @@ We demonstrate how to import the \lstinline{Prelude} in
 \ref{prog:h.o.hello_world}, \ref{prog:user_input_client_server}, \ref{prog:broadcastmsgs}, \ref{prog:stack_print}, and \ref{prog:mem-cell}.
 
 \begin{lstlisting}
--- from Example 12:
+-- from Example 12 and service channel manual:
 protocol StringTerminal => S =
-    StringTerminalPut :: Put([Char]|S) => S
-    StringTerminalGet :: Get([Char]|S) => S 
+    StringTerminalPut :: Put( [Char] | S) => S
+    StringTerminalGet :: Get( [Char] | S) => S 
     StringTerminalClose :: TopBot => S
 
+protocol IntTerminal => S =
+    IntTerminalPut :: Put( Int | S) => S
+    IntTerminalGet :: Get( Int | S) => S 
+    IntTerminalClose :: TopBot => S
+
+protocol CharTerminal => S =
+    CharTerminalPut :: Put( Char | S) => S
+    CharTerminalGet :: Get( Char | S) => S 
+    CharTerminalClose :: TopBot => S
+
 coprotocol S => Console =
-    ConsolePut :: S => Get([Char]|S) 
-    ConsoleGet :: S => Put([Char]|S) 
+    ConsolePut :: S => Get( [Char] | S) 
+    ConsoleGet :: S => Put( [Char] | S) 
     ConsoleClose :: S => TopBot 
+    ConsoleStringTerminal :: S => S (+) Neg(StringTerminal)
+
+coprotocol S => IntConsole =
+    IntConsolePut :: S => Get( Int | S) 
+    IntConsoleGet :: S => Put( Int | S) 
+    IntConsoleClose :: S => TopBot 
+
+coprotocol S => CharConsole =
+    CharConsolePut :: S => Get( Char | S) 
+    CharConsoleGet :: S => Put( Char | S) 
+    CharConsoleClose :: S => TopBot 
+
+coprotocol S => Timer =
+    Timer :: S => Get(Int | S (*) Put(() | TopBot))
+    TimerClose :: S => TopBot
 
 -- from Example 15:
 fun isEmpty :: [Char] -> Bool =
