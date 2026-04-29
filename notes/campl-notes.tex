@@ -678,42 +678,45 @@ It would wait for the first \lstinline$client$ before starting its interaction w
 For true concurrency, \lstinline$server$ should dynamically opt to have interactions in the order it receives messages. 
 % it's not the client that sends a message first because the server cannot know that. it only knows which one it receives first.
 We call this \tc{controlled non-determinism} which uses the \lstinline$race$ process command.
-A non-deterministic \lstinline$server$ is shown in Example~\ref{ex:nondetserver}:
+A \lstinline$server$ that calls a locally defined process \lstinline$non_deterministic_server$, which holds a \lstinline$race$, is shown in Example~\ref{ex:nondetserver}:
+% defn								-- invoke processes before they are defined using defn
+% where defn					-- locally define processes using where
 \begin{lstlisting} [label=ex:nondetserver, caption=Server echos each client in the order it receives messages]
-proc server_deterministic :: | 																							Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
-	| winner, loser => -> do
-		on winner do		-- interacts with client it received a message from first
-			get msg
-			put msg
-			close
-		on loser do			-- interacts with other client
-			get msg
-			put msg
-			halt
+defn
+	proc server =			-- echos msgs without making clients wait for each other
+		| two_ch => -> do
+			split two_ch into ch1, ch2
+			server_non_deterministic( | ch1, ch2 => )
 
-proc server_non_deterministic :: | 																						Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
-	| ch1, ch2 => -> do
-		race					-- controlled non-determinism via a race
-			ch1 -> server_deterministic( | ch1, ch2 => )		-- client on ch1 wins
-			ch2 -> server_deterministic( | ch2, ch1 => )		-- client on ch2 wins
-			
-proc server =
-	| two_ch => -> do
-		split two_ch into ch1, ch2
-		server_non_deterministic( | ch1, ch2 => )
+where defn
+	proc server_non_deterministic :: | 																				Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
+		| ch1, ch2 => -> do
+			race					-- controlled non-determinism via a race
+				ch1 -> server_deterministic( | ch1, ch2 => )		-- client on ch1 wins
+				ch2 -> server_deterministic( | ch2, ch1 => )		-- client on ch2 wins
+	
+	proc server_deterministic :: | 																						Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
+		| winner, loser => -> do
+			on winner do	-- interacts with client it received a message from first
+				get msg
+				put msg
+				close
+			on loser do		-- interacts with other client
+				get msg
+				put msg
+				halt
 \end{lstlisting}
 Races can be held for any number of channels on which a process is waiting for a message.
-The \lstinline$race$ on line 14 consists of channels \lstinline$ch1$ and \lstinline$ch2$ as indicated by lines 15 and 16, respectively.
+The \lstinline$race$ on line 10 consists of channels \lstinline$ch1$ and \lstinline$ch2$ as indicated by lines 11 and 12, respectively.
 A process body is defined for each channel in the race, and the process will execute according to the winning channel's corresponding process body.
-If \lstinline$ch1$ wins, line 15 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch1$ in the argument for the  \lstinline$winner$ channel.
-If \lstinline$ch2$ wins, line 16 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch2$ in the argument for the \lstinline$winner$ channel.
+If \lstinline$ch1$ wins, line 11 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch1$ in the argument for the  \lstinline$winner$ channel.
+If \lstinline$ch2$ wins, line 12 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch2$ in the argument for the \lstinline$winner$ channel.
 
 Notice that the type signatures of \lstinline$server_deterministic$ and \lstinline$server_non_deterministic$ are the same. 
 This is because races do not change channel types; they only change the order in which the steps of the interactions take place.
 Finer details on the \lstinline$race$ command are given in Section~\ref{sec:race-command}.
 
-Another use case for controlled non-determinism is a time out feature.
-We can implement this using the \lstinline{Timer} service channel:
+Another use case for races is a time out feature using the \lstinline{Timer} service channel:
 \begin{lstlisting}
 coprotocol S => Timer =
     Timer :: S => Get(Int|S (*) Put(()|TopBot))
