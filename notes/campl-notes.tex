@@ -789,6 +789,8 @@ Custom sequential types can be defined as data or codata.
 The value of variables can be used to conditionally branch the execution of functions and processes.
 Higher-order functions are not yet supported, so sequential functions cannot be represented as sequential types.
 However, higher-order processes are supported, so processes can be represented as sequential types and passed as higher-order messages.
+This section discusses these features, which are related to the sequential type system.
+We synthesize content from \cite{Ku18, Po21, Po22, No25}.
 
 \subsection{Functions}
 \label{sec:funcs}
@@ -810,10 +812,9 @@ fun (++) :: [A],[A] -> [A] =
 	(b:bs),cs	-> b : (bs ++ cs)
 \end{lstlisting}
 The parentheses around the function name indicate an infix function is being defined.
-The name of an infix function is required to contain only special characters with some constraints.
+The name of an infix function is required to contain only special characters with some constraints \cite{Fo23}.
 %https://github.com/campl-ucalgary/campl/blob/main/resources/notes_on_infix_operators.txt
 
-\TODO{add citation for braden's notes on infix naming constraints}
 
 CaMPL also supports mutually recursive function definitions using a \lstinline$defn$ statement and local function definitions using a \lstinline$where$ statement inside a \lstinline$defn$ statement. 
 We demonstrate a local function definition in Example~\ref{ex:codata reverse_print}.
@@ -2005,9 +2006,10 @@ Thus, the message passing logic provides a clean separation of computation and c
 	\caption{Programming syntax for {\bf PMsg} \label{Fig:programming-syntax}}
 \end{figure}
 
+\newpage
+\printbibliography
 
 \newpage
-
 \begin{appendix}
 \section{Examples: Complete programs}
 
