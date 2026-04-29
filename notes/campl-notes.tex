@@ -778,17 +778,16 @@ proc client :: | Timer => PassMessages([Char]|), StringTerminal =
 \label{Sec:SequentialTypes}
 
 The sequential part of CaMPL is a basic functional programming language.
-Higher-order functions are not yet supported.
-Codata types are supported.
-Sequential type for encoding processes and passing an encoded process as a message, that is, higher order message passing, is supported.
-
-\TODO{rephrase this intro to be more natural}
+Custom sequential types can be defined as data or codata.
+The value of variables can be used to conditionally branch the execution of functions and processes.
+Higher-order functions are not yet supported, so sequential functions cannot be represented as sequential types.
+However, higher-order processes are supported, so processes can be represented as sequential types and passed as higher-order messages.
 
 \subsection{Functions}
 \label{sec:funcs}
 
 Functions are defined using the \lstinline{fun} keyword, and they are called using their name and a comma-separated list of their input arguments enclosed in parentheses.
-Let us define a function that will take a list as input and return a \lstinline$Bool$ depending on whether the input list is empty or not. We will use this function in Example \ref{ex:serverclientwithservices-branching} to check whether the user has input an empty string.
+We define a function that will take a list as input and return a \lstinline$Bool$ depending on whether the input list is empty or not. We will use this function in Example \ref{ex:serverclientwithservices-branching} to check whether the user has input an empty string.
 \begin{lstlisting}[label=ex:isEmpty, caption=Sequential function that checks if a list is empty]
 fun isEmpty :: [A] -> Bool =
 	[]	-> True
@@ -797,7 +796,6 @@ fun isEmpty :: [A] -> Bool =
   
 %infix function syntax (like for example append? concat? as ++ )
 We can define infix functions such as concatenation \lstinline{++}, which we used on line 30 of Example~\ref{ex:serverclientwithservices} `\lstinline$put "message from user: "     ++ msg$':
-%An infix append function \lstinline{++} can be defined as follows:
 \begin{lstlisting}[label=ex:concat, caption=Infix concatenation function]
 fun (++) :: [A],[A] -> [A] =
 	a,[]			-> a
@@ -806,17 +804,17 @@ fun (++) :: [A],[A] -> [A] =
 \end{lstlisting}
 The parentheses around the function name indicate an infix function is being defined.
 The name of an infix function is required to contain only special characters with some constraints.
+%https://github.com/campl-ucalgary/campl/blob/main/resources/notes_on_infix_operators.txt
 
-\TODO{in process commands manual add section describing constraints of process commands?}
+\TODO{add citation for braden's notes on infix naming constraints}
 
 CaMPL also supports defining functions locally? using the \lstinline$where$ keyword inside a \lstinline$defn$ construct. 
 
 \TODO{test whether where locally defines a function or just allows the function to be defined after it is used}
 
 \subsection{Data and codata types}
-% maybe we need to change this sentence entirely so that there aren't three examples, but the for examples use so much more space than eg so i changed that back. i think the parentheses and commas make it grammatically correct though
 Built-in sequential types include \lstinline$Int$, \lstinline$Bool$, \lstinline$Char$, tuples (e.g., the unit \lstinline$()$ or pairs \lstinline$(Int,Bool)$), lists (e.g., strings \lstinline$[Char]$), and encoded processes (e.g., \lstinline$Store(Int|Console=>TopBot)$).
-Encoded processes in a \lstinline{Store} type can be passed as higher-order messages which we explain and demonstrate in Section~\ref{sec:homsgs}.
+Encoded processes can be passed as higher-order messages which we explain and demonstrate in Section~\ref{sec:homsgs}.
 
 %constructor :: data -> create data structure
 %case :: data structure -> access data
@@ -831,7 +829,6 @@ Instances of codata structures are built using \tc{records} that define an imple
 % lists can already grow infinitely, but you can't remove elements from a list infinitely.
 % stacks can be defined to allow infinite pops.
 Example \ref{ex:codata stack} defines a ``success or failure'' \lstinline{SF} data type (a.k.a. ``Maybe'') and a \lstinline{Stack} codata type which can optionally be implemented to be infinitely popped.
-% i think we should explain the SF data type. like i'm sure most people can figure it out but i feel like the SS/FF constructors are a robin thing
 \begin{lstlisting} [label=ex:codata stack, caption=Definition of a Stack codata type using a success/failure data type, numbers=left, name=codata]
 data SF(A) -> C =
 	SS :: A -> C  							-- Success constructor (a.k.a Just)
@@ -848,24 +845,15 @@ The \lstinline{SF} data type allows a \lstinline$Pop$ to safely fail if the \lst
 
 An instance of a \lstinline{Stack} can be built from a list using \lstinline{(:)} to implement the destructors.
 We define the following function \lstinline$listStack$ which returns a record that builds a \lstinline{Stack}:
-%that will produce a \tc{record} of the  Stack codata type from a list of sequential type \lstinline$A$. 
-\begin{lstlisting} [label=ex:record, caption=Function that produces a record to build Stack from a list, numbers=left, name=codata]
+\begin{lstlisting} [label=ex:record, caption=Function that returns a record to build a Stack from a list, numbers=left, name=codata]
 fun listStack :: [A] -> Stack(A) = 
 	cs -> (		-- given a list, returns the record:
 		Push := c -> listStack(c:cs),			-- implementation of Push
 		Pop := -> case cs of							-- implementation of Pop
-			b:bs -> (SS(b), listStack(bs))	-- pop top of the stack
-			[] -> (FF, listStack([]))				-- fail if stack is empty
+			b:bs -> (SS(b), listStack(bs))	-- pop the top of the stack
+			[] -> (FF, listStack([]))				-- fail if the stack is empty
 		)
-\end{lstlisting}  
-%We can now use the record above as follows in a \lstinline$run$ process as follows to push a string to stack and pop it:
-%this does not compile because you cannot use sequential statements in a process body. a process body must consist of process commands like plug, put, get, etc.
-%\begin{lstlisting} 
-%proc run =
-%      |  =>
-%       -> Pop(Push("Hello World", listStack([])))
-%\end{lstlisting} 
-%There is no visible output when this program is run. 
+\end{lstlisting} 
 
 We use a \lstinline{Stack} in the following \lstinline$reverse_print$ process to collect messages as they are received.
 Once all the messages have been received, we will \lstinline$flatten$ and print the \lstinline$stack$ from top to bottom.
@@ -891,7 +879,8 @@ proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
 					halt
 \end{lstlisting}
 Note that we don't actually require that \lstinline$stack$ is implemented using the \lstinline$listStack$ record.
-If we want to use that implementation, we can initialize \lstinline$stack$ as \lstinline{listStack([])} when \lstinline$reverse_print$ is first called.
+To use that implementation, we must initialize \lstinline$stack$ as \lstinline{listStack([])} when \lstinline$reverse_print$ is first called.
+A complete program based on this example is given in Appendix~\ref{prog:stack_print}.
 
 % \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack? no :((( :D }
 
