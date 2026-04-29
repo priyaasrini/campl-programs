@@ -936,11 +936,43 @@ The above example can also be implemented using \lstinline$case$:
 			<lines 17-20>
 \end{lstlisting}
 
+The above example can also be implemented using \lstinline$switch$:\begin{lstlisting}
+	switch
+		isEmpty(msg) -> do		-- user pressed ENTER, so close channels and halt
+			<lines 10-15>
+		True -> do						-- user has sent a message, so forward to server
+			<lines 17-20>
+\end{lstlisting}
+Note that \lstinline$switch$ statements streamline the code for an \lstinline$if$-\lstinline$then$-\lstinline$else if$-\lstinline$then$-\lstinline$...$-\lstinline$else$ statement rather than being a unique feature.
+That is, they execute the first process body in which the corresponding expression evaluates to \lstinline$True$.
+Thus, a catch-all default branch can be defined using \lstinline$True$ as the expression.
 
-\TODO{do we need an example for switch?}
-\TODO{do we need an example for pattern matching sequential types? we might be able to make these the same example?}
-
-A process definition may pattern match on instances of sequential types with different process body definitions.
+The above example can also be implemented by defining another process to mutually recurse with \lstinline{client} and conditionally branch using pattern matching on the instance of \lstinline{msg}: 
+\begin{lstlisting}[label=ex:pattern_matching, caption=Conditional branching using pattern matching]
+defn
+	proc client :: | => PassMessages([Char]|), StringTerminal =
+		| => ch, terminal -> do
+			on terminal do						-- receive msg from user
+				hput StringTerminalPut
+				put "Hello User! Enter message in terminal. Press ENTER to close."
+				hput StringTerminalGet
+				get msg
+			pattern_match(msg | => ch, terminal)
+	proc pattern_match :: [Char] | => PassMessages([Char]|), Terminal =
+		"" | => ch, terminal -> do	-- user pressed ENTER. close channels and halt
+			on ch do 
+				hput CloseCh
+				close 
+			on terminal do
+				hput StringTerminalClose	
+				halt 
+		msg | => ch, terminal -> do	-- user sent a message, so forward to server
+			on ch do											
+				hput SendMsg
+				put msg
+			client( | => ch, terminal)-- recurse 
+\end{lstlisting}   
+We discuss mutually recursive processes in Section~\ref{sec:calling_procs}.
 
 
 \subsection{Higher-order messages}
