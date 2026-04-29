@@ -299,6 +299,7 @@ In the first step of the above interaction, a message travels from left to right
 Recall that the polarity of the channel that each process uses defines that process's role in the interaction.
 The \lstinline$client$ uses \lstinline$put$ on its output polarity channel \lstinline$ch$ to send a message. Complementary to \lstinline$put$, \lstinline$server$ uses \lstinline$get$ on its input polarity channel \lstinline$ch$ to receive the message.
 In the second step, the message travels in the opposite direction, so the type of \lstinline$ch$ is inferred as the dual of the previous step and the processes use the dual commands.
+Finer details on dual channel types and complementary pairs of process commands are given in Section~\ref{subsec:pairs}.
 
 Channel polarities allow one to define unambiguous interactions between processes. 
 Without polarities to distinguish their roles, both \lstinline$client$ and \lstinline$server$ could use a \lstinline$get$ command in the first step of the interaction.
@@ -1258,11 +1259,11 @@ The \lstinline$halt$ command must be used as the last command in a command block
 \subsection{Complementary pairs }
 \label{subsec:pairs}
 
-We use the term {\em complementary pair} to describe the process commands that are used on a channel with the same type but on opposite polarities.
+\tc{Complementary pairs} are the process commands that are used on opposite polarities of a channel with a certain type.
 That is, two processes connected along a channel will each use one of the commands in a complementary pair to perform their role in the interaction.
-An extended discussion on defining the commands that can be used on a channel by both type and polarity is given in Section~\ref{Sec:polarities}.
+An extended discussion on the importance of channel polarities is given in Section~\ref{Sec:polarities}.
 
-In a complementary pair, one command {\em blocks} a process until the other process performs its command and {\em unblocks}. 
+In a complementary pair, one command \tc{blocks} a process until the other process performs the complementary command to \tc{unblock} it. 
 For example, the \lstinline$get$ command is used to receive a message, and it blocks until the other process performs its complementary \lstinline$put$ command to send the message.
 Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands and whether they are blocking or non-blocking.
 %In this section, we explain each of these commands and their usage. 
@@ -1311,7 +1312,7 @@ proc server =
 \end{lstlisting}
 The \lstinline$get$ command on line 11 blocks \lstinline$server$ until a value is received on channel \lstinline$ch$.
 When the value is received, it binds the value to the variable \lstinline$msg$ and proceeds down the process command block. 
-We say that \lstinline$ch$ is {\em used} in the \lstinline$get$ command, and hence, it must be in scope. 
+Channel \lstinline$ch$ is \tc{used} in the \lstinline$get$ command, and hence, it must be in scope. 
 The \lstinline$get$ command cannot be the last command in a command block. 
 
 The \lstinline$put$ command on line 4 sends the value \lstinline$"Hello Server!"$ on channel \lstinline$ch$ and proceeds down the process command block. 
@@ -1391,7 +1392,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					halt
 				
  \end{lstlisting}
-The \lstinline$hput$ command on line 15 {\em activates} channel \lstinline$dest1$ by setting its type according to the handle \lstinline$CoSendMsg$ and proceeds down the process command block.
+The \lstinline$hput$ command on line 15 \tc{activates} channel \lstinline$dest1$ by setting its type according to the handle \lstinline$CoSendMsg$ and proceeds down the process command block.
 Since \lstinline$dest1$ is used in the \lstinline$hput$ command, it must be in scope. 
 The \lstinline$hput$ command cannot be the last command in a command block. 
 Since protocols and coprotocols are concurrent analogues of inductive and coinductive data types, we can think of \lstinline$hput$ as constructing the handle on the channel.
@@ -1448,7 +1449,7 @@ proc sender =
 \end{lstlisting} 
 The \lstinline$split$ command on line 5 removes the channel \lstinline$source$ from scope, creates two new channels \lstinline$source1$ and \lstinline$source2$ in scope, and blocks \lstinline$sender$ until two new processes are created and connected on the new channels.
 After the \lstinline$split$ command unblocks, \lstinline$sender$ will proceed down the process command block, which means the process commands used on the two new channels in lines 6 - 8 and 9 - 11 will be executed sequentially.
-The \lstinline$source$ is {\em used} in the \lstinline$split$ command, so it must be in scope at line 5, but the command removes it from scope.
+The \lstinline$source$ is used in the \lstinline$split$ command, so it must be in scope at line 5, but the command removes it from scope.
 The two new channels will have the same polarity as the original channel.
 The \lstinline$split$ command cannot be the last command in a command block. 
 
@@ -1476,7 +1477,7 @@ proc broadcast =
 \end{lstlisting} 
 The \lstinline$fork$ command on line 17 removes the channel \lstinline$source$ from scope and creates two new channels that are each passed into one of the two process bodies on lines 18 - 23 and 24 - 29.
 After the \lstinline$fork$ command, the two process bodies each have one of the two new channels in scope and process commands in each process body will be executed concurrently.
-The \lstinline$source$ is {\em used} in the \lstinline$fork$ command, so it must be in scope at line 17, but it is removed from scope by the command.
+Channel \lstinline$source$ is used in the \lstinline$fork$ command, so it must be in scope at line 17, but it is removed from scope by the command.
 The two new channels will have the same polarity as the original channel.
 
 The \lstinline$fork$ command must be the last command in a command block. 
@@ -1703,6 +1704,8 @@ Table \ref{Table: Usage of fork and split process commands} describes the usage 
 \end{center}
 \end{table}
 
+
+\TODO{Should this be moved to the mathematical underpinning section?}
 {\bf Note on logic:} The {\tt split} and the {\tt fork} process commands arise directly from the two-sidedness of the rules of the linear logic. The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. The rule $\otimes_R$ is same as {\tt fork}ing over an input channel, and the rule $\oplus_L$ is same as {\tt fork}ing over an output channel.
 \begin{figure}[h]
 	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2}  \quad \quad \quad \quad \quad \quad \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
@@ -1721,18 +1724,15 @@ The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules fo
 \subsection{Controlled non-determinism using {\tt race}}
 \label{sec:race-command}
 
-\comment{TODO: recall example?}
-%In Example ??, 
-
 The \lstinline$race$ command can be used to race channels on which a blocking \lstinline$get$ command is the next command that can be used on the channel.\footnote{ We are working on adding support to race on other blocking process commands, i.e. \lstinline$hcase$, \lstinline$split$. Current compiler support is only for \lstinline$get$ on \lstinline$Put$ or \lstinline$Get$ channels.}
 That is, input polarity \lstinline$Put$ channels or output polarity \lstinline$Get$ channels.
 A race allows the process to unblock when any channel in the race unblocks, i.e. when the first message is received on any of the channels in the race.
-We call this channel the {\em winner} of the race.
-When the process unblocks, the process will execute the winner's corresponding process command block.
+We call this channel the \tc{winner} of the race.
+When the process unblocks, it will execute the winner's corresponding process body.
 The rest of the process bodies are ignored.
-Since only one of the race process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
+Since only one of the race's process bodies will be executed, all existing open channels in scope must be closed or passed into another process by the end of each process body.
 The \lstinline$race$ command must be the last command in a command block.
-
+We demonstrate the \lstinline$race$ command in the examples in Section~\ref{Sec:races}.
 
 
 
