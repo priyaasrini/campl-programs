@@ -706,20 +706,73 @@ Races can be held for any number of channels on which a process is waiting for a
 The \lstinline$race$ on line 14 consists of channels \lstinline$ch1$ and \lstinline$ch2$ as indicated by lines 15 and 16, respectively.
 A process body is defined for each channel in the race, and the process will execute according to the winning channel's corresponding process body.
 If \lstinline$ch1$ wins, line 15 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch1$ in the argument for the  \lstinline$winner$ channel.
-If \lstinline$ch2$ wins, lines 16 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch2$ in the argument for the \lstinline$winner$ channel.
-Finer details on the \lstinline$race$ process command are given in Section~\ref{sec:race-command}.
+If \lstinline$ch2$ wins, line 16 will execute and \lstinline$server_deterministic$ will be called with \lstinline$ch2$ in the argument for the \lstinline$winner$ channel.
 
 Notice that the type signatures of \lstinline$server_deterministic$ and \lstinline$server_non_deterministic$ are the same. 
-This is because the interactions that happen on the channels are the same, and the only difference between the two versions is the order in which the steps of the interaction take place.
+This is because races do not change channel types; they only change the order in which the steps of the interactions take place.
+Finer details on the \lstinline$race$ command are given in Section~\ref{sec:race-command}.
 
-We can also use controlled non-determinism and the \lstinline{Timer} service channel to implement time out features.
+Another use case for controlled non-determinism is a time out feature.
+We can implement this using the \lstinline{Timer} service channel:
 \begin{lstlisting}
 coprotocol S => Timer =
     Timer :: S => Get(Int|S (*) Put(()|TopBot))
     TimerClose :: S => TopBot 
 \end{lstlisting}
+This service is a coprotocol, so we use it on an input polarity channel.
+Thus, the \lstinline{Get(Int|...)} type of the \lstinline{Timer} handle allows one to \lstinline{put} an integer with a time limit in microseconds.
+To set a timer for 60 seconds, that is 60 000 000.
+The \lstinline{(*)} type allows one to split the channel and reuse the recursive part to set arbitrarily many timers.
+Finally, the \lstinline{Put(()|...)} type in the non-recursive part can be used in a \lstinline{race}.
+%After the specified time limit, the service channel will send an empty tuple \lstinline{()}, so the process will unblock from the race.
+We modify Example~\ref{ex:serverclientwithservices} to demonstrate this:
+\begin{lstlisting}[label=ex:clienttimeout, caption=Client that times out the Terminal after 60 seconds.]
+proc client :: | Timer => PassMessages([Char]|), StringTerminal =
+	| timer => ch, terminal -> do
+		on terminal do
+			hput StringTerminalPut
+			put "Hello User! Please enter message. Terminal will time out in 60 s."
+			hput StringTerminalGet
+		on timer do
+			hput Timer
+			put 60000000											-- set time limit for 60 seconds
+		split timer into new_timer, times_up
+		on new_timer do										 	-- no recursion, so close new_timer
+			hput TimerClose
+			close
+		race
+			times_up -> do										-- if the timer wins, user timed out
+				on times_up do
+					get ()
+					close
+				on ch do												-- don't forward anything to server
+					hput CloseCh
+					close
+				on terminal do									-- halt after msg is finally received
+					get msg
+					hput StringTerminalPut
+					put "User timed out. Message not sent."
+					hput StringTerminalClose
+					halt
+			terminal -> do										-- if user wins, run original code
+				get msg on terminal
+				on ch do
+					hput SendMsg
+					put msg
+					hput CloseCh
+					close
+				on terminal do
+					hput StringTerminalPut
+					put "Sent message to server. Press ENTER to close terminal."
+					hput StringTerminalGet
+					get _
+					hput StringTerminalClose
+					close
+				on times_up do									-- then close the timer and halt
+					get ()
+					halt
+\end{lstlisting}
 
-\TODO{add another example with Timer}
 
 \section{Sequential types}
 \label{Sec:SequentialTypes}
