@@ -2055,12 +2055,12 @@ coprotocol S => Timer =
     Timer :: S => Get(Int | S (*) Put(() | TopBot))
     TimerClose :: S => TopBot
 
--- from Example 15:
+-- from Example 16:
 fun isEmpty :: [A] -> Bool =
 	[]	-> True
 	_		-> False
 	
--- from Example 16:
+-- from Example 17:
 fun (++) :: [A],[A] -> [A] =
 	a,[]			-> a
 	[],a 			-> a
@@ -2088,7 +2088,7 @@ proc helloworld :: | Console => =
 		hput ConsoleClose on console
 		halt console
 
--- from Example 21:
+-- from Example 23:
 proc ho_sender :: | => Put( Store(|Console=>) | TopBot) = 
 	| => ch -> do
 		on ch do
@@ -2127,7 +2127,7 @@ protocol PassMessages (A| ) => S =
     SendMsg :: Put(A|S) => S 
     CloseCh :: TopBot => S
 
--- from Example 20:
+-- from Example 21:
 proc client :: | => PassMessages([Char]|), StringTerminal =
 	| => ch, terminal -> do
 		on terminal do	
@@ -2179,7 +2179,7 @@ proc run :: | Console => StringTerminal =
 Note that this program will not produce observable effects when it is run.
 This program combines code from Examples \ref{ex:broadcastmsg}, \ref{ex:negdest1}, \ref{ex:sender}.
 \begin{lstlisting}
--- from Example 24:
+-- from Example 26:
 proc sender :: | => Put([Char] | Get([Char] | TopBot)) =
 	| => source ->
 		on source do
@@ -2261,7 +2261,7 @@ coprotocol S => CoPassMessages (A| ) =
 	CoSendMsg ::  S => Get(A|S)
 	CoCloseCh :: S => TopBot
 
--- new code (combines ideas from Examples 13 and 20):
+-- new code (combines ideas from Examples 13 and 21):
 proc sender :: | Console => PassMsgsWithConf([Char]| ) =
 	| console => source -> do
 		on console do	
@@ -2327,7 +2327,7 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					hput CoCloseCh
 					halt
 
--- new code (combines ideas from Examples 13 and 20):
+-- new code (combines ideas from Examples 13 and 21):
 proc proc1 :: [Char] | => CoPassMessages([Char]| ), StringTerminal =
 	tag | => source, terminal -> do
 		hcase source of
@@ -2378,30 +2378,36 @@ proc run =
 
 \newpage
 \subsection{Non-deterministic server interacts with two clients}
-\label{prog:user_input_client_server}
+\label{prog:non_det_server}
 
 Note that this program will not produce observable effects when it is run.
 This program combines code from Examples \ref{ex:serverecho}, \ref{ex:clientfork}, \ref{ex:nondetserver}.
 
 \begin{lstlisting}
 -- from Example 14:
-proc server_deterministic =
-	| winner, loser => -> do
-		on winner do
-			get msg
-			put msg
-			close
-		on loser do
-			get msg
-			put msg
-			halt
-			
-proc server =
-	| two_ch => -> do
-		split two_ch into ch1, ch2
-		race
-			ch1 -> server_deterministic( | ch1, ch2 => )	
-			ch2 -> server_deterministic( | ch2, ch1 => )	
+defn
+	proc server =
+		| two_ch => -> do
+			split two_ch into ch1, ch2
+			server_non_deterministic( | ch1, ch2 => )
+
+where defn
+	proc server_non_deterministic =
+		| ch1, ch2 => -> do
+			race
+				ch1 -> server_deterministic( | ch1, ch2 => )	
+				ch2 -> server_deterministic( | ch2, ch1 => )	
+	
+	proc server_deterministic =
+		| winner, loser => -> do
+			on winner do
+				get msg
+				put msg
+				close
+			on loser do
+				get msg
+				put msg
+				halt
 
 -- from Example 2:
 proc client = 
@@ -2434,7 +2440,7 @@ This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combine
 \begin{lstlisting}
 import Prelude
 
--- from Example 17:
+-- from Example 18:
 data SF(A) -> C =
 	SS :: A -> C
 	FF :: -> C
@@ -2443,7 +2449,7 @@ codata S -> Stack(A) =
 	Push :: A, S -> S
 	Pop :: S -> (SF(A),S)	
 
--- from Example 18:	
+-- from Example 19:	
 fun listStack :: [A] -> Stack(A) = 
 	cs -> (
 		Push := c -> listStack(c:cs),
@@ -2452,27 +2458,29 @@ fun listStack :: [A] -> Stack(A) =
 			[] -> (FF, listStack([]))
 		)
 
--- from Example 19:
-fun flatten :: Stack([Char]) -> [Char] =
-	s -> case Pop(s) of
-		(SS(str), stack) -> str ++ " " ++ flatten(stack)
-		(FF, stack) -> ""
-        
-proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
-	stack | source, console => -> do
-		hcase source of
-			SendMsg -> do
-				get msg on source
-				reverse_print(Push(msg, stack) | source, console => )
-			CloseCh -> do
-				close source
-				on console do
-					hput ConsolePut
-					put "Printing stack from top to bottom: " ++ flatten(stack)
-					hput ConsoleClose
-					halt
-
 -- from Example 20:
+defn        
+	proc reverse_print :: Stack([Char]) | PassMessages([Char]| ), Console => =
+		stack | source, console => -> do
+			hcase source of
+				SendMsg -> do		-- push messages to stack as they are received
+					get msg on source
+					reverse_print(Push(msg, stack) | source, console => )
+				CloseCh -> do		-- after receiving all messages, print flattened stack
+					close source
+					on console do
+						hput ConsolePut
+						put "Printing stack from top to bottom: " ++ flatten(stack)
+						hput ConsoleClose
+						halt
+where
+	fun flatten :: Stack([Char]) -> [Char] =
+		s -> case Pop(s) of			-- recursively pop strings and concat them
+			(SS(str), stack) -> str ++ " " ++ flatten(stack)
+			(FF, stack) -> ""
+
+
+-- from Example 21:
 proc client :: | => PassMessages([Char]|), StringTerminal =
 	| => ch, terminal -> do
 		on terminal do	
@@ -2513,7 +2521,7 @@ We visualize the process network for the memory cell program in the following sc
 \begin{lstlisting}
 import Prelude
     
--- modified from Example 22:
+-- modified from Example 24:
 protocol Mutex( |M) => S =
 	Pass :: M (+) Neg(S) => S
 	Done :: TopBot => S 									-- this handle is new
@@ -2556,7 +2564,7 @@ proc memDone :: | Mutex( |MemCh([Char]| )) => MemCh([Char]| ),StringTerminal =
 				on mem do
 					hput MemCls
 					halt
--- modified from Example 23:
+-- modified from Example 25:
 defn
 	proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ), StringTerminal =
 		tag | mutex => mem, terminal -> do	-- terminal is new
