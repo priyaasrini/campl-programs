@@ -969,11 +969,11 @@ We discuss mutually recursive processes in Section~\ref{sec:calling_procs}.
 \label{sec:homsgs}
 
 In sequential functional programming, higher-order functions take other functions as input or produce functions as output. 
-Although higher-order functions are not currently supported in CaMPL, a concurrent analogue, called \tc{higher-order processes}, is.
+Although higher-order functions are not currently supported in CaMPL, a concurrent analogue is: \tc{Higher-order processes} 
 %Higher-order processes are given by enriching the concurrent part in the sequential part.
 % the categorical semantics of higher-order functions is given by cartesian closed categories because the closed part basically gives a self-enrichment, so the concurrent analogue is given by enriching processes in the sequential side.
 % idk what happens if you have a process that uses a function that is passed as a message then i guess either the code for that function is packaged up with the process or it's only the name and then hopefully the other process knows how to call that function?? idk
-Higher-order processes encode other processes as sequential data -- called a \tc{higher-order message}, pass a higher-order message, and/or decode and invoke an encoded process.
+encode other processes as sequential data -- called a \tc{higher-order message}, pass a higher-order message, and/or decode and invoke an encoded process.
 
 Example \ref{ex:hoprocs} shows higher-order processes passing \lstinline$helloworld$ from Example~\ref{ex:helloworld}:
 \begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
