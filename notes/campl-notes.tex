@@ -678,8 +678,9 @@ It would wait for the first \lstinline$client$ before starting its interaction w
 % we aren't talking about this 
 For true concurrency, \lstinline$server$ should dynamically opt to have interactions in the order it receives messages. 
 % it's not the client that sends a message first because the server cannot know that. it only knows which one it receives first.
-We call this \tc{controlled non-determinism} which uses the \lstinline$race$ process command.
-A \lstinline$server$ that calls a locally defined process \lstinline$non_deterministic_server$, which holds a \lstinline$race$, is shown in Example~\ref{ex:nondetserver}:
+We call this \tc{controlled non-determinism} based on the outcome of a \tc{race} between the channels.
+A \lstinline$server$ that calls a locally defined process \lstinline$non_deterministic_server$, which holds a race
+using the \lstinline$race$ command, is shown in Example~\ref{ex:nondetserver}:
 % defn								-- invoke processes before they are defined using defn
 % where defn					-- locally define processes using where
 \begin{lstlisting} [label=ex:nondetserver, caption=Server echos each client in the order it receives messages]
