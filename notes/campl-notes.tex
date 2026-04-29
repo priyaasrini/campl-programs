@@ -899,11 +899,11 @@ If we want to use that implementation, we can initialize \lstinline$stack$ as \l
 \label{sec:seqcontrol}
 
 Recall that, in Example \ref{ex:serverclientwithservices}, \lstinline$client$  transmitted precisely one message from the user to \lstinline$server$.
-To allow a user to input arbitrarily many messages before pressing enter to close the terminal, a stopping condition based on sequential data must be able to control the \lstinline$client$'s execution.
-Conditional branching of a process's execution uses \lstinline$if$-\lstinline$then$-\lstinline$else$, \lstinline$case$, or \lstinline$switch$ statements. 
+To allow a user to input arbitrarily many messages before pressing enter to close the terminal, a stopping condition based on the sequential variable \lstinline{msg} must control the \lstinline$client$'s execution.
+Conditional branching of a process's execution uses \lstinline$if$-\lstinline$then$-\lstinline$else$, \lstinline$case$, or \lstinline$switch$ statements or multiple process body definitions that pattern match on the value of variables. 
 
 We modify \lstinline$client$ to prompt the user for input until the user presses enter without typing a message, thereby sending an empty string.
-Each time \lstinline$client$ receives a string from the user, it will check if it is empty using the \lstinline$isEmpty$ function defined in Section~\ref{sec:funcs}.
+Each time \lstinline$client$ receives a string from the user, it will check if it is empty using the \lstinline$isEmpty$ function defined in Example~\ref{ex:isEmpty}.
 \begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client execution conditional on user input] 
 proc client :: | => PassMessages([Char]|), StringTerminal =
 	| => ch, terminal -> do
@@ -926,13 +926,14 @@ proc client :: | => PassMessages([Char]|), StringTerminal =
 					put msg
 				client( | => ch, terminal)	-- recurse 
 \end{lstlisting}   
+A complete program based on this example is given in Appendix~\ref{prog:user_input_client_server}.
 
-The above example can also be implemented using \lstinline$case$:
+The above example can also be implemented using \lstinline$case$ on the built-in constructors for \lstinline{Bool}:
 \begin{lstlisting}
 	case isEmpty(msg) of
-		True -> do						-- user pressed ENTER so close channels and halt
+		True -> do						-- user pressed ENTER, so close channels and halt
 			<lines 10-15>
-		False -> do						-- user has provided a message so forward to server
+		False -> do						-- user has sent a message, so forward to server
 			<lines 17-20>
 \end{lstlisting}
 
