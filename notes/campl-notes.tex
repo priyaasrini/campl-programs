@@ -715,6 +715,8 @@ If \lstinline$ch2$ wins, line 12 will execute and \lstinline$server_deterministi
 Notice that the type signatures of \lstinline$server_deterministic$ and \lstinline$server_non_deterministic$ are the same. 
 This is because races do not change channel types; they only change the order in which the steps of the interactions take place.
 Finer details on the \lstinline$race$ command are given in Section~\ref{sec:race-command}.
+We discuss locally defined processes in Section~\ref{sec:calling_procs}.
+A complete program based on this example is given in Appendix~\ref{prog:non_det_server}.
 
 Another use case for races is a time out feature using the \lstinline{Timer} service channel:
 \begin{lstlisting}
@@ -813,7 +815,7 @@ The name of an infix function is required to contain only special characters wit
 
 CaMPL also supports mutually recursive function definitions using a \lstinline$defn$ statement and local function definitions using a \lstinline$where$ statement inside a \lstinline$defn$ statement. 
 We demonstrate a local function definition in Example~\ref{ex:codata reverse_print}.
-\TODO{test whether where locally defines a function or just allows the function to be defined after it is used}
+Details of \lstinline$defn$ and \lstinline$where$ are the same for functions and processes, and we describe the details for processes in Section~\ref{sec:calling_procs}.
 
 \subsection{Data and codata types}
 Built-in sequential types include \lstinline$Int$, \lstinline$Bool$, \lstinline$Char$, tuples (e.g., the unit \lstinline$()$ or pairs \lstinline$(Int,Bool)$), lists (e.g., strings \lstinline$[Char]$), and encoded processes (e.g., \lstinline$Store(Int|Console=>TopBot)$).
@@ -1113,9 +1115,18 @@ Notice that on lines 7 and 9, the input and output channels used by each process
 Any sequential data in scope at line 6 can be used in the in-line process definitions.
 
 \subsection{Calling processes}
+\label{sec:calling_procs}
 
 A process can be invoked by calling it using its name and passing it valid instances of all of the variables and channels in its process definition.
-We have seen this in the \lstinline$plug$ command of a \lstinline$run$ process quite often.
+A process must be defined prior to its invocation unless the related processes are contained within a \lstinline{defn} statement.
+Recall that we defined mutually recursive processes with \lstinline{defn} in Example~\ref{ex:pattern_matching}.
+Processes can also be locally defined using a \lstinline{where} statement within a \lstinline{defn} statement.
+Recall that we locally defined processes, which were also within a nested \lstinline{defn} statement, in Example~\ref{ex:nondetserver}.
+Locally defined processes can only be called by the processes in the \lstinline{defn} statement above the \lstinline{where} keyword.
+For locally defined processes to call each other, as shown in Example~\ref{ex:nondetserver}, the nested \lstinline{defn} statement is required.
+
+We have seen many examples processes called in the \lstinline$plug$ command of a \lstinline$run$ process.
+When a process is called outside of a \lstinline$plug$ command, it must be the last command in the command block.
 Recall that we called \lstinline$send_to_dest1$ recursively in Example~\ref{ex:coprotocoldest1}:
 \begin{lstlisting} 
 proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
@@ -1133,9 +1144,8 @@ proc send_to_dest1 :: | PassMessages([Char]| ), CoPassMessages([Char]| ) => =
 					hput CoCloseCh
 					halt
 				
- \end{lstlisting}
- Notice that when we make the process call on line 9, it is the last command in the \lstinline$do$ block that starts on line 4.
- When a process is called outside of a \lstinline$plug$ command, it must be the last command in the command block.
+\end{lstlisting}
+Notice that when we make the process call on line 9, it is the last command in the \lstinline$do$ block that starts on line 4.
 This means that all existing open channels in scope at the time the process is called must be passed to the process.
 
 
@@ -1176,16 +1186,15 @@ The process with access to \lstinline$memCell$ runs \lstinline$memAccess$.
 The process that is waiting runs \lstinline$memWait$.
 When access to \lstinline$memCell$ changes, the processes will swap what they are running.
 That is, the process running \lstinline$memAccess$ will call \lstinline$memWait$ and vice versa.
-To define processes like this, we need \lstinline$memAccess$ and \lstinline$memWait$ to be mutually recursive. 
-This uses the \lstinline$defn$ keyword:
-\begin{lstlisting}
-defn
-	proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
-		...
-    		
-	proc memWait :: [Char] | => Mutex( |MemCh([Char]| )) =
-		...
-\end{lstlisting}
+To define mutually recursive processes like this, we should use a \lstinline$defn$ statement, as mentioned in Section~\ref{sec:calling_procs}.
+%\begin{lstlisting}
+%defn
+%	proc memAccess :: [Char] | Mutex( |MemCh([Char]| )) => MemCh([Char]| ) =
+%		...
+%    		
+%	proc memWait :: [Char] | => Mutex( |MemCh([Char]| )) =
+%		...
+%\end{lstlisting}
 However, for clearer explanations, we will consider the process definitions separately.
 
 First, we will consider \lstinline$memAccess$:
