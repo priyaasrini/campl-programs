@@ -796,7 +796,7 @@ We synthesize content from \cite{Ku18, Po21, Po22, No25}.
 \label{sec:funcs}
 
 Functions are defined using the \lstinline{fun} keyword, and they are called using their name and a comma-separated list of their input arguments enclosed in parentheses.
-We define a function that will take a list as input and return a \lstinline$Bool$ depending on whether the input list is empty or not. We will use this function in Example \ref{ex:serverclientwithservices-branching} to check whether the user has input an empty string.
+We define a function \lstinline{isEmpty} that will take a list as input and return a \lstinline$Bool$ depending on whether the input list is empty or not. We will use \lstinline{isEmpty} in Example \ref{ex:serverclientwithservices-branching} to check whether the user has input an empty string.
 \begin{lstlisting}[label=ex:isEmpty, caption=Sequential function that checks if a list is empty]
 fun isEmpty :: [A] -> Bool =
 	[]	-> True
@@ -984,7 +984,8 @@ Although higher-order functions are not currently supported in CaMPL, a concurre
 % idk what happens if you have a process that uses a function that is passed as a message then i guess either the code for that function is packaged up with the process or it's only the name and then hopefully the other process knows how to call that function?? idk
 encode other processes as sequential data -- called a \tc{higher-order message}, pass a higher-order message, and/or decode and invoke an encoded process.
 
-Example \ref{ex:hoprocs} shows higher-order processes passing \lstinline$helloworld$ from Example~\ref{ex:helloworld}:
+Example \ref{ex:hoprocs} shows higher-order processes passing \lstinline$helloworld$ from Example~\ref{ex:helloworld}. 
+A complete program based on this example is given in Appendix~\ref{prog:h.o.hello_world}.
 \begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
 proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
 	| => ch -> do
@@ -1017,8 +1018,10 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
 
-Table \ref{Table:summary} summarizes the interactions provided by the built-in channel types [Kum18, Section 3.3.2]. We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
 \TODO{check that all forward and back references are correct}
+
+Table \ref{Table:summary} summarizes the interactions provided by the built-in channel types. 
+We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
 
 %\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
 
@@ -1053,7 +1056,7 @@ Table \ref{Table:summary} summarizes the interactions provided by the built-in c
 		 \hline
 		  N/A & Decode and invoke the process \newline encoded in a \lstinline$Store$ type. & \lstinline$use$ & \ref{ex:hoprocs} \\
 		 \hline
-		  N/A & Conditional branching. & \lstinline$if-then-else$, \lstinline$case$, \lstinline$switch$ & \ref{ex:serverclientwithservices-branching}, \ref{ex:}\\
+		  N/A & Conditional branching. & \lstinline$if-then-else$, \lstinline$case$, \lstinline$switch$ & \ref{ex:serverclientwithservices-branching}\\
 		 \hline
 	\end{tabular}
 	\caption{Summary of channel types and process commands.}
