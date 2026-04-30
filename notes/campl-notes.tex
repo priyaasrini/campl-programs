@@ -77,12 +77,16 @@ The implementation of this feature and the changes to the categorical semantics 
 In this article, we illustrate CaMPL's type system and demonstrate the above features through a series of code examples.
 We have summarized these features with the corresponding channel types and process commands in Table~\ref{Table:summary} at the beginning of Section~\ref{sec:concurrent-operators}.
 
-We use \tc{this style} whenever we introduce CaMPL terminology.
+{\bf Related work: }
+
+\TODO{add related work. can use references from presentation}
+%https://seis.bristol.ac.uk/~tz20861/talks/ll-cantab-2022.pdf
 
 
 \section{A brief overview of CaMPL}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, shown in Example \ref{ex:helloworld}.
+We use \tc{this style} whenever we introduce CaMPL terminology.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$.
 The \lstinline$console$ channel has type \lstinline$Console$ which is a special channel type built-in to the compiler to connect any CaMPL program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!, name=helloworld] 
@@ -2041,7 +2045,8 @@ Complete programs that can be directly copied and pasted are given in the Append
 \label{prog:prelude}
 
 CaMPL has a module system that allows one to import and use code defined in other files.
-This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:}.
+This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, and \ref{ex:concat}.
+We encourage readers to write additional functions in their version of the Prelude as an exercise in CaMPL programming.
 We demonstrate how to import the \lstinline{Prelude} in 
 \ref{prog:h.o.hello_world}, \ref{prog:user_input_client_server}, \ref{prog:broadcastmsgs}, \ref{prog:stack_print}, and \ref{prog:mem-cell}.
 
@@ -2093,8 +2098,7 @@ fun (++) :: [A],[A] -> [A] =
 	[],a 			-> a
 	(b:bs),cs	-> b : (bs ++ cs)  
 \end{lstlisting}
-	
-\TODO{complete Prelude file.}
+
 
 \TODO{make schematics visualizing process networks}
 
