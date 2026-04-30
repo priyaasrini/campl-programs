@@ -1705,22 +1705,6 @@ Table \ref{Table: Usage of fork and split process commands} describes the usage 
 \end{table}
 
 
-\TODO{Should this be moved to the mathematical underpinning section?}
-{\bf Note on logic:} The {\tt split} and the {\tt fork} process commands arise directly from the two-sidedness of the rules of the linear logic. The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. The rule $\otimes_R$ is same as {\tt fork}ing over an input channel, and the rule $\oplus_L$ is same as {\tt fork}ing over an output channel.
-\begin{figure}[h]
-	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2}  \quad \quad \quad \quad \quad \quad \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
-\vspace{-2em}
-\caption{Sequent rules for {\tt fork}}
-\label{Fig: sequent rules fork}
-\end{figure}
-The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules for split}. The rule $\otimes_L$ is same as {\tt split}ting over an input channel, and The rule $\oplus_R$ is same as {\tt split}ting over an output channel.
-\begin{figure}[h]
-	\[ \infer[\oplus_R]{A ~|~ X1 \dashvv Y1 \oplus Y2}{A ~|~ X1 \dashvv Y1, Y2} \quad \quad \quad \quad \quad \quad \infer[\otimes_L]{A ~|~ X1, X2 \dashvv Y1}{A ~|~ X1 \otimes X2 \dashvv Y1} \]
-\vspace{-2em}
-\caption{Sequent rules for {\tt split}}
-\label{Fig: sequent rules for split}
-\end{figure}
-
 \subsection{Controlled non-determinism using {\tt race}}
 \label{sec:race-command}
 
@@ -1988,9 +1972,39 @@ where the {\em antecedent} (which we will also call the {\em context}) of $\Phi$
 
 \subsubsection{The logic of message-passing}
 	
-	The logic of message, {\bf PMsg}, passing concerned with communication over channels represents the logic of communication, and is concerned with channels over which processes communicate messages. A sequent of {\bf PMsg} has three components all of which are unordered lists: list $\Phi$ of message types, list $\Lambda$ of left polarity channels, and list $\Delta$ of right polarity channels which, together define a sequent of PMsg: 
-\[ \Phi ~|~ \Lambda \vvdash \Delta \]	
-The inference rules for {\bf PMsg} are presented in Figure \ref{Fig:PMsgRules}. Most of the rules of this calculus are standard ones for two-sided multiplicative linear logic except the {\em action} rules $\circ_l$, $\circ_r$, $\bullet_l$, and $\bullet_r$ which allow messages to be bound to channels of interaction.
+The logic of message passing, {\bf PMsg}, is concerned with interactions over channels and represents the logic of communication. 
+A sequent of {\bf PMsg} has three components all of which are unordered lists: $\Phi$ of message types, $\Gamma$ of input polarity channels, and $\Delta$ of output polarity channels: 
+\[ \Phi ~|~ \Gamma \vvdash \Delta \]	
+{\bf PMsg} corresponds to the concurrent type system, the sequents  correspond to processes, and the proofs in this logic correspond to concurrent programs. 
+
+The inference rules for {\bf PMsg} are presented in Figure \ref{Fig:PMsgRules}. 
+Each rule corresponds to a process command.
+Figure \ref{Fig:programming-syntax} provides the process commands that come from each rule.
+Complementary pairs of process commands arise directly from the two-sidedness of the inference rules.
+
+Most of the rules come from two-sided multiplicative linear logic except the {\em action} rules, which allow messages to be bound to channels of interaction.
+The {\tt get} and the {\tt put} process commands arise from the action rules.
+The rule $\circ_l$ is the same as using {\tt get} on an input channel, and the rule $\circ_r$ is the same as using {\tt put} on an output channel.
+The rule $\bullet_l$ is the same as using {\tt put} on an input channel, and the rule $\bullet_r$ is the same as using {\tt get} on an output channel.
+
+The {\tt split} and the {\tt fork} process commands arise from the multiplicative linear logic rules. 
+%The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. 
+The rule $\otimes_l$ is same as using {\tt split} on an input channel, and the rule $\otimes_r$ is same as using {\tt fork} on an output channel.
+%\begin{figure}[h]
+%	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2}  \quad \quad \quad \quad \quad \quad \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
+%\vspace{-2em}
+%\caption{Sequent rules for {\tt fork}}
+%\label{Fig: sequent rules fork}
+%\end{figure}
+%The sequent rules for {\tt split} are shown in Figure \ref{Fig: sequent rules for split}. 
+The rule $\oplus_l$ is same as using {\tt fork} on an input channel, and the rule $\oplus_r$ is same as using {\tt split} on an output channel.
+%\begin{figure}[h]
+%	\[ \infer[\oplus_R]{A ~|~ X1 \dashvv Y1 \oplus Y2}{A ~|~ X1 \dashvv Y1, Y2} \quad \quad \quad \quad \quad \quad \infer[\otimes_L]{A ~|~ X1, X2 \dashvv Y1}{A ~|~ X1 \otimes X2 \dashvv Y1} \]
+%\vspace{-2em}
+%\caption{Sequent rules for {\tt split}}
+%\label{Fig: sequent rules for split}
+%\end{figure}
+
 \begin{figure}[p]
 	\centering
 	\includegraphics[scale=0.6]{figs/PMsgRules.PNG}
