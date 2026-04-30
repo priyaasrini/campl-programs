@@ -1071,7 +1071,7 @@ We will also revisit previous examples to emphasize the details of how one uses 
 \subsection{Connecting processes using {\tt plug}}
 
 We have seen the \lstinline$plug$ command used in most of our examples, especially in \lstinline$run$ processes.
-This command must be used as the last command in a command block.
+This command must be used as the last command in a process command block.
 
 Recall the \lstinline$run$ process from Example \ref{ex:negdest1} that connected \lstinline$broadcast$ to the source and destination processes:
 \begin{lstlisting}
@@ -1093,13 +1093,10 @@ A channel cannot appear more than twice in a \lstinline$plug$ command either.
 Since the \lstinline$plug$ command is the last command in the command block, all existing open channels in scope must be passed to the processes being plugged.
 Sequential data is not a linear resource, so it can be duplicated, passed into, and used by any number of processes in a \lstinline$plug$ command.
 
-Two processes can be plugged to each other if and only if they satisfy the following conditions:
-\begin{enumerate}[(1)]
-	\item both process definitions have a channel with the same type and opposite polarities.
-	\item plugging the processes will not create a cycle (they cannot already be connected).
-\end{enumerate}
+Two processes can be plugged to each other if and only if they satisfy the following conditions: 1) both process definitions have a channel with the same type and opposite polarities, and 2) plugging the processes will not create a cycle.
 In the above example, \lstinline$proc2$ and \lstinline$send_to_dest1$ could not be connected because they both have input polarity channels but no output polarity channels.
 Furthermore, changing their process definitions and adding a channel is not possible either because they are both already connected to \lstinline$broadcast$.
+Satisfying the second condition also requires that processes are not already connected to each other.
 
 A \lstinline$plug$ command can plug previously defined processes, as above, and/or in-line process definitions.
 Recall Example \ref{ex:negdest1}, and notice the in-line process definitions on lines 7 - 8 and 9 - 12:
@@ -1129,9 +1126,9 @@ Recall that we defined mutually recursive processes with \lstinline{defn} in Exa
 Processes can also be locally defined using a \lstinline{where} statement within a \lstinline{defn} statement.
 Recall that we locally defined processes, which were also within a nested \lstinline{defn} statement, in Example~\ref{ex:nondetserver}.
 Locally defined processes can only be called by the processes in the \lstinline{defn} statement above the \lstinline{where} keyword.
-For locally defined processes to call each other, as shown in Example~\ref{ex:nondetserver}, the nested \lstinline{defn} statement is required.
+For locally defined processes to call each other, as shown in Example~\ref{ex:nondetserver}, the nested \lstinline{defn} statement on line 7 is required.
 
-We have seen many examples processes called in the \lstinline$plug$ command of a \lstinline$run$ process.
+We have seen many examples with processes called in the \lstinline$plug$ command of a \lstinline$run$ process.
 When a process is called outside of a \lstinline$plug$ command, it must be the last command in the command block.
 Recall that we called \lstinline$send_to_dest1$ recursively in Example~\ref{ex:coprotocoldest1}:
 \begin{lstlisting} 
@@ -1264,15 +1261,13 @@ The \lstinline$halt$ command must be used as the last command in a command block
 \subsection{Complementary pairs }
 \label{subsec:pairs}
 
-\tc{Complementary pairs} are the process commands that are used on opposite polarities of a channel with a certain type.
+\tc{Complementary pairs} of process commands are used on opposite polarities of a channel with a certain type.
 That is, two processes connected along a channel will each use one of the commands in a complementary pair to perform their role in the interaction.
 An extended discussion on the importance of channel polarities is given in Section~\ref{Sec:polarities}.
 
 In a complementary pair, one command \tc{blocks} a process until the other process performs the complementary command to \tc{unblock} it. 
-For example, the \lstinline$get$ command is used to receive a message, and it blocks until the other process performs its complementary \lstinline$put$ command to send the message.
+For example, \lstinline$get$ is used to receive a message, and it blocks until the other process performs the complementary \lstinline$put$ to send the message.
 Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands and whether they are blocking or non-blocking.
-%In this section, we explain each of these commands and their usage. 
-
  \begin{table}[!h]
 \centering
 	\begin{tabular}{|l|l|l|}
