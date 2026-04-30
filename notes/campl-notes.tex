@@ -1524,191 +1524,47 @@ For example, if this process was sending confirmation messages, the variable \ls
 These commands can be used on channels with type \lstinline$(*)$, ``tensor,'' or \lstinline$(+)$, ``par,'' depending on which end of the channel has one process \lstinline$fork$ into two processes.
 Recall that a \lstinline$(*)$ channel means the process on the left forks (using the channel with output polarity), and a \lstinline$(+)$ channel means the process on the right forks (using the channel with input polarity).
 The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the change in the process network on each channel type and use \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
-%TENSOR
+
+% TENSOR 
 \begin{figure}[h]
-\[ \xymatrixcolsep{40mm}
-\xymatrix{\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (0) at (1, 5.25) {};
-		\node [style=none] (1) at (1, 4.25) {};
-		\node [style=none] (2) at (0.75, 4) {};
-		\node [style=none] (3) at (1.25, 4) {};
-		\node [style=none] (4) at (0.75, 4.7) {};
-		\node [style=none] (5) at (1.25, 4.7) {};
-		\node [style=head, thick] (6) at (5, 5.25) {};
-		\node [style=none] (7) at (5, 4.25) {};
-		\node [style=none] (8) at (4.75, 4) {};
-		\node [style=none] (9) at (5.25, 4) {};
-		\node [style=none] (10) at (4.75, 4.7) {};
-		\node [style=none] (11) at (5.25, 4.7) {};
-		\node [style=none] (12) at (1.75, 4.5) {};
-		\node [style=none] (13) at (4.25, 4.5) {};
-		\node [style=none] (14) at (3, 4.75) {\lstinline$(*)$};
-		\node [style=none] (15) at (1.75, 4.25) {+};
-		\node [style=none] (16) at (4.25, 4.25) {-};
-		\node [style=none] (17) at (0.5, 4.5) {$A$};
-		\node [style=none] (18) at (5.5, 4.5) {$B$};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (0) to (1.center);
-		\draw [thick] (1.center) to (2.center);
-		\draw [thick] (1.center) to (3.center);
-		\draw [thick] (4.center) to (5.center);
-		\draw [thick] (6) to (7.center);
-		\draw [thick] (7.center) to (8.center);
-		\draw [thick] (7.center) to (9.center);
-		\draw [thick] (10.center) to (11.center);
-		\draw (12.center) to (13.center);
-	\end{pgfonlayer}
-\end{tikzpicture} \ar[r]^{\text{ \lstinline$fork$ / \lstinline$split$}~~~~~~}
-& 
-\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (15) at (5.5, 5.25) {};
-		\node [style=none] (16) at (5.5, 4.25) {};
-		\node [style=none] (17) at (5.75, 4) {};
-		\node [style=none] (18) at (5.25, 4) {};
-		\node [style=none] (19) at (5.75, 4.7) {};
-		\node [style=none] (20) at (5.25, 4.7) {};
-		\node [style=head, thick] (21) at (1.5, 6.25) {};
-		\node [style=none] (22) at (1.5, 5.25) {};
-		\node [style=none] (23) at (1.75, 5) {};
-		\node [style=none] (24) at (1.25, 5) {};
-		\node [style=none] (25) at (1.75, 5.7) {};
-		\node [style=none] (26) at (1.25, 5.7) {};
-		\node [style=none] (27) at (4.75, 4.75) {};
-		\node [style=none] (28) at (2.25, 5.5) {};
-		\node [style=head, thick] (29) at (1.5, 4.5) {};
-		\node [style=none] (30) at (1.5, 3.5) {};
-		\node [style=none] (31) at (1.75, 3.25) {};
-		\node [style=none] (32) at (1.25, 3.25) {};
-		\node [style=none] (33) at (1.75, 3.95) {};
-		\node [style=none] (34) at (1.25, 3.95) {};
-		\node [style=none] (35) at (2.25, 4) {};
-		\node [style=none] (36) at (4.75, 4.5) {};
-		\node [style=none] (44) at (6, 4.5) {$B$};
-		\node [style=none] (45) at (1, 5.5) {$A1$};
-		\node [style=none] (46) at (1, 3.75) {$A2$};
-		\node [style=none] (47) at (2.25, 5.75) {+};
-		\node [style=none] (48) at (2.25, 3.75) {+};
-		\node [style=none] (49) at (4.75, 5) {-};
-		\node [style=none] (50) at (4.75, 4.25) {-};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (15) to (16.center);
-		\draw [thick] (16.center) to (17.center);
-		\draw [thick] (16.center) to (18.center);
-		\draw [thick] (19.center) to (20.center);
-		\draw [thick] (21) to (22.center);
-		\draw [thick] (22.center) to (23.center);
-		\draw [thick] (22.center) to (24.center);
-		\draw [thick] (25.center) to (26.center);
-		\draw [in=0, out=180] (27.center) to (28.center);
-		\draw [thick] (29) to (30.center);
-		\draw [thick] (30.center) to (31.center);
-		\draw [thick] (30.center) to (32.center);
-		\draw [thick] (33.center) to (34.center);
-		\draw [in=0, out=180] (36.center) to (35.center);
-	\end{pgfonlayer}
-\end{tikzpicture} }
-\]
- \caption{Change in process network on \lstinline$(*)$ type}
+\[ 
+\xymatrixcolsep{7pc}
+\xymatrixrowsep{0.1pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
+^<{~~+}^{\text{\lstinline$X(*) Y$}}^>{-~~} 
+ & \overset{\qquad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$fork$ / \lstinline$split$} }
+ & \overset{\blackman}{\underset{\blackman}{\quad}} 
+ \ar@{-} @/^1pc/ @<+4ex> [r]+<-4ex, -2ex>  ^<{~~+}  ^{\text{\lstinline$X$}} ^>{-~~}
+  \ar@{-} @/_1pc/ @<-4ex> [r]+<-4ex, +2ex>  _<{~~+}   _{\text{\lstinline$Y$}} _>{-~~}
+ & \overset{\quad ~ \quad}{\blackman}
+ }  
+ \]
+ \caption{Change in process network from \lstinline$(*)$ channels}
  \label{Fig: Tensor}
 \end{figure}
 
-
-
-% PAR:
+% PAR 
 \begin{figure}[h]
-\[ \xymatrixcolsep{40mm}
-\xymatrix{\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (0) at (1, 5.25) {};
-		\node [style=none] (1) at (1, 4.25) {};
-		\node [style=none] (2) at (0.75, 4) {};
-		\node [style=none] (3) at (1.25, 4) {};
-		\node [style=none] (4) at (0.75, 4.7) {};
-		\node [style=none] (5) at (1.25, 4.7) {};
-		\node [style=head, thick] (6) at (5, 5.25) {};
-		\node [style=none] (7) at (5, 4.25) {};
-		\node [style=none] (8) at (4.75, 4) {};
-		\node [style=none] (9) at (5.25, 4) {};
-		\node [style=none] (10) at (4.75, 4.7) {};
-		\node [style=none] (11) at (5.25, 4.7) {};
-		\node [style=none] (12) at (1.75, 4.5) {};
-		\node [style=none] (13) at (4.25, 4.5) {};
-		\node [style=none] (14) at (3, 4.75) {\lstinline$(+)$};
-		\node [style=none] (15) at (1.75, 4.25) {+};
-		\node [style=none] (16) at (4.25, 4.25) {-};
-		\node [style=none] (17) at (0.5, 4.5) {$A$};
-		\node [style=none] (18) at (5.5, 4.5) {$B$};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (0) to (1.center);
-		\draw [thick] (1.center) to (2.center);
-		\draw [thick] (1.center) to (3.center);
-		\draw [thick] (4.center) to (5.center);
-		\draw [thick] (6) to (7.center);
-		\draw [thick] (7.center) to (8.center);
-		\draw [thick] (7.center) to (9.center);
-		\draw [thick] (10.center) to (11.center);
-		\draw (12.center) to (13.center);
-	\end{pgfonlayer}
-\end{tikzpicture} \ar[r]^{\text{ \lstinline$split$ / \lstinline$fork$}~~~~~~}
-& 
-\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (15) at (1.5, 5.25) {};
-		\node [style=none] (16) at (1.5, 4.25) {};
-		\node [style=none] (17) at (1.25, 4) {};
-		\node [style=none] (18) at (1.75, 4) {};
-		\node [style=none] (19) at (1.25, 4.7) {};
-		\node [style=none] (20) at (1.75, 4.7) {};
-		\node [style=head, thick] (21) at (5.5, 6.25) {};
-		\node [style=none] (22) at (5.5, 5.25) {};
-		\node [style=none] (23) at (5.25, 5) {};
-		\node [style=none] (24) at (5.75, 5) {};
-		\node [style=none] (25) at (5.25, 5.7) {};
-		\node [style=none] (26) at (5.75, 5.7) {};
-		\node [style=none] (27) at (2.25, 4.75) {};
-		\node [style=none] (28) at (4.75, 5.5) {};
-		\node [style=head, thick] (29) at (5.5, 4.5) {};
-		\node [style=none] (30) at (5.5, 3.5) {};
-		\node [style=none] (31) at (5.25, 3.25) {};
-		\node [style=none] (32) at (5.75, 3.25) {};
-		\node [style=none] (33) at (5.25, 3.95) {};
-		\node [style=none] (34) at (5.75, 3.95) {};
-		\node [style=none] (35) at (4.75, 4) {};
-		\node [style=none] (36) at (2.25, 4.5) {};
-		\node [style=none] (44) at (1, 4.5) {$A$};
-		\node [style=none] (45) at (6, 5.5) {$B1$};
-		\node [style=none] (46) at (6, 3.75) {$B2$};
-		\node [style=none] (47) at (2.25, 5) {+};
-		\node [style=none] (48) at (2.25, 4.25) {+};
-		\node [style=none] (49) at (4.75, 5.75) {-};
-		\node [style=none] (50) at (4.75, 3.75) {-};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (15) to (16.center);
-		\draw [thick] (16.center) to (17.center);
-		\draw [thick] (16.center) to (18.center);
-		\draw [thick] (19.center) to (20.center);
-		\draw [thick] (21) to (22.center);
-		\draw [thick] (22.center) to (23.center);
-		\draw [thick] (22.center) to (24.center);
-		\draw [thick] (25.center) to (26.center);
-		\draw [in=-180, out=0] (27.center) to (28.center);
-		\draw [thick] (29) to (30.center);
-		\draw [thick] (30.center) to (31.center);
-		\draw [thick] (30.center) to (32.center);
-		\draw [thick] (33.center) to (34.center);
-		\draw [in=180, out=0] (36.center) to (35.center);
-	\end{pgfonlayer}
-\end{tikzpicture} }
-\]
- \caption{Change in process network on \lstinline$(+)$ type}
+\[ 
+\xymatrixcolsep{7pc}
+\xymatrixrowsep{0.1pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
+^<{~~+}^{\text{\lstinline$X(+) Y$}}^>{-~~} 
+ & \overset{\qquad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$split$ / \lstinline$fork$} }
+ & \overset{\quad ~ \quad}{\blackman}
+  \ar@{-} @/^1pc/ @<+0.25ex> [r]+<-3ex, +4ex>  ^<{~~+}   ^{\text{\lstinline$X$}} ^>{-~~}
+ \ar@{-} @/_1pc/ @<-0.25ex> [r]+<-3ex, -4ex>  _<{~~+}  _{\text{\lstinline$Y$}} _>{-~~}
+ & \overset{\blackman}{\underset{\blackman}{\quad}} 
+ }  
+ \]
+ \caption{Change in process network from \lstinline$(+)$ channels}
  \label{Fig: Par}
 \end{figure}
+
 
 
 Again, if the type of a channel is not explicitly defined, using \lstinline$fork$ on the output polarity end and \lstinline$split$ on the input polarity end will force the type of the channel to be \lstinline$(*)$.
@@ -2697,6 +2553,202 @@ proc run =
 
 
 DEPRECATED:
+
+
+
+%TENSOR
+\begin{figure}[h]
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {\lstinline$X(*) Y$};
+		\node [style=none] (15) at (1.75, 4.25) {+};
+		\node [style=none] (16) at (4.25, 4.25) {-};
+%		\node [style=none] (17) at (0.5, 4.5) {$A$};
+%		\node [style=none] (18) at (5.5, 4.5) {$B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture} 
+\ar[r]^{\text{ \lstinline$fork$ / \lstinline$split$}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (5.5, 5.25) {};
+		\node [style=none] (16) at (5.5, 4.25) {};
+		\node [style=none] (17) at (5.75, 4) {};
+		\node [style=none] (18) at (5.25, 4) {};
+		\node [style=none] (19) at (5.75, 4.7) {};
+		\node [style=none] (20) at (5.25, 4.7) {};
+		\node [style=head, thick] (21) at (1.5, 6.25) {};
+		\node [style=none] (22) at (1.5, 5.25) {};
+		\node [style=none] (23) at (1.75, 5) {};
+		\node [style=none] (24) at (1.25, 5) {};
+		\node [style=none] (25) at (1.75, 5.7) {};
+		\node [style=none] (26) at (1.25, 5.7) {};
+		\node [style=none] (27) at (4.75, 4.75) {};
+		\node [style=none] (28) at (2.25, 5.5) {};
+		\node [style=head, thick] (29) at (1.5, 4.5) {};
+		\node [style=none] (30) at (1.5, 3.5) {};
+		\node [style=none] (31) at (1.75, 3.25) {};
+		\node [style=none] (32) at (1.25, 3.25) {};
+		\node [style=none] (33) at (1.75, 3.95) {};
+		\node [style=none] (34) at (1.25, 3.95) {};
+		\node [style=none] (35) at (2.25, 4) {};
+		\node [style=none] (36) at (4.75, 4.5) {};
+%		\node [style=none] (44) at (6, 4.5) {$B$};
+%		\node [style=none] (45) at (1, 5.5) {$A1$};
+%		\node [style=none] (46) at (1, 3.75) {$A2$};
+		\node [style=none] (47) at (2.25, 5.75) {+};
+		\node [style=none] (48) at (2.25, 3.75) {+};
+		\node [style=none] (49) at (4.75, 5) {-};
+		\node [style=none] (50) at (4.75, 4.25) {-};
+		\node [style=none] (52) at (3.5, 5.4) {\lstinline$X$};
+		\node [style=none] (51) at (3.5, 3.9) {\lstinline$Y$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=0, out=180] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=0, out=180] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+ \caption{Change in process network from \lstinline$(*)$ channels}
+ \label{Fig: Tensor}
+\end{figure}
+
+
+
+% PAR:
+\begin{figure}[h]
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {\lstinline$X(+) Y$};
+		\node [style=none] (15) at (1.75, 4.25) {+};
+		\node [style=none] (16) at (4.25, 4.25) {-};
+%		\node [style=none] (17) at (0.5, 4.5) {$A$};
+%		\node [style=none] (18) at (5.5, 4.5) {$B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \ar[r]^{\text{ \lstinline$split$ / \lstinline$fork$}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (1.5, 5.25) {};
+		\node [style=none] (16) at (1.5, 4.25) {};
+		\node [style=none] (17) at (1.25, 4) {};
+		\node [style=none] (18) at (1.75, 4) {};
+		\node [style=none] (19) at (1.25, 4.7) {};
+		\node [style=none] (20) at (1.75, 4.7) {};
+		\node [style=head, thick] (21) at (5.5, 6.25) {};
+		\node [style=none] (22) at (5.5, 5.25) {};
+		\node [style=none] (23) at (5.25, 5) {};
+		\node [style=none] (24) at (5.75, 5) {};
+		\node [style=none] (25) at (5.25, 5.7) {};
+		\node [style=none] (26) at (5.75, 5.7) {};
+		\node [style=none] (27) at (2.25, 4.75) {};
+		\node [style=none] (28) at (4.75, 5.5) {};
+		\node [style=head, thick] (29) at (5.5, 4.5) {};
+		\node [style=none] (30) at (5.5, 3.5) {};
+		\node [style=none] (31) at (5.25, 3.25) {};
+		\node [style=none] (32) at (5.75, 3.25) {};
+		\node [style=none] (33) at (5.25, 3.95) {};
+		\node [style=none] (34) at (5.75, 3.95) {};
+		\node [style=none] (35) at (4.75, 4) {};
+		\node [style=none] (36) at (2.25, 4.5) {};
+%		\node [style=none] (44) at (1, 4.5) {$A$};
+%		\node [style=none] (45) at (6, 5.5) {$B1$};
+%		\node [style=none] (46) at (6, 3.75) {$B2$};
+		\node [style=none] (47) at (2.25, 5) {+};
+		\node [style=none] (48) at (2.25, 4.25) {+};
+		\node [style=none] (49) at (4.75, 5.75) {-};
+		\node [style=none] (50) at (4.75, 3.75) {-};
+		\node [style=none] (52) at (3.5, 5.4) {\lstinline$X$};
+		\node [style=none] (51) at (3.5, 3.9) {\lstinline$Y$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=-180, out=0] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=180, out=0] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+ \caption{Change in process network from \lstinline$(+)$ channels}
+ \label{Fig: Par}
+\end{figure}
+
+
+
 
 \subsection{EchoServer 2.0}
 
