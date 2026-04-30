@@ -1326,16 +1326,46 @@ Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in sc
 
 These commands can be used on channels with type \lstinline$Put$ or \lstinline$Get$ depending on the direction the message is travelling on the channel.
 Recall that messages travel on \lstinline$Put$ channels from left to right (output to input polarity), and messages travel on \lstinline$Get$ channels from right to left (input to output polarity).
-The diagram in Figure~\ref{Fig: Put and Get} visualizes the direction messages are sent on each channel type and uses \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
+The diagrams in Figures~\ref{Fig: Put} and \ref{Fig: Get} visualize the direction messages are sent on each channel type and uses \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
+%\begin{figure}[h]
+%\[  \xymatrix{  
+% \blackman  \quad
+%  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
+% \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
+% &  & & \quad \blackman   }  
+% \]
+% \caption{Direction of messages on \lstinline$Put$ and \lstinline$Get$ types}
+% \label{Fig: Put and Get}
+%\end{figure}
+
+% PUT
 \begin{figure}[h]
-\[  \xymatrix{  
- \blackman  \quad
-  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
- \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
- &  & & \quad \blackman   }  
+\[ \xymatrixcolsep{7pc}
+ \xymatrix{ 
+ \overset{\text{\lstinline$a : A$}}{\blackman} \ar[r]^<{~~+}^{\text{\lstinline$Put(A|X)$}}^>{-~~} 
+ & \overset{\quad ~ \quad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$put$ / \lstinline$get$} }
+ & \overset{\text{\lstinline$a : A$}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$X$}}^>{-~~} 
+ & \overset{\text{\lstinline$a : A$}}{\blackman} 
+ }  
  \]
- \caption{Direction of messages on \lstinline$Put$ and \lstinline$Get$ types}
- \label{Fig: Put and Get}
+ \caption{Message passing on \lstinline$Put$ channels}
+ \label{Fig: Put}
+\end{figure}
+
+% GET
+\begin{figure}[h]
+\[ \xymatrixcolsep{7pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} 
+ & \overset{\text{\lstinline$a : A$}}{\blackman} \ar[l]_<{+~~}_{\text{\lstinline$Get(A|X)$}}_>{~~-} 
+ \ar@{~>}[r]^{\text{ \lstinline$get$ / \lstinline$put$} }
+ & \overset{\text{\lstinline$a : A$}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$X$}}^>{-~~} 
+ & \overset{\text{\lstinline$a : A$}}{\blackman} 
+ }  
+ \]
+ \caption{Message passing on \lstinline$Get$ channels}
+ \label{Fig: Get}
 \end{figure}
 
 If the type of a channel is not explicitly defined, using \lstinline$put$ on the output polarity end and \lstinline$get$ on the input polarity end will force the type of the channel to be \lstinline$Put$.
