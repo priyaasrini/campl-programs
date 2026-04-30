@@ -146,6 +146,7 @@ We hope that these questions motivate the reader to continue on to the more comp
 
 
 \section{Concurrent types}
+\label{Sec:ConcurrentTypes}
 
 At any instance in run-time, the topology of a CaMPL program is a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges. 
 The property of acyclicity is guaranteed by the type system, and it ensures that programs will never deadlock.
@@ -1018,12 +1019,14 @@ To \lstinline$use$ an encoded process, a higher-order process must provide insta
 \label{sec:concurrent-operators}
 \label{Sec:concurrent-commands}
 
-\TODO{check that all forward and back references are correct}
+%\TODO{check that all forward and back references are correct}
 
-Table \ref{Table:summary} summarizes the interactions provided by the built-in channel types. 
-We have already seen examples that use the basic process commands, so we will briefly revisit them to emphasize the details of their use.
-
-%\comment{TODO: redesign this table to have process commands too so that it can be put in the introduction.}
+Conceptually, we have covered CaMPL's programming features in Sections \ref{Sec:ConcurrentTypes} and \ref{Sec:SequentialTypes}.
+Table \ref{Table:summary} summarizes the features and provides references to corresponding examples. 
+The finer details of how one can successfully write programs using these features are provided explicitly in this section.
+%\comment{the idea is the type system parts can focus on the concepts and be like a nice paper to read and then the proc commands section can be more like a manual because we don't really have a manual manual. they should be able to write some programs after the concurrent and sequential type system sections, and if they have compiler errors or ``why isn't this working'' questions then they can go to the process commands section.}
+We provide new examples of processes which coordinate access to a shared memory cell and use a \lstinline{(+)} channel to \lstinline{split} and \lstinline{fork}.
+We will also revisit previous examples to emphasize the details of how one uses each process command.
 
 \begin{table}[!ht]
 \begin{center}
@@ -1063,9 +1066,6 @@ We have already seen examples that use the basic process commands, so we will br
 	\label{Table:summary}
 \end{center}
 \end{table}
-
-\comment{the idea is the type system parts can focus on the concepts and be like a nice paper to read and then the proc commands section can be more like a manual because we don't really have a manual manual. they should be able to write some programs after the concurrent and sequential type system sections, and if they have compiler errors or ``why isn't this working'' questions then they can go to the process commands section.}
-
 
 
 \subsection{Connecting processes using {\tt plug}}
