@@ -1923,36 +1923,28 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 
 % convey that these constructs are coming from a mathematical foundation and not just ``out of thin air'' 
 
-FROM 8 PAGE INTRO COMMENTS:
-
-Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses message-passing concurrency.
-It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proof-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
+CaMPL implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proof-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
 In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
 
 The categorical semantics of the message-passing logic is given by a {\em linear actegory} in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
 The covariant action passes messages in the forward direction, which we describe in this article as ``left to right,'' and the contravariant action passes messages in the backward direction, which we describe as ``right to left.''
-A linear actegory minimally consists of a monoidal category acting covariantly and contravariantly on a linearly distributive category, 
-%(LDC), 
-satisfying certain coherences~\cite{CoP07, CS97}. 
-
-END 8 PADE INTRO COMMENTS.
 
 
-
-The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. 
+%The semantics of the concurrent side of CaMPL is given by a linearly distributive category whose objects are interpreted as concurrent channel types and maps as processes between channels. 
 
 \subsection{Category Theory}
 
-The mathematical semantics of CaMPL is modeled by a {\em linear actegory} \cite{CoP07} in which a symmetric monoidal categorical category $\A$ -- representing the semantics of the sequential type system -- acts on a symmetric linearly distributive category $\C$ -- representing the semantics of the concurrent type system. This interaction is defined by two action functors:
-
+A linear actegory minimally consists of a monoidal category acting covariantly and contravariantly on a linearly distributive category, 
+%(LDC), 
+satisfying certain coherences~\cite{CoP07, CS97}. 
+The mathematical semantics of CaMPL is modelled by a linear actegory in which a symmetric monoidal categorical category $\A$ -- representing the semantics of the sequential type system -- acts on a symmetric linearly distributive category $\C$ -- representing the semantics of the concurrent type system. This interaction is defined by two action functors:
 \[ \circ: \A \times \C \to \C \quad \quad \text{ and } \quad \quad \bullet: \A^{\sf op} \times \C \to \C \]
+These functors describe how sequential data, or messages, are passed on channels, which are modelled as concurrent types. 
+The \(\circ\) action corresponds to the \lstinline{Put} channel type, and the \(\bullet\) action corresponds to the the \lstinline{Get} channel type.
 
-These functors describe how sequential data, or {\em messages}, are transmitted on {\em channels}, which are modeled as concurrent types. The $\circ$ functor is the left parametrized left adjoint of $\bullet$ in the sense that the following is a parametrized adjunction:
-
-\[ A \in \A,  \quad A \circ - \dashv A \bullet - : \C \to \C \]
-
+The $\circ$ functor is the left parametrized left adjoint of $\bullet$ in the sense that the following is a parametrized adjunction for all \(A \in \A\):
+\[ \quad A \circ - \dashv A \bullet - : \C \to \C \]
 The adjunction signifies that a process sending or receiving a message can do so from either end of a channel. 
-The \(\circ\) action corresponds to the {\tt Put} channel type, and the \(\bullet\) action corresponds to the the {\tt Get} channel type.
 
 \subsection{Message Passing Logic}
 
@@ -1964,7 +1956,7 @@ This provides a clean separation of computation and communication operations the
 \subsubsection{The logic of messages}
 
 The logic of messages, {\bf Msg}, is concerned with the generation of messages and represents the logic of computation. 
-The logic is presented in a Gentzen sequent style: a sequent takes the form
+The logic is presented in a Gentzen-style sequent calculus: a sequent takes the form
 \[ \Phi \vdash A \]
 where the {\em antecedent} (or the {\em context}), $\Phi$, is a comma-separated list of formulas and the {\em succedent} $A$ is a single formula. 
 {\bf Msg} corresponds to the sequential type system, and the proofs in this logic correspond to sequential programs. 
@@ -1978,7 +1970,9 @@ The inference rules for {\bf Msg} are given in Figure \ref{Fig:MsgRules}. In the
 	\label{Fig:MsgRules}
 \end{figure}
 
-\subsubsection{The logic of message-passing}
+\TODO{retake screenshots to crop out original figure numbers}
+
+\subsubsection{The logic of message passing}
 	
 The logic of message passing, {\bf PMsg}, is concerned with interactions over channels and represents the logic of communication. 
 A sequent of {\bf PMsg} has three components all of which are unordered lists: $\Phi$ of message types, $\Gamma$ of input polarity channels, and $\Delta$ of output polarity channels: 
@@ -1990,14 +1984,14 @@ Each rule corresponds to a process command.
 Figure \ref{Fig:programming-syntax} provides the process commands that come from each rule.
 Complementary pairs of process commands arise directly from the two-sidedness of the inference rules.
 
-Most of the rules come from two-sided multiplicative linear logic except the {\em action} rules, which allow messages to be bound to channels of interaction.
-The {\tt get} and the {\tt put} process commands arise from the action rules.
-The rule $\circ_l$ is the same as using {\tt get} on an input channel, and the rule $\circ_r$ is the same as using {\tt put} on an output channel.
-The rule $\bullet_l$ is the same as using {\tt put} on an input channel, and the rule $\bullet_r$ is the same as using {\tt get} on an output channel.
+Most of the rules come from two-sided multiplicative linear logic except the {\em action} rules, which allow sequential message types to be bound to concurrent channel types.
+The \lstinline{get} and \lstinline{put} process commands arise from the action rules.
+The rule $\circ_l$ is the same as using \lstinline{get} on an input channel, and the rule $\circ_r$ is the same as using \lstinline{put} on an output channel.
+The rule $\bullet_l$ is the same as using \lstinline{put} on an input channel, and the rule $\bullet_r$ is the same as using \lstinline{get} on an output channel.
 
-The {\tt split} and the {\tt fork} process commands arise from the multiplicative linear logic rules. 
+The \lstinline{split} and \lstinline{fork} process commands arise from the multiplicative linear logic rules. 
 %The sequent rules for for fork are shown in Figure \ref{Fig: sequent rules fork}. 
-The rule $\otimes_l$ is same as using {\tt split} on an input channel, and the rule $\otimes_r$ is same as using {\tt fork} on an output channel.
+The rule $\otimes_l$ is same as using \lstinline{split} on an input channel, and the rule $\otimes_r$ is same as using \lstinline{fork} on an output channel.
 %\begin{figure}[h]
 %	\[ \infer[\otimes_R]{A, B ~|~ X1, X2 \dashvv Y1 \otimes Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2}  \quad \quad \quad \quad \quad \quad \infer[\oplus_L]{A,B ~|~ X1 \oplus X2 \dashvv Y1, Y2}{A ~|~ X1 \dashvv Y1 \quad \quad B ~|~ X2 \dashvv Y2} \]
 %\vspace{-2em}
