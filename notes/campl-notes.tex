@@ -1290,7 +1290,7 @@ Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands an
 % what about race? store? use?
 
 
-\subsubsection{{\tt put} and {\tt get}: Send and receive messages}
+\subsubsection{Sending and receiving messages using {\tt put} and {\tt get}}
 \label{subsec:put-get}
 
 We have used the \lstinline$put$ and \lstinline$get$ process commands to send messages and receive messages, respectively, in most of our examples so far.
@@ -1362,7 +1362,7 @@ Table \ref{Table: Usage of get and put process commands} describes the usage of 
 \end{table}
 
 
-\subsubsection{{\tt hcase} and {\tt hput}: Channel activation}
+\subsubsection{Channel activation using {\tt hput} and {\tt hcase}}
 \label{subsec:hput-hcase}
 
 Custom channel types, called protocols and coprotocols, allow processes to change the type of a channel dynamically at run-time.
@@ -1414,7 +1414,7 @@ It also uses the coprotocol channel \lstinline$dest1$ with input polarity, so it
 If the type of a channel is not explicitly defined, using the handles of an existing protocol in an \lstinline$hput$ command on the output polarity end and an \lstinline$hcase$ command on the input polarity end will force the channel type to be that protocol.
 This would not work if the handles belong to an existing coprotocol; in that case, the \lstinline$hput$ and \lstinline$hcase$ commands would need to be used on the opposite ends.
 
-\subsubsection{{\tt split} and {\tt fork}: Multi-process communication}
+\subsubsection{Multi-process communication using {\tt fork} and {\tt split}}
 \label{sec:split-fork}
 
 The \lstinline$fork$ and \lstinline$split$ commands are used to make changes to the network of processes at run-time while ensuring no cycles are introduced.
