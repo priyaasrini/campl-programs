@@ -1943,25 +1943,33 @@ The semantics of the concurrent side of CaMPL is given by a linearly distributiv
 
 \subsection{Category Theory}
 
-The mathematical semantics of CaMPL is modeled by a {\em linear actegory} \cite{CoP07}:4.2 where a symmetric monoidal categorical category $\X$ --- representing the semantics of of the sequential side --- acts on a symmetric linearly distributive category $\C$ --- representing the semantics of the concurrent side. This interaction is defined by two action functors:
+The mathematical semantics of CaMPL is modeled by a {\em linear actegory} \cite{CoP07} in which a symmetric monoidal categorical category $\A$ -- representing the semantics of the sequential type system -- acts on a symmetric linearly distributive category $\C$ -- representing the semantics of the concurrent type system. This interaction is defined by two action functors:
 
 \[ \circ: \A \times \C \to \C \quad \quad \text{ and } \quad \quad \bullet: \A^{\sf op} \times \C \to \C \]
 
-These functors describe how sequential data, or {\em messages}, are transmitted through {\em channels}, which are modeled as concurrent types. The $\circ$ functor is the left parametrized left adjoint of $\bullet$ in the sense that the following is a parametrized adjunction:
+These functors describe how sequential data, or {\em messages}, are transmitted on {\em channels}, which are modeled as concurrent types. The $\circ$ functor is the left parametrized left adjoint of $\bullet$ in the sense that the following is a parametrized adjunction:
 
-\[ A \in \A,  \quad X \circ - \dashv A \bullet - : \C \to \C \]
+\[ A \in \A,  \quad A \circ - \dashv A \bullet - : \C \to \C \]
 
-The adjunction signifies that a process transmitting or receiving a message can do so from either end of a channel. 
+The adjunction signifies that a process sending or receiving a message can do so from either end of a channel. 
+The \(\circ\) action corresponds to the {\tt Put} channel type, and the \(\bullet\) action corresponds to the the {\tt Get} channel type.
 
 \subsection{Message Passing Logic}
 
-The message passing logic, {\bf Msg}, gives a type system for concurrent proccesses which use message passing as their concurrency primitive \cite{CoP07}. The logic they introduced is two-tiered with rules governing the interaction of the two tiers. The two-tiers include the logic of messages and logic of message-passing.
+The message passing logic gives a type system for concurrent processes which use message passing as their concurrency primitive \cite{CoP07}. 
+It is a two-tiered logic with rules governing operations within each tier and interactions between the two tiers. 
+The two-tiers include the logic of messages and logic of message-passing.
+This provides a clean separation of computation and communication operations thereby allowing the complexities associated with each to be addressed effectively.
 
 \subsubsection{The logic of messages}
 
-This tier concerned with generation of messages represents the logic of computation, and corresponds to the type system for sequential computation. The proofs in this logic correspond to sequential programs. The logic is presented in a Gentzen sequent style: a sequent takes the form
+The logic of messages, {\bf Msg}, is concerned with the generation of messages and represents the logic of computation. 
+The logic is presented in a Gentzen sequent style: a sequent takes the form
 \[ \Phi \vdash A \]
-where the {\em antecedent} (which we will also call the {\em context}) of $\Phi$ is a comma-separated list of formulas and the {\em succedent} $A$ is a single formula. The term calculus for this logic is given in Figure \ref{Fig:MsgRules}. In the inference rules, {\em subs} stands for substitution and is the cut rule. 
+where the {\em antecedent} (or the {\em context}), $\Phi$, is a comma-separated list of formulas and the {\em succedent} $A$ is a single formula. 
+{\bf Msg} corresponds to the sequential type system, and the proofs in this logic correspond to sequential programs. 
+
+The inference rules for {\bf Msg} are given in Figure \ref{Fig:MsgRules}. In the inference rules, {\em subs} stands for substitution and is the cut rule. 
 
 \begin{figure}[h]
 	\centering
@@ -2010,13 +2018,13 @@ The rule $\oplus_l$ is same as using {\tt fork} on an input channel, and the rul
 	\includegraphics[scale=0.6]{figs/PMsgRules.PNG}
 	\caption{Inference rules for {\bf PMsg} \label{Fig:PMsgRules}}
 \end{figure}
-	
-Thus, the message passing logic provides a clean separation of computation and communication layers thereby allowing the complexities associated with each layer to be addressed effectively. Figure \ref{Fig:programming-syntax} provides the programming syntax for CaMPL.
+
 \begin{figure}[p]
 	\centering
 	\includegraphics[scale=0.6]{figs/programming-syntax.png}
 	\caption{Programming syntax for {\bf PMsg} \label{Fig:programming-syntax}}
 \end{figure}
+
 
 \newpage
 \printbibliography
