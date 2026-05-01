@@ -336,9 +336,10 @@ The outer-most layer \lstinline$Put([Char]| ...)$ defines the first step of the 
 Accordingly, \lstinline$client$ uses \lstinline$put$ on line 4 to send, and \lstinline$server$ uses \lstinline$get$ on line 11 to receive. 
 In the next layer \lstinline$Get(Int| ...)$, an integer \lstinline$server_id$ travels from right to left (\lstinline$server$ to \lstinline$client$).
 Accordingly, \lstinline$client$ uses \lstinline$get$ on line 5 to receive, and \lstinline$server$ uses \lstinline$put$ on line 12 to send.
+Finer details about these commands are given in Section~\ref{subsec:put-get}. 
 The inner-most layer \lstinline$TopBot$ is the base case and final step. 
 We can \lstinline$close$ the channel or, as above, \lstinline$halt$ by closing the final open channel.
-Finer details about these process commands are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
+Finer details about these commands are given in Section~\ref{sec:close}. 
 
 From Example~\ref{ex:serverid}, we can see that a channel of type \lstinline$Put$ indicates messages will travel from left to right, type \lstinline$Get$ indicates messages will travel from right to left, and type \lstinline$TopBot$ indicates the interaction is over and the channel will be closed.
 The diagrams in Figures~\ref{Fig: Put} and \ref{Fig: Get} visualize the direction messages travel on each channel type.
