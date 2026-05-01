@@ -202,68 +202,28 @@ We explain these finer details on process commands in Section~\ref{Sec:concurren
 
 % i don't like this sentence but idk how to make it better.
 Different process body definitions can be executed depending on the value of variables.
-We will discuss how sequential data can control a process's execution in Section~\ref{sec:seqcontrol} on sequential control.
+We will discuss how sequential data can control a process's execution in Section~\ref{sec:seqcontrol}.
 
 We can depict processes using diagrams. 
-We will use diagrams to illustrate the effect of each process command on the processes involved.
-The \lstinline$broadcast$ process can be expressed as follows (note that sequential data are not shown):
-\TODO{change diagram}
-  \[ \begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [thick, circle, scale=2] (0) at (-3, 5) {};
-		\node [style=none] (1) at (-3, 4) {};
-		\node [style=none] (2) at (-3.25, 3.75) {};
-		\node [style=none] (3) at (-2.75, 3.75) {};
-		\node [style=none] (4) at (-3.25, 4.45) {};
-		\node [style=none] (5) at (-2.75, 4.45) {};
-		\node [style=none] (6) at (-2.5, 4.75) {};
-		\node [style=none] (7) at (-2.5, 4.25) {};
-		\node [style=none] (8) at (-2.5, 3.5) {};
-		\node [style=none] (9) at (-3.5, 4.75) {};
-		\node [style=none] (10) at (-3.5, 4.25) {};
-		\node [style=none] (11) at (-3.5, 3.5) {};
-		\node [style=none] (12) at (-1, 5.5) {};
-		\node [style=none] (13) at (-1, 4.75) {};
-		\node [style=none] (14) at (-1.5, 4.25) {$.$};
-		\node [style=none] (15) at (-1.5, 4) {$.$};
-		\node [style=none] (15) at (-1.5, 3.5) {$.$};
-		\node [style=none] (15) at (-1.5, 3.75) {$.$};
-		\node [style=none] (16) at (-1, 3) {};
-		\node [style=none] (17) at (-5, 5.5) {};
-		\node [style=none] (18) at (-5, 4.75) {};
-		\node [style=none] (19) at (-4.5, 4.25) {$.$};
-		\node [style=none] (15) at (-4.5, 4) {$.$};
-		\node [style=none] (15) at (-4.5, 3.5) {$.$};
-		\node [style=none] (20) at (-4.5, 3.75) {$.$};
-		\node [style=none] (21) at (-5, 3) {};
-		\node [style=none] (22) at (-0.75, 5.5) {$o_1$};
-		\node [style=none] (23) at (-0.75, 4.75) {$o_2$};
-		\node [style=none] (24) at (-0.75, 3) {$o_m$};
-		\node [style=none] (25) at (-5.25, 5.5) {$i_1$};
-		\node [style=none] (26) at (-5.25, 4.75) {$i_2$};
-		\node [style=none] (27) at (-5.25, 3) {$i_n$};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (0) to (1.center);
-		\draw [thick] (1.center) to (2.center);
-		\draw [thick] (1.center) to (3.center);
-		\draw [thick] (4.center) to (5.center);
-		\draw [bend left=15] (6.center) to (12.center);
-		\draw [bend left=15] (7.center) to (13.center);
-		\draw [bend right=15] (8.center) to (16.center);
-		\draw [bend right=15, looseness=0.75] (9.center) to (17.center);
-		\draw [bend right=15] (10.center) to (18.center);
-		\draw [bend left=15] (11.center) to (21.center);
-	\end{pgfonlayer}
-\end{tikzpicture} \]
-
-%The above picture is a schematic of a process with input channels $i_1,i_2,\ldots,i_n$ and output channels $o_1,o_2,\ldots,o_m$. The sequential types are not shown in the schematic.
-
-
+We will use diagrams to illustrate some of the interactions processes can have along channels.
+A diagram of \lstinline$broadcast$ is shown in Figure~\ref{Fig: broadcast}.
+We use \lstinline$-$ to denote input polarity and \lstinline$+$ to denote output polarity.
+% broadcast
+\begin{figure}[h]
+\[ \xymatrixcolsep{3pc}
+ \xymatrix{ 
+ ~  \ar@{-} [r]+<-3ex, +0ex> ^>{-~~}^{\text{\lstinline$source$}}
+ & \overset{\overset{\text{\lstinline$confirmation_msg$}}{\quad}}{\blackman}
+ & ~ \ar@{-} @/^0.25pc/ @<-3ex> [l]+<+3ex, -2.25ex>  _>{~~+}   _{\text{\lstinline$dest1$}} 
+ \ar@{-} @/_0.25pc/ @<+3ex> [l]+<+3ex, +2.25ex>  ^>{~~+}  ^{\text{\lstinline$dest2$}}
+ }  
+ \]
+ \caption{Diagram of \lstinline$broadcast$ process}
+ \label{Fig: broadcast}
+\end{figure}
 
 \subsection{Channels}
 \label{Sec:Channels}
-
 
 A process \tc{uses} process commands on a channel to interact with the process plugged into the other end. 
 Two processes are connected by (at most) one typed channel that they use with opposite polarities. 
