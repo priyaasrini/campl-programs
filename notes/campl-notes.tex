@@ -338,9 +338,51 @@ In the next layer \lstinline$Get(Int| ...)$, an integer \lstinline$server_id$ tr
 Accordingly, \lstinline$client$ uses \lstinline$get$ on line 5 to receive, and \lstinline$server$ uses \lstinline$put$ on line 12 to send.
 The inner-most layer \lstinline$TopBot$ is the base case and final step. 
 We can \lstinline$close$ the channel or, as above, \lstinline$halt$ by closing the final open channel.
+Finer details about these process commands are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
 
 From Example~\ref{ex:serverid}, we can see that a channel of type \lstinline$Put$ indicates messages will travel from left to right, type \lstinline$Get$ indicates messages will travel from right to left, and type \lstinline$TopBot$ indicates the interaction is over and the channel will be closed.
-Finer details about the corresponding process commands of these types are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
+The diagrams in Figures~\ref{Fig: Put} and \ref{Fig: Get} visualize the direction messages travel on each channel type.
+
+%\begin{figure}[h]
+%\[  \xymatrix{  
+% \blackman  \quad
+%  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
+% \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
+% &  & & \quad \blackman   }  
+% \]
+% \caption{Direction of messages on \lstinline$Put$ and \lstinline$Get$ types}
+% \label{Fig: Put and Get}
+%\end{figure}
+
+% PUT
+\begin{figure}[h]
+\[ \xymatrixcolsep{7pc}
+ \xymatrix{ 
+ \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar[r]^<{~~+}^{\text{\lstinline$ch:Put(A|Ch)$}}^>{-~~} 
+ & \overset{\quad ~ \quad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$put$ / \lstinline$get$} }
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$ch:Ch$}}^>{-~~} 
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} 
+ }  
+ \]
+ \caption{Message passing on \lstinline$Put$ channels}
+ \label{Fig: Put}
+\end{figure}
+
+% GET
+\begin{figure}[h]
+\[ \xymatrixcolsep{7pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} 
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar[l]_<{+~~}_{\text{\lstinline$ch:Get(A|Ch)$}}_>{~~-} 
+ \ar@{~>}[r]^{\text{ \lstinline$get$ / \lstinline$put$} }
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$ch:Ch$}}^>{-~~} 
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} 
+ }  
+ \]
+ \caption{Message passing on \lstinline$Get$ channels}
+ \label{Fig: Get}
+\end{figure}
 
 Next, in Example~\ref{ex:clientfork}, we will consider a compound channel type that allows bundling of two (or more) channels into one.
 The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from multiplicative linear logic and allow changes to be made to the network of processes while ensuring no cycles are introduced.
@@ -384,7 +426,48 @@ The next layers indicate how the interactions between the processes on the two n
 
 What if we wanted the process on the right to be replaced by two new processes instead?
 Then, we would use \lstinline$(+)$ which is dual to \lstinline$(*)$.
+The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the change in the process network from each channel type.
 An example demonstrating a channel with type \lstinline$(+)$ and finer details about the corresponding process commands are given in Section~\ref{sec:split-fork}.
+
+% TENSOR 
+\begin{figure}[h]
+\[ 
+\xymatrixcolsep{7pc}
+\xymatrixrowsep{0.1pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
+^<{~~+}^{\text{\lstinline$ch:Ch1(*) Ch2$}}^>{-~~} 
+ & \overset{\qquad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$fork$ / \lstinline$split$} }
+ & \overset{\blackman}{\underset{\blackman}{\quad}} 
+ \ar@{-} @/^1pc/ @<+4ex> [r]+<-4ex, -2ex>  ^<{~~+}  ^{\text{\lstinline$ch1:Ch1$}} ^>{-~~}
+  \ar@{-} @/_1pc/ @<-4ex> [r]+<-4ex, +2ex>  _<{~~+}   _{\text{\lstinline$ch2:Ch2$}} _>{-~~}
+ & \overset{\quad ~ \quad}{\blackman}
+ }  
+ \]
+ \caption{Change in process network from \lstinline$(*)$ channels}
+ \label{Fig: Tensor}
+\end{figure}
+
+% PAR 
+\begin{figure}[h]
+\[ 
+\xymatrixcolsep{7pc}
+\xymatrixrowsep{0.1pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
+^<{~~+}^{\text{\lstinline$ch:Ch1(+) Ch2$}}^>{-~~} 
+ & \overset{\qquad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$split$ / \lstinline$fork$} }
+ & \overset{\quad ~ \quad}{\blackman}
+  \ar@{-} @/^1pc/ @<+0.25ex> [r]+<-3ex, +4ex>  ^<{~~+}   ^{\text{\lstinline$ch1:Ch1$}} ^>{-~~}
+ \ar@{-} @/_1pc/ @<-0.25ex> [r]+<-3ex, -4ex>  _<{~~+}  _{\text{\lstinline$ch2:Ch2$}} _>{-~~}
+ & \overset{\blackman}{\underset{\blackman}{\quad}} 
+ }  
+ \]
+ \caption{Change in process network from \lstinline$(+)$ channels}
+ \label{Fig: Par}
+\end{figure}
 
 Lastly, the \lstinline$Neg$ channel type negates a given channel type.
 This means that the direction of the interaction is reversed, so it is in the same direction as the \tc{dual} type.
@@ -1286,47 +1369,6 @@ Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in sc
 
 These commands can be used on channels with type \lstinline$Put$ or \lstinline$Get$ depending on the direction the message is travelling on the channel.
 Recall that messages travel on \lstinline$Put$ channels from left to right (output to input polarity), and messages travel on \lstinline$Get$ channels from right to left (input to output polarity).
-The diagrams in Figures~\ref{Fig: Put} and \ref{Fig: Get} visualize the direction messages are sent on each channel type and uses \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
-%\begin{figure}[h]
-%\[  \xymatrix{  
-% \blackman  \quad
-%  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
-% \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
-% &  & & \quad \blackman   }  
-% \]
-% \caption{Direction of messages on \lstinline$Put$ and \lstinline$Get$ types}
-% \label{Fig: Put and Get}
-%\end{figure}
-
-% PUT
-\begin{figure}[h]
-\[ \xymatrixcolsep{7pc}
- \xymatrix{ 
- \overset{\text{\lstinline$a : A$}}{\blackman} \ar[r]^<{~~+}^{\text{\lstinline$Put(A|X)$}}^>{-~~} 
- & \overset{\quad ~ \quad}{\blackman}  
- \ar@{~>}[r]^{\text{ \lstinline$put$ / \lstinline$get$} }
- & \overset{\text{\lstinline$a : A$}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$X$}}^>{-~~} 
- & \overset{\text{\lstinline$a : A$}}{\blackman} 
- }  
- \]
- \caption{Message passing on \lstinline$Put$ channels}
- \label{Fig: Put}
-\end{figure}
-
-% GET
-\begin{figure}[h]
-\[ \xymatrixcolsep{7pc}
- \xymatrix{ 
- \overset{\quad ~ \quad}{\blackman} 
- & \overset{\text{\lstinline$a : A$}}{\blackman} \ar[l]_<{+~~}_{\text{\lstinline$Get(A|X)$}}_>{~~-} 
- \ar@{~>}[r]^{\text{ \lstinline$get$ / \lstinline$put$} }
- & \overset{\text{\lstinline$a : A$}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$X$}}^>{-~~} 
- & \overset{\text{\lstinline$a : A$}}{\blackman} 
- }  
- \]
- \caption{Message passing on \lstinline$Get$ channels}
- \label{Fig: Get}
-\end{figure}
 
 If the type of a channel is not explicitly defined, using \lstinline$put$ on the output polarity end and \lstinline$get$ on the input polarity end will force the type of the channel to be \lstinline$Put$.
 Dually, using \lstinline$get$ on the output polarity end and \lstinline$put$ on the input polarity end will force the type of the channel to be \lstinline$Get$.
@@ -1483,49 +1525,6 @@ For example, if this process was sending confirmation messages, the variable \ls
 
 These commands can be used on channels with type \lstinline$(*)$, ``tensor,'' or \lstinline$(+)$, ``par,'' depending on which end of the channel has one process \lstinline$fork$ into two processes.
 Recall that a \lstinline$(*)$ channel means the process on the left forks (using the channel with output polarity), and a \lstinline$(+)$ channel means the process on the right forks (using the channel with input polarity).
-The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the change in the process network on each channel type and use \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
-
-% TENSOR 
-\begin{figure}[h]
-\[ 
-\xymatrixcolsep{7pc}
-\xymatrixrowsep{0.1pc}
- \xymatrix{ 
- \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
-^<{~~+}^{\text{\lstinline$X(*) Y$}}^>{-~~} 
- & \overset{\qquad}{\blackman}  
- \ar@{~>}[r]^{\text{ \lstinline$fork$ / \lstinline$split$} }
- & \overset{\blackman}{\underset{\blackman}{\quad}} 
- \ar@{-} @/^1pc/ @<+4ex> [r]+<-4ex, -2ex>  ^<{~~+}  ^{\text{\lstinline$X$}} ^>{-~~}
-  \ar@{-} @/_1pc/ @<-4ex> [r]+<-4ex, +2ex>  _<{~~+}   _{\text{\lstinline$Y$}} _>{-~~}
- & \overset{\quad ~ \quad}{\blackman}
- }  
- \]
- \caption{Change in process network from \lstinline$(*)$ channels}
- \label{Fig: Tensor}
-\end{figure}
-
-% PAR 
-\begin{figure}[h]
-\[ 
-\xymatrixcolsep{7pc}
-\xymatrixrowsep{0.1pc}
- \xymatrix{ 
- \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
-^<{~~+}^{\text{\lstinline$X(+) Y$}}^>{-~~} 
- & \overset{\qquad}{\blackman}  
- \ar@{~>}[r]^{\text{ \lstinline$split$ / \lstinline$fork$} }
- & \overset{\quad ~ \quad}{\blackman}
-  \ar@{-} @/^1pc/ @<+0.25ex> [r]+<-3ex, +4ex>  ^<{~~+}   ^{\text{\lstinline$X$}} ^>{-~~}
- \ar@{-} @/_1pc/ @<-0.25ex> [r]+<-3ex, -4ex>  _<{~~+}  _{\text{\lstinline$Y$}} _>{-~~}
- & \overset{\blackman}{\underset{\blackman}{\quad}} 
- }  
- \]
- \caption{Change in process network from \lstinline$(+)$ channels}
- \label{Fig: Par}
-\end{figure}
-
-
 
 Again, if the type of a channel is not explicitly defined, using \lstinline$fork$ on the output polarity end and \lstinline$split$ on the input polarity end will force the type of the channel to be \lstinline$(*)$.
 Dually, using \lstinline$split$ on the output polarity end and \lstinline$fork$ on the input polarity end will force the type of the channel to be \lstinline$(+)$.
