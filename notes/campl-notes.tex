@@ -77,12 +77,16 @@ The implementation of this feature and the changes to the categorical semantics 
 In this article, we illustrate CaMPL's type system and demonstrate the above features through a series of code examples.
 We have summarized these features with the corresponding channel types and process commands in Table~\ref{Table:summary} at the beginning of Section~\ref{sec:concurrent-operators}.
 
-We use \tc{this style} whenever we introduce CaMPL terminology.
+{\bf Related work: }
+
+\TODO{add related work. can use references from presentation}
+%https://seis.bristol.ac.uk/~tz20861/talks/ll-cantab-2022.pdf
 
 
 \section{A brief overview of CaMPL}
 
 As is tradition, we will introduce CaMPL with a ``Hello World!'' example program, shown in Example \ref{ex:helloworld}.
+We use \tc{this style} whenever we introduce CaMPL terminology.
 We demonstrate a \tc{process} named \lstinline$helloworld$ printing \lstinline$"Hello World!"$ by sending the string as a message on a \tc{channel} named \lstinline$console$.
 The \lstinline$console$ channel has type \lstinline$Console$ which is a special channel type built-in to the compiler to connect any CaMPL program to the terminal from which it is run.
 \begin{lstlisting}[label=ex:helloworld, caption=Hello World!, name=helloworld] 
@@ -198,68 +202,28 @@ We explain these finer details on process commands in Section~\ref{Sec:concurren
 
 % i don't like this sentence but idk how to make it better.
 Different process body definitions can be executed depending on the value of variables.
-We will discuss how sequential data can control a process's execution in Section~\ref{sec:seqcontrol} on sequential control.
+We will discuss how sequential data can control a process's execution in Section~\ref{sec:seqcontrol}.
 
 We can depict processes using diagrams. 
-We will use diagrams to illustrate the effect of each process command on the processes involved.
-The \lstinline$broadcast$ process can be expressed as follows (note that sequential data are not shown):
-\TODO{change diagram}
-  \[ \begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [thick, circle, scale=2] (0) at (-3, 5) {};
-		\node [style=none] (1) at (-3, 4) {};
-		\node [style=none] (2) at (-3.25, 3.75) {};
-		\node [style=none] (3) at (-2.75, 3.75) {};
-		\node [style=none] (4) at (-3.25, 4.45) {};
-		\node [style=none] (5) at (-2.75, 4.45) {};
-		\node [style=none] (6) at (-2.5, 4.75) {};
-		\node [style=none] (7) at (-2.5, 4.25) {};
-		\node [style=none] (8) at (-2.5, 3.5) {};
-		\node [style=none] (9) at (-3.5, 4.75) {};
-		\node [style=none] (10) at (-3.5, 4.25) {};
-		\node [style=none] (11) at (-3.5, 3.5) {};
-		\node [style=none] (12) at (-1, 5.5) {};
-		\node [style=none] (13) at (-1, 4.75) {};
-		\node [style=none] (14) at (-1.5, 4.25) {$.$};
-		\node [style=none] (15) at (-1.5, 4) {$.$};
-		\node [style=none] (15) at (-1.5, 3.5) {$.$};
-		\node [style=none] (15) at (-1.5, 3.75) {$.$};
-		\node [style=none] (16) at (-1, 3) {};
-		\node [style=none] (17) at (-5, 5.5) {};
-		\node [style=none] (18) at (-5, 4.75) {};
-		\node [style=none] (19) at (-4.5, 4.25) {$.$};
-		\node [style=none] (15) at (-4.5, 4) {$.$};
-		\node [style=none] (15) at (-4.5, 3.5) {$.$};
-		\node [style=none] (20) at (-4.5, 3.75) {$.$};
-		\node [style=none] (21) at (-5, 3) {};
-		\node [style=none] (22) at (-0.75, 5.5) {$o_1$};
-		\node [style=none] (23) at (-0.75, 4.75) {$o_2$};
-		\node [style=none] (24) at (-0.75, 3) {$o_m$};
-		\node [style=none] (25) at (-5.25, 5.5) {$i_1$};
-		\node [style=none] (26) at (-5.25, 4.75) {$i_2$};
-		\node [style=none] (27) at (-5.25, 3) {$i_n$};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (0) to (1.center);
-		\draw [thick] (1.center) to (2.center);
-		\draw [thick] (1.center) to (3.center);
-		\draw [thick] (4.center) to (5.center);
-		\draw [bend left=15] (6.center) to (12.center);
-		\draw [bend left=15] (7.center) to (13.center);
-		\draw [bend right=15] (8.center) to (16.center);
-		\draw [bend right=15, looseness=0.75] (9.center) to (17.center);
-		\draw [bend right=15] (10.center) to (18.center);
-		\draw [bend left=15] (11.center) to (21.center);
-	\end{pgfonlayer}
-\end{tikzpicture} \]
-
-%The above picture is a schematic of a process with input channels $i_1,i_2,\ldots,i_n$ and output channels $o_1,o_2,\ldots,o_m$. The sequential types are not shown in the schematic.
-
-
+We will use diagrams to illustrate some of the interactions processes can have along channels.
+A diagram of \lstinline$broadcast$ is shown in Figure~\ref{Fig: broadcast}.
+We use \lstinline$-$ to denote input polarity and \lstinline$+$ to denote output polarity.
+% broadcast
+\begin{figure}[h]
+\[ \xymatrixcolsep{3pc}
+ \xymatrix{ 
+ ~  \ar@{-} [r]+<-3ex, +0ex> ^>{-~~}^{\text{\lstinline$source$}}
+ & \overset{\overset{\text{\lstinline$confirmation_msg$}}{\quad}}{\blackman}
+ & ~ \ar@{-} @/^0.25pc/ @<-3ex> [l]+<+3ex, -2.25ex>  _>{~~+}   _{\text{\lstinline$dest1$}} 
+ \ar@{-} @/_0.25pc/ @<+3ex> [l]+<+3ex, +2.25ex>  ^>{~~+}  ^{\text{\lstinline$dest2$}}
+ }  
+ \]
+ \caption{Diagram of \lstinline$broadcast$ process}
+ \label{Fig: broadcast}
+\end{figure}
 
 \subsection{Channels}
 \label{Sec:Channels}
-
 
 A process \tc{uses} process commands on a channel to interact with the process plugged into the other end. 
 Two processes are connected by (at most) one typed channel that they use with opposite polarities. 
@@ -372,11 +336,54 @@ The outer-most layer \lstinline$Put([Char]| ...)$ defines the first step of the 
 Accordingly, \lstinline$client$ uses \lstinline$put$ on line 4 to send, and \lstinline$server$ uses \lstinline$get$ on line 11 to receive. 
 In the next layer \lstinline$Get(Int| ...)$, an integer \lstinline$server_id$ travels from right to left (\lstinline$server$ to \lstinline$client$).
 Accordingly, \lstinline$client$ uses \lstinline$get$ on line 5 to receive, and \lstinline$server$ uses \lstinline$put$ on line 12 to send.
+Finer details about these commands are given in Section~\ref{subsec:put-get}. 
 The inner-most layer \lstinline$TopBot$ is the base case and final step. 
 We can \lstinline$close$ the channel or, as above, \lstinline$halt$ by closing the final open channel.
+Finer details about these commands are given in Section~\ref{sec:close}. 
 
 From Example~\ref{ex:serverid}, we can see that a channel of type \lstinline$Put$ indicates messages will travel from left to right, type \lstinline$Get$ indicates messages will travel from right to left, and type \lstinline$TopBot$ indicates the interaction is over and the channel will be closed.
-Finer details about the corresponding process commands of these types are given in Sections \ref{subsec:put-get} and \ref{sec:close}. 
+The diagrams in Figures~\ref{Fig: Put} and \ref{Fig: Get} visualize the direction messages travel on each channel type.
+
+%\begin{figure}[h]
+%\[  \xymatrix{  
+% \blackman  \quad
+%  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
+% \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
+% &  & & \quad \blackman   }  
+% \]
+% \caption{Direction of messages on \lstinline$Put$ and \lstinline$Get$ types}
+% \label{Fig: Put and Get}
+%\end{figure}
+
+% PUT
+\begin{figure}[h]
+\[ \xymatrixcolsep{7pc}
+ \xymatrix{ 
+ \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar[r]^<{~~+}^{\text{\lstinline$ch:Put(A|Ch)$}}^>{-~~} 
+ & \overset{\quad ~ \quad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$put$ / \lstinline$get$} }
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$ch:Ch$}}^>{-~~} 
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} 
+ }  
+ \]
+ \caption{Message passing on \lstinline$Put$ channels}
+ \label{Fig: Put}
+\end{figure}
+
+% GET
+\begin{figure}[h]
+\[ \xymatrixcolsep{7pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} 
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar[l]_<{+~~}_{\text{\lstinline$ch:Get(A|Ch)$}}_>{~~-} 
+ \ar@{~>}[r]^{\text{ \lstinline$get$ / \lstinline$put$} }
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} \ar@{-}[r]^<{~~+}^{\text{\lstinline$ch:Ch$}}^>{-~~} 
+ & \overset{\text{~\lstinline$a:A$~}}{\blackman} 
+ }  
+ \]
+ \caption{Message passing on \lstinline$Get$ channels}
+ \label{Fig: Get}
+\end{figure}
 
 Next, in Example~\ref{ex:clientfork}, we will consider a compound channel type that allows bundling of two (or more) channels into one.
 The types \lstinline$(*)$, called \tc{tensor}, and \lstinline$(+)$, called \tc{par}, come from multiplicative linear logic and allow changes to be made to the network of processes while ensuring no cycles are introduced.
@@ -420,7 +427,48 @@ The next layers indicate how the interactions between the processes on the two n
 
 What if we wanted the process on the right to be replaced by two new processes instead?
 Then, we would use \lstinline$(+)$ which is dual to \lstinline$(*)$.
+The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the change in the process network from each channel type.
 An example demonstrating a channel with type \lstinline$(+)$ and finer details about the corresponding process commands are given in Section~\ref{sec:split-fork}.
+
+% TENSOR 
+\begin{figure}[h]
+\[ 
+\xymatrixcolsep{7pc}
+\xymatrixrowsep{0.1pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
+^<{~~+}^{\text{\lstinline$ch:Ch1(*) Ch2$}}^>{-~~} 
+ & \overset{\qquad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$fork$ / \lstinline$split$} }
+ & \overset{\blackman}{\underset{\blackman}{\quad}} 
+ \ar@{-} @/^1pc/ @<+4ex> [r]+<-4ex, -2ex>  ^<{~~+}  ^{\text{\lstinline$ch1:Ch1$}} ^>{-~~}
+  \ar@{-} @/_1pc/ @<-4ex> [r]+<-4ex, +2ex>  _<{~~+}   _{\text{\lstinline$ch2:Ch2$}} _>{-~~}
+ & \overset{\quad ~ \quad}{\blackman}
+ }  
+ \]
+ \caption{Change in process network from \lstinline$(*)$ channels}
+ \label{Fig: Tensor}
+\end{figure}
+
+% PAR 
+\begin{figure}[h]
+\[ 
+\xymatrixcolsep{7pc}
+\xymatrixrowsep{0.1pc}
+ \xymatrix{ 
+ \overset{\quad ~ \quad}{\blackman} \ar@{-}[r]
+^<{~~+}^{\text{\lstinline$ch:Ch1(+) Ch2$}}^>{-~~} 
+ & \overset{\qquad}{\blackman}  
+ \ar@{~>}[r]^{\text{ \lstinline$split$ / \lstinline$fork$} }
+ & \overset{\quad ~ \quad}{\blackman}
+  \ar@{-} @/^1pc/ @<+0.25ex> [r]+<-3ex, +4ex>  ^<{~~+}   ^{\text{\lstinline$ch1:Ch1$}} ^>{-~~}
+ \ar@{-} @/_1pc/ @<-0.25ex> [r]+<-3ex, -4ex>  _<{~~+}  _{\text{\lstinline$ch2:Ch2$}} _>{-~~}
+ & \overset{\blackman}{\underset{\blackman}{\quad}} 
+ }  
+ \]
+ \caption{Change in process network from \lstinline$(+)$ channels}
+ \label{Fig: Par}
+\end{figure}
 
 Lastly, the \lstinline$Neg$ channel type negates a given channel type.
 This means that the direction of the interaction is reversed, so it is in the same direction as the \tc{dual} type.
@@ -1322,17 +1370,6 @@ Again, \lstinline$ch$ is used in the \lstinline$put$ command so it must be in sc
 
 These commands can be used on channels with type \lstinline$Put$ or \lstinline$Get$ depending on the direction the message is travelling on the channel.
 Recall that messages travel on \lstinline$Put$ channels from left to right (output to input polarity), and messages travel on \lstinline$Get$ channels from right to left (input to output polarity).
-The diagram in Figure~\ref{Fig: Put and Get} visualizes the direction messages are sent on each channel type and uses \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
-\begin{figure}[h]
-\[  \xymatrix{  
- \blackman  \quad
-  \ar@<8pt>[rrr]^{+ \qquad {\tt Put} \qquad - }
- \ar@<-8pt>@{<-}[rrr]_{+ \qquad {\tt Get} \qquad  -} 
- &  & & \quad \blackman   }  
- \]
- \caption{Direction of messages on \lstinline$Put$ and \lstinline$Get$ types}
- \label{Fig: Put and Get}
-\end{figure}
 
 If the type of a channel is not explicitly defined, using \lstinline$put$ on the output polarity end and \lstinline$get$ on the input polarity end will force the type of the channel to be \lstinline$Put$.
 Dually, using \lstinline$get$ on the output polarity end and \lstinline$put$ on the input polarity end will force the type of the channel to be \lstinline$Get$.
@@ -1489,193 +1526,6 @@ For example, if this process was sending confirmation messages, the variable \ls
 
 These commands can be used on channels with type \lstinline$(*)$, ``tensor,'' or \lstinline$(+)$, ``par,'' depending on which end of the channel has one process \lstinline$fork$ into two processes.
 Recall that a \lstinline$(*)$ channel means the process on the left forks (using the channel with output polarity), and a \lstinline$(+)$ channel means the process on the right forks (using the channel with input polarity).
-The diagrams in Figures~\ref{Fig: Tensor} and \ref{Fig: Par} visualize the change in the process network on each channel type and use \lstinline$+$ to denote output polarity and \lstinline$-$ to denote input polarity.
-%TENSOR
-\begin{figure}[h]
-\[ \xymatrixcolsep{40mm}
-\xymatrix{\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (0) at (1, 5.25) {};
-		\node [style=none] (1) at (1, 4.25) {};
-		\node [style=none] (2) at (0.75, 4) {};
-		\node [style=none] (3) at (1.25, 4) {};
-		\node [style=none] (4) at (0.75, 4.7) {};
-		\node [style=none] (5) at (1.25, 4.7) {};
-		\node [style=head, thick] (6) at (5, 5.25) {};
-		\node [style=none] (7) at (5, 4.25) {};
-		\node [style=none] (8) at (4.75, 4) {};
-		\node [style=none] (9) at (5.25, 4) {};
-		\node [style=none] (10) at (4.75, 4.7) {};
-		\node [style=none] (11) at (5.25, 4.7) {};
-		\node [style=none] (12) at (1.75, 4.5) {};
-		\node [style=none] (13) at (4.25, 4.5) {};
-		\node [style=none] (14) at (3, 4.75) {\lstinline$(*)$};
-		\node [style=none] (15) at (1.75, 4.25) {+};
-		\node [style=none] (16) at (4.25, 4.25) {-};
-		\node [style=none] (17) at (0.5, 4.5) {$A$};
-		\node [style=none] (18) at (5.5, 4.5) {$B$};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (0) to (1.center);
-		\draw [thick] (1.center) to (2.center);
-		\draw [thick] (1.center) to (3.center);
-		\draw [thick] (4.center) to (5.center);
-		\draw [thick] (6) to (7.center);
-		\draw [thick] (7.center) to (8.center);
-		\draw [thick] (7.center) to (9.center);
-		\draw [thick] (10.center) to (11.center);
-		\draw (12.center) to (13.center);
-	\end{pgfonlayer}
-\end{tikzpicture} \ar[r]^{\text{ \lstinline$fork$ / \lstinline$split$}~~~~~~}
-& 
-\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (15) at (5.5, 5.25) {};
-		\node [style=none] (16) at (5.5, 4.25) {};
-		\node [style=none] (17) at (5.75, 4) {};
-		\node [style=none] (18) at (5.25, 4) {};
-		\node [style=none] (19) at (5.75, 4.7) {};
-		\node [style=none] (20) at (5.25, 4.7) {};
-		\node [style=head, thick] (21) at (1.5, 6.25) {};
-		\node [style=none] (22) at (1.5, 5.25) {};
-		\node [style=none] (23) at (1.75, 5) {};
-		\node [style=none] (24) at (1.25, 5) {};
-		\node [style=none] (25) at (1.75, 5.7) {};
-		\node [style=none] (26) at (1.25, 5.7) {};
-		\node [style=none] (27) at (4.75, 4.75) {};
-		\node [style=none] (28) at (2.25, 5.5) {};
-		\node [style=head, thick] (29) at (1.5, 4.5) {};
-		\node [style=none] (30) at (1.5, 3.5) {};
-		\node [style=none] (31) at (1.75, 3.25) {};
-		\node [style=none] (32) at (1.25, 3.25) {};
-		\node [style=none] (33) at (1.75, 3.95) {};
-		\node [style=none] (34) at (1.25, 3.95) {};
-		\node [style=none] (35) at (2.25, 4) {};
-		\node [style=none] (36) at (4.75, 4.5) {};
-		\node [style=none] (44) at (6, 4.5) {$B$};
-		\node [style=none] (45) at (1, 5.5) {$A1$};
-		\node [style=none] (46) at (1, 3.75) {$A2$};
-		\node [style=none] (47) at (2.25, 5.75) {+};
-		\node [style=none] (48) at (2.25, 3.75) {+};
-		\node [style=none] (49) at (4.75, 5) {-};
-		\node [style=none] (50) at (4.75, 4.25) {-};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (15) to (16.center);
-		\draw [thick] (16.center) to (17.center);
-		\draw [thick] (16.center) to (18.center);
-		\draw [thick] (19.center) to (20.center);
-		\draw [thick] (21) to (22.center);
-		\draw [thick] (22.center) to (23.center);
-		\draw [thick] (22.center) to (24.center);
-		\draw [thick] (25.center) to (26.center);
-		\draw [in=0, out=180] (27.center) to (28.center);
-		\draw [thick] (29) to (30.center);
-		\draw [thick] (30.center) to (31.center);
-		\draw [thick] (30.center) to (32.center);
-		\draw [thick] (33.center) to (34.center);
-		\draw [in=0, out=180] (36.center) to (35.center);
-	\end{pgfonlayer}
-\end{tikzpicture} }
-\]
- \caption{Change in process network on \lstinline$(*)$ type}
- \label{Fig: Tensor}
-\end{figure}
-
-
-
-% PAR:
-\begin{figure}[h]
-\[ \xymatrixcolsep{40mm}
-\xymatrix{\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (0) at (1, 5.25) {};
-		\node [style=none] (1) at (1, 4.25) {};
-		\node [style=none] (2) at (0.75, 4) {};
-		\node [style=none] (3) at (1.25, 4) {};
-		\node [style=none] (4) at (0.75, 4.7) {};
-		\node [style=none] (5) at (1.25, 4.7) {};
-		\node [style=head, thick] (6) at (5, 5.25) {};
-		\node [style=none] (7) at (5, 4.25) {};
-		\node [style=none] (8) at (4.75, 4) {};
-		\node [style=none] (9) at (5.25, 4) {};
-		\node [style=none] (10) at (4.75, 4.7) {};
-		\node [style=none] (11) at (5.25, 4.7) {};
-		\node [style=none] (12) at (1.75, 4.5) {};
-		\node [style=none] (13) at (4.25, 4.5) {};
-		\node [style=none] (14) at (3, 4.75) {\lstinline$(+)$};
-		\node [style=none] (15) at (1.75, 4.25) {+};
-		\node [style=none] (16) at (4.25, 4.25) {-};
-		\node [style=none] (17) at (0.5, 4.5) {$A$};
-		\node [style=none] (18) at (5.5, 4.5) {$B$};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (0) to (1.center);
-		\draw [thick] (1.center) to (2.center);
-		\draw [thick] (1.center) to (3.center);
-		\draw [thick] (4.center) to (5.center);
-		\draw [thick] (6) to (7.center);
-		\draw [thick] (7.center) to (8.center);
-		\draw [thick] (7.center) to (9.center);
-		\draw [thick] (10.center) to (11.center);
-		\draw (12.center) to (13.center);
-	\end{pgfonlayer}
-\end{tikzpicture} \ar[r]^{\text{ \lstinline$split$ / \lstinline$fork$}~~~~~~}
-& 
-\begin{tikzpicture}[scale=1.5]
-	\begin{pgfonlayer}{nodelayer}
-		\node [style=head, thick] (15) at (1.5, 5.25) {};
-		\node [style=none] (16) at (1.5, 4.25) {};
-		\node [style=none] (17) at (1.25, 4) {};
-		\node [style=none] (18) at (1.75, 4) {};
-		\node [style=none] (19) at (1.25, 4.7) {};
-		\node [style=none] (20) at (1.75, 4.7) {};
-		\node [style=head, thick] (21) at (5.5, 6.25) {};
-		\node [style=none] (22) at (5.5, 5.25) {};
-		\node [style=none] (23) at (5.25, 5) {};
-		\node [style=none] (24) at (5.75, 5) {};
-		\node [style=none] (25) at (5.25, 5.7) {};
-		\node [style=none] (26) at (5.75, 5.7) {};
-		\node [style=none] (27) at (2.25, 4.75) {};
-		\node [style=none] (28) at (4.75, 5.5) {};
-		\node [style=head, thick] (29) at (5.5, 4.5) {};
-		\node [style=none] (30) at (5.5, 3.5) {};
-		\node [style=none] (31) at (5.25, 3.25) {};
-		\node [style=none] (32) at (5.75, 3.25) {};
-		\node [style=none] (33) at (5.25, 3.95) {};
-		\node [style=none] (34) at (5.75, 3.95) {};
-		\node [style=none] (35) at (4.75, 4) {};
-		\node [style=none] (36) at (2.25, 4.5) {};
-		\node [style=none] (44) at (1, 4.5) {$A$};
-		\node [style=none] (45) at (6, 5.5) {$B1$};
-		\node [style=none] (46) at (6, 3.75) {$B2$};
-		\node [style=none] (47) at (2.25, 5) {+};
-		\node [style=none] (48) at (2.25, 4.25) {+};
-		\node [style=none] (49) at (4.75, 5.75) {-};
-		\node [style=none] (50) at (4.75, 3.75) {-};
-	\end{pgfonlayer}
-	\begin{pgfonlayer}{edgelayer}
-		\draw [thick] (15) to (16.center);
-		\draw [thick] (16.center) to (17.center);
-		\draw [thick] (16.center) to (18.center);
-		\draw [thick] (19.center) to (20.center);
-		\draw [thick] (21) to (22.center);
-		\draw [thick] (22.center) to (23.center);
-		\draw [thick] (22.center) to (24.center);
-		\draw [thick] (25.center) to (26.center);
-		\draw [in=-180, out=0] (27.center) to (28.center);
-		\draw [thick] (29) to (30.center);
-		\draw [thick] (30.center) to (31.center);
-		\draw [thick] (30.center) to (32.center);
-		\draw [thick] (33.center) to (34.center);
-		\draw [in=180, out=0] (36.center) to (35.center);
-	\end{pgfonlayer}
-\end{tikzpicture} }
-\]
- \caption{Change in process network on \lstinline$(+)$ type}
- \label{Fig: Par}
-\end{figure}
-
 
 Again, if the type of a channel is not explicitly defined, using \lstinline$fork$ on the output polarity end and \lstinline$split$ on the input polarity end will force the type of the channel to be \lstinline$(*)$.
 Dually, using \lstinline$split$ on the output polarity end and \lstinline$fork$ on the input polarity end will force the type of the channel to be \lstinline$(+)$.
@@ -2041,7 +1891,8 @@ Complete programs that can be directly copied and pasted are given in the Append
 \label{prog:prelude}
 
 CaMPL has a module system that allows one to import and use code defined in other files.
-This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:}.
+This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, and \ref{ex:concat}.
+We encourage readers to write additional functions in their version of the Prelude as an exercise in CaMPL programming.
 We demonstrate how to import the \lstinline{Prelude} in 
 \ref{prog:h.o.hello_world}, \ref{prog:user_input_client_server}, \ref{prog:broadcastmsgs}, \ref{prog:stack_print}, and \ref{prog:mem-cell}.
 
@@ -2093,8 +1944,7 @@ fun (++) :: [A],[A] -> [A] =
 	[],a 			-> a
 	(b:bs),cs	-> b : (bs ++ cs)  
 \end{lstlisting}
-	
-\TODO{complete Prelude file.}
+
 
 \TODO{make schematics visualizing process networks}
 
@@ -2663,6 +2513,202 @@ proc run =
 
 
 DEPRECATED:
+
+
+
+%TENSOR
+\begin{figure}[h]
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {\lstinline$X(*) Y$};
+		\node [style=none] (15) at (1.75, 4.25) {+};
+		\node [style=none] (16) at (4.25, 4.25) {-};
+%		\node [style=none] (17) at (0.5, 4.5) {$A$};
+%		\node [style=none] (18) at (5.5, 4.5) {$B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture} 
+\ar[r]^{\text{ \lstinline$fork$ / \lstinline$split$}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (5.5, 5.25) {};
+		\node [style=none] (16) at (5.5, 4.25) {};
+		\node [style=none] (17) at (5.75, 4) {};
+		\node [style=none] (18) at (5.25, 4) {};
+		\node [style=none] (19) at (5.75, 4.7) {};
+		\node [style=none] (20) at (5.25, 4.7) {};
+		\node [style=head, thick] (21) at (1.5, 6.25) {};
+		\node [style=none] (22) at (1.5, 5.25) {};
+		\node [style=none] (23) at (1.75, 5) {};
+		\node [style=none] (24) at (1.25, 5) {};
+		\node [style=none] (25) at (1.75, 5.7) {};
+		\node [style=none] (26) at (1.25, 5.7) {};
+		\node [style=none] (27) at (4.75, 4.75) {};
+		\node [style=none] (28) at (2.25, 5.5) {};
+		\node [style=head, thick] (29) at (1.5, 4.5) {};
+		\node [style=none] (30) at (1.5, 3.5) {};
+		\node [style=none] (31) at (1.75, 3.25) {};
+		\node [style=none] (32) at (1.25, 3.25) {};
+		\node [style=none] (33) at (1.75, 3.95) {};
+		\node [style=none] (34) at (1.25, 3.95) {};
+		\node [style=none] (35) at (2.25, 4) {};
+		\node [style=none] (36) at (4.75, 4.5) {};
+%		\node [style=none] (44) at (6, 4.5) {$B$};
+%		\node [style=none] (45) at (1, 5.5) {$A1$};
+%		\node [style=none] (46) at (1, 3.75) {$A2$};
+		\node [style=none] (47) at (2.25, 5.75) {+};
+		\node [style=none] (48) at (2.25, 3.75) {+};
+		\node [style=none] (49) at (4.75, 5) {-};
+		\node [style=none] (50) at (4.75, 4.25) {-};
+		\node [style=none] (52) at (3.5, 5.4) {\lstinline$X$};
+		\node [style=none] (51) at (3.5, 3.9) {\lstinline$Y$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=0, out=180] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=0, out=180] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+ \caption{Change in process network from \lstinline$(*)$ channels}
+ \label{Fig: Tensor}
+\end{figure}
+
+
+
+% PAR:
+\begin{figure}[h]
+\[ \xymatrixcolsep{40mm}
+\xymatrix{\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (0) at (1, 5.25) {};
+		\node [style=none] (1) at (1, 4.25) {};
+		\node [style=none] (2) at (0.75, 4) {};
+		\node [style=none] (3) at (1.25, 4) {};
+		\node [style=none] (4) at (0.75, 4.7) {};
+		\node [style=none] (5) at (1.25, 4.7) {};
+		\node [style=head, thick] (6) at (5, 5.25) {};
+		\node [style=none] (7) at (5, 4.25) {};
+		\node [style=none] (8) at (4.75, 4) {};
+		\node [style=none] (9) at (5.25, 4) {};
+		\node [style=none] (10) at (4.75, 4.7) {};
+		\node [style=none] (11) at (5.25, 4.7) {};
+		\node [style=none] (12) at (1.75, 4.5) {};
+		\node [style=none] (13) at (4.25, 4.5) {};
+		\node [style=none] (14) at (3, 4.75) {\lstinline$X(+) Y$};
+		\node [style=none] (15) at (1.75, 4.25) {+};
+		\node [style=none] (16) at (4.25, 4.25) {-};
+%		\node [style=none] (17) at (0.5, 4.5) {$A$};
+%		\node [style=none] (18) at (5.5, 4.5) {$B$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (0) to (1.center);
+		\draw [thick] (1.center) to (2.center);
+		\draw [thick] (1.center) to (3.center);
+		\draw [thick] (4.center) to (5.center);
+		\draw [thick] (6) to (7.center);
+		\draw [thick] (7.center) to (8.center);
+		\draw [thick] (7.center) to (9.center);
+		\draw [thick] (10.center) to (11.center);
+		\draw (12.center) to (13.center);
+	\end{pgfonlayer}
+\end{tikzpicture} \ar[r]^{\text{ \lstinline$split$ / \lstinline$fork$}~~~~~~}
+& 
+\begin{tikzpicture}[scale=1.5]
+	\begin{pgfonlayer}{nodelayer}
+		\node [style=head, thick] (15) at (1.5, 5.25) {};
+		\node [style=none] (16) at (1.5, 4.25) {};
+		\node [style=none] (17) at (1.25, 4) {};
+		\node [style=none] (18) at (1.75, 4) {};
+		\node [style=none] (19) at (1.25, 4.7) {};
+		\node [style=none] (20) at (1.75, 4.7) {};
+		\node [style=head, thick] (21) at (5.5, 6.25) {};
+		\node [style=none] (22) at (5.5, 5.25) {};
+		\node [style=none] (23) at (5.25, 5) {};
+		\node [style=none] (24) at (5.75, 5) {};
+		\node [style=none] (25) at (5.25, 5.7) {};
+		\node [style=none] (26) at (5.75, 5.7) {};
+		\node [style=none] (27) at (2.25, 4.75) {};
+		\node [style=none] (28) at (4.75, 5.5) {};
+		\node [style=head, thick] (29) at (5.5, 4.5) {};
+		\node [style=none] (30) at (5.5, 3.5) {};
+		\node [style=none] (31) at (5.25, 3.25) {};
+		\node [style=none] (32) at (5.75, 3.25) {};
+		\node [style=none] (33) at (5.25, 3.95) {};
+		\node [style=none] (34) at (5.75, 3.95) {};
+		\node [style=none] (35) at (4.75, 4) {};
+		\node [style=none] (36) at (2.25, 4.5) {};
+%		\node [style=none] (44) at (1, 4.5) {$A$};
+%		\node [style=none] (45) at (6, 5.5) {$B1$};
+%		\node [style=none] (46) at (6, 3.75) {$B2$};
+		\node [style=none] (47) at (2.25, 5) {+};
+		\node [style=none] (48) at (2.25, 4.25) {+};
+		\node [style=none] (49) at (4.75, 5.75) {-};
+		\node [style=none] (50) at (4.75, 3.75) {-};
+		\node [style=none] (52) at (3.5, 5.4) {\lstinline$X$};
+		\node [style=none] (51) at (3.5, 3.9) {\lstinline$Y$};
+	\end{pgfonlayer}
+	\begin{pgfonlayer}{edgelayer}
+		\draw [thick] (15) to (16.center);
+		\draw [thick] (16.center) to (17.center);
+		\draw [thick] (16.center) to (18.center);
+		\draw [thick] (19.center) to (20.center);
+		\draw [thick] (21) to (22.center);
+		\draw [thick] (22.center) to (23.center);
+		\draw [thick] (22.center) to (24.center);
+		\draw [thick] (25.center) to (26.center);
+		\draw [in=-180, out=0] (27.center) to (28.center);
+		\draw [thick] (29) to (30.center);
+		\draw [thick] (30.center) to (31.center);
+		\draw [thick] (30.center) to (32.center);
+		\draw [thick] (33.center) to (34.center);
+		\draw [in=180, out=0] (36.center) to (35.center);
+	\end{pgfonlayer}
+\end{tikzpicture} }
+\]
+ \caption{Change in process network from \lstinline$(+)$ channels}
+ \label{Fig: Par}
+\end{figure}
+
+
+
 
 \subsection{EchoServer 2.0}
 
