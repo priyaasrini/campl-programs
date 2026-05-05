@@ -568,7 +568,7 @@ To decode and invoke an encoded process, the \lstinline$use$ process command is 
 To \lstinline$use$ an encoded process, a higher-order process must provide instances of variables and channels of the correct types and polarities as specified by the \lstinline$Store$ type signature.
 \fi
 
-\subsection{Higher-order message passing}
+\section{Higher-order message passing}
 \label{sec:homsgs}
 
 In sequential functional programming, higher-order functions take other functions as input or produce functions as output. 
@@ -613,7 +613,7 @@ The CaMPL project is still very much in progress.
 As such, CaMPL is a proof-of-concept langauge.
 On the implementation side, we are actively working on a paper to comprehensively document every programming feature.
 We are working on updating the compiler to be able to race protocol/coprotocol handles.
-We also want to add features to work with processes that are distributed over multiple devices and connected by a network.
+We also want to add features to work with processes that are distributed over multiple devices and connected by a network. We have summarized the programming features discussed in this article, and the corresponding process commands in Table \ref{Table:summary} in Appendix \ref{sec:summarytable}.
 
 On the categorical semantics side, we are working on a precise semantics for non-determinism that considers how races interact with the other features.
 We are also considering a categorical semantics for message passing between quantum processes \cite{QMP23}.
@@ -661,9 +661,9 @@ We denote an argument for a sequential type with \lstinline$A$ and a concurrent 
 		 \hline
 		  \lstinline$Put(A|Ch)$ or \newline \lstinline$Get(A|Ch)$ & Next process command block selected with controlled non-determinism.  & \lstinline$race$ & \ref{Sec:races} \\
 		 \hline
-		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ & \\
+		  N/A & Encode another process in a sequential \lstinline$Store$ type. & \lstinline$store$ &  \ref{sec:homsgs}\\
 		 \hline
-		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \\
+		  N/A & Decode and invoke the process encoded in a \lstinline$Store$ type. & \lstinline$use$ & \ref{sec:homsgs} \\
 		 \hline
 	\end{tabular}
 	\caption{Summary of channel types and process commands.}
