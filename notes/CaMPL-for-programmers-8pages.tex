@@ -446,7 +446,7 @@ Consider the protocol called \lstinline$PassMessages$:
 \newpage
 \begin{lstlisting} %[label=ex:protocolpassmsgs, caption=Protocol for passing an arbitrary number of messages]
 
-protocol PassMessages (A| ) => S =			-- passes messages of type A
+protocol PassMessages(A| ) => S =			-- passes messages of type A
     SendMsg :: Put(A|S) => S						-- handle to send another message
     CloseCh :: TopBot => S							-- handle to finish sending messages
 \end{lstlisting}
