@@ -14,6 +14,19 @@
 \usepackage{xypic}
 \usepackage{stmaryrd}
 \usepackage{tikz}
+% this is for the process network diagrams in the appendix so they are the same width as the text.
+\usepackage{environ}\makeatletter
+\newsavebox{\measure@tikzpicture}
+\NewEnviron{scaletikzpicturetowidth}[1]{%
+  \def\tikz@width{#1}%
+  \def\tikzscale{1}\begin{lrbox}{\measure@tikzpicture}%
+  \BODY
+  \end{lrbox}%
+  \pgfmathparse{#1/\wd\measure@tikzpicture}%
+  \edef\tikzscale{\pgfmathresult}%
+  \BODY
+}
+\makeatother
 \usepackage{proof}
 \usepackage{mathpartir}
 \usepackage[shortlabels]{enumitem}
