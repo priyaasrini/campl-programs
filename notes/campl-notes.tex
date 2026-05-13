@@ -1847,7 +1847,7 @@ The adjunction signifies that a process sending or receiving a message can do so
 The categorical semantics of CaMPL differ slightly from what was described in Cockett and Pastro’s paper.
 Since \lstinline{TopBot} is the unit channel type, we only have one unit instead of two, so $\X$ is actually an isomix category \cite{}.
 Furthermore, the \lstinline{Neg} channel type gives each channel type a linear adjoint which means that  $\X$ is a $\ast$-autonomous category \cite{}.
-The categorical semantics of non-recursive protocols are coproducts, and coprotocols are products \cite{CoS01} and the 2005 paper?.
+The categorical semantics of non-recursive protocols are coproducts, and coprotocols are products \cite{CoS01, CoP04}.
 For recursive protocols (and coprotocols), the categorical semantics is given by pairs of initial functor algebras and final functor coalgebras \cite{Ye12}.
 The categorical semantics for non-deterministic processes is obtained by enriching the concurrent semantics, $\X$, in sup-lattices by taking the power set of each hom-set of morphisms \cite{xanna}.
 This allows a process to be represented by a set of processes that define its possible executions.
@@ -1924,9 +1924,9 @@ Recall that $\circ$ and $\bullet$ correspond to the \lstinline{Put} and \lstinli
 The rule $\circ_l$ is the same as using \lstinline{get} on an input channel, and the rule $\circ_r$ is the same as using \lstinline{put} on an output channel.
 The rule $\bullet_l$ is the same as using \lstinline{put} on an input channel, and the rule $\bullet_r$ is the same as using \lstinline{get} on an output channel.
 
-\TODO{citation}
+
 Protocols, coprotocols, races, and higher-order message passing were not discussed in Cockett and Pastro's paper.
-The inference rules for non-recursive protocols and coprotocols come from additive linear logic, which are similar to the additive rules in \cite{} 2005 paper multiplicative-additive linear logic.
+The inference rules for non-recursive protocols and coprotocols come from additive linear logic, which are similar to the additive rules in \cite{CoP04}.
 Recursive instances of protocols and coprotocols use proof boxes for fixed point combinators \cite{Ye12}.
 Races do not change the type of a process, so an inference rule for a race only requires specifying the different possible executions as different orderings of inference rule applications depending on the outcome of the race.
 Higher-order message passing has two additional rules for \lstinline{store} and \lstinline{use} which are given in \cite{No25}.
