@@ -36,14 +36,12 @@ The current proto-alpha version of the compiler and the abstract machine is impl
 %This section should introduce the salient details of CaMPL (like it should be a highlight reel of CaMPL. if people don't read past this section they should still be able to be like ``oh yeah i heard of CaMPL it was cool because of x, y, z'') which could include some of the following points:
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses message-passing concurrency.
-It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving an asynchronous concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
+It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining and proving an asynchronous concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
 Their paper diverges from the approach taken by Abramsky et al. in 
 \cite{ABRAMSKY19933, Abr1993IntCats, Abramsky1999ConcurrentGA, AGN2000} which used exclusively the types and rules of linear logic that were introduced by Girard in \cite{GIRARD19871}.
 It also diverges from the popular approach of using linear logic to retrospectively develop a type system for the \(\pi\)-calculus (comprehensively presented by Milner in \cite{Milner1993TheP}) which has produced a significant body of work especially after the connection to session types was established \cite{BELLIN199411, Barber1997Action, CPf2010, Wa12, CairesPT16, KMP19, AG19, QKB21}.
 %
-Instead, Cockett and Pastro introduced a two-tiered logic in which sequential computation operations are handled separately from concurrent communication operations, while still allowing interaction between the two tiers.
-Within the concurrent tier, operations for manipulating channels and the topology of the process network, which come from linear logic, are distinct from operations for passing messages of sequential data, such as strings or integers.
-This is what distinguishes their approach from those that use operations derived from linear logic exclusively.
+Instead, Cockett and Pastro introduced a two-tiered logic that augments linear logic with new rules for passing messages of sequential data, such as strings or integers.
 Consequently, CaMPL is a two-tiered programming language.
 We motivate this design decision with the following excerpt from Cockett and Pastro’s paper: 
 %consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
@@ -58,7 +56,7 @@ interactions between the two levels.
 [...]
  Thus, we believe programming language designers should be thinking in terms of developing integrated two tier languages in order to give high-level support for concurrent programming [...]. 
 \end{quote}
-The categorical semantics Cockett and Pastro give for the message-passing logic is a {\em linear actegory}.
+The categorical semantics Cockett and Pastro give for the two-tiered logic is a {\em linear actegory}.
 % in which the category of messages and sequential functions acts on the category of communication channels and concurrent processes in two directions.
 %The covariant action passes messages in the forward direction, which we describe in this article as ``left to right,'' and the contravariant action passes messages in the backward direction, which we describe as ``right to left.''
 %CaMPL programs are composed of multiple concurrent processes which communicate with each other by passing messages along communication channels.
@@ -90,13 +88,13 @@ The implementation of this feature and the changes to the categorical semantics 
 The current implementation of CaMPL is available at \url{https://campl-ucalgary.github.io/}.
 
 In this article, we illustrate CaMPL's two-tiered type system and demonstrate the above features through a series of code examples.
-The brief overview in Section~\ref{Sec:brief_overview} will get us straight to the point by considering two simple examples without explaining many details.
+The brief overview in Section~\ref{Sec:brief_overview} considers two basic examples without explaining specific details.
 We discuss the concurrent tier of CaMPL, which corresponds to the message-passing logic, in Section~\ref{Sec:ConcurrentTypes}.
 We discuss the sequential tier of CaMPL, which corresponds to the message logic, in Section~\ref{Sec:SequentialTypes}.
-We will also discuss how the value of sequential data can be used to control a process's execution in this section.
+We will also discuss how the value of sequential data can be used to control a process's execution.
 The key concepts of the above programming features will be covered by these two sections, and the corresponding channel types and process commands are summarized in Table~\ref{Table:summary}.
 If one is interested in writing CaMPL programs, we provide finer details in Section~\ref{sec:concurrent-operators}.
-We also cover some more complicated examples in the same section.
+We also cover some more complicated examples.
 Finally, in Section~\ref{Sec:math_underp}, we briefly discuss  the categorical and logical semantics described by Cockett and Pastro and explain how CaMPL emerged from them.
 In Appendix~\ref{sec:appendix}, we provide examples of complete programs that were written by collecting code from the examples throughout this article.
 
@@ -347,6 +345,7 @@ Variables and channels are bound to types in the order they appear.
 
 We modify Example~\ref{ex:serverecho} and include the processes' type signatures.
 To effectively illustrate the types, we redefine \lstinline$server$ to have a \lstinline$server_id$ variable that it will send back to  \lstinline$client$:
+
 \begin{lstlisting}[label=ex:serverid, caption=Server replies to Client with server id] 
 proc client :: | => Put([Char]|Get(Int|TopBot)) = 			-- type signature
 	| => ch ->
@@ -1170,7 +1169,7 @@ We will also revisit previous examples to emphasize the details of how one uses 
 \end{center}
 \end{table}
 
-\newpage
+%\newpage
 \subsection{Connecting processes using {\tt plug}}
 
 We have seen the \lstinline$plug$ command used in most of our examples, especially in \lstinline$run$ processes.
@@ -1187,7 +1186,7 @@ proc run =
 		proc2( | dest2 =>)		-- proc2 cannot be connected to send_to_dest1
 \end{lstlisting}	
 The \lstinline$plug$ command, used on line 2 in the above example, connects any number of processes along channels such that the network of connected processes remains acyclic.
-That is, the topology of a program is a finite acyclic graph consisting of processes as nodes and channels as edges.
+That is, the topology of a program is a connected finite acyclic graph consisting of processes as nodes and channels as edges.
 Processes which are plugged together run in parallel and may communicate via the channels connecting them. 
 
 Notice that each channel connects exactly two processes.
@@ -1358,12 +1357,12 @@ The \lstinline$halt$ command must be used as the last command in a command block
 \label{subsec:pairs}
 
 \tc{Complementary pairs} of process commands are used on opposite polarities of a channel with a certain type.
-That is, two processes connected along a channel will each use one of the commands in a complementary pair to perform their role in the interaction.
+That is, two processes connected along a channel will each use one command in a complementary pair to perform their role in the interaction.
 An extended discussion on the importance of channel polarities is given in Section~\ref{Sec:polarities}.
 
 In a complementary pair, one command \tc{blocks} a process until the other process performs the complementary command to \tc{unblock} it. 
 For example, \lstinline$get$ is used to receive a message, and it blocks until the other process performs the complementary \lstinline$put$ to send the message.
-Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands and whether the process that uses each command is blocked.
+Table \ref{tab:mpl-constructs} summarizes complementary pairs of commands and whether the process that uses each command is blocked.
  \begin{table}[!h]
 \centering
 	\begin{tabular}{|l|l|}
@@ -1819,7 +1818,7 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 \label{Sec:math_underp}
 % convey that these constructs are coming from a mathematical foundation and not just ``out of thin air''
 
-CaMPL implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential tier, called the message logic, that interacts with a concurrent tier, called the message-passing logic. 
+CaMPL implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential tier, called the message logic, that interacts with a concurrent tier, called the message-passing logic. 
 The message logic is a simple logic that corresponds to sequential functional programming.
 The message-passing logic corresponds to programming concurrent processes which use message passing along channels. They provided the term calculus for both the logic \cite[Section 2.1, Section 3.1]{CoP07} which was implemented as a programming language called the CaMPL. We will discuss the syntax of CaMPL in reference to the two-tiered logic after briefly describing the categorical semantics of message passing.
 
@@ -1833,14 +1832,14 @@ The covariant action passes messages in the forward direction, which we describe
 A linear $\A$-actegory minimally consists of a monoidal category $\A$ acting covariantly and contravariantly on a linearly distributive category 
 %(LDC) 
 $\X$, satisfying certain coherences~\cite{CoP07, CS97}. 
-The categorical semantics of CaMPL is modelled by a symmetric linear $\A$-actegory in which a distributive symmetric monoidal category $\A$, which defines the semantics of the sequential tier, acts on a symmetric linearly distributive category $\X$ \cite{CS97}, which defines the semantics of the concurrent tier. Linearly distributive categories are the categorical semantics of multiplicative linear logic \cite[Chapter 1]{Sri21}. 
+The categorical semantics of CaMPL is modelled by a symmetric linear $\A$-actegory in which a distributive symmetric monoidal category $\A$, which defines the semantics of the sequential tier, acts on a symmetric linearly distributive category $\X$, which defines the semantics of the concurrent tier. Linearly distributive categories are the categorical semantics of multiplicative linear logic \cite{CS97, Sri21}. 
 
 In the monoidal category $\A$, objects correspond to sequential types, or message types, and morphisms correspond to sequential functions.
 Since $\A$ is a distributive monoidal category, it has coproducts over which its tensor distributes.
 The tensor in $\A$ corresponds to tuples and the coproducts correspond to data types with multiple constructors.
 
 In the linearly distributive category $\X$, objects correspond to concurrent types, or channel types, and morphisms correspond to concurrent processes.
-Since $\X$ is a linearly distributive category, it has two functors $\ox$ and $\oa$, corresponding to the multiplicative conjunction $\ox$ and the multiplicative disjunction $\oplus$ of linear logic respectively:
+Since $\X$ is a linearly distributive category, it has two functors $\ox$ and $\oa$, corresponding to the multiplicative conjunction $\ox$ and the multiplicative disjunction $\oplus$ of linear logic:
 \[ \otimes: \X \times \X \to \X \quad \quad \text{ and } \quad \quad \oplus: \X \times \X \to \X\]
 These functors define the bundled channel types.
 The \(\otimes\) functor corresponds to the \lstinline{(*)} channel type, and the \(\oplus\) functor corresponds to the  \lstinline{(+)} channel type.
