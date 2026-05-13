@@ -5,9 +5,9 @@
 \addbibresource{refs.bib}
 \linespread{1.11}
 
-\title{Categorical Message Passing Language (CaMPL): syntax and semantics}
+\title{Categorical Message Passing Language (CaMPL): \newline Syntax and Semantics}
 \author{
-    Robin Cockett\thanks{University of Calgary} \and Daniel Kiyoshi Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna {Little Berg}* \and Melika Norouzbeygi* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
+    Robin Cockett\thanks{University of Calgary} \and Daniel Kiyoshi Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna {Little Berg}* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
 %\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
 \date{\today}
 
@@ -35,8 +35,15 @@ The current proto-alpha version of the compiler and abstract machine is implemen
 %This section should introduce the salient details of CaMPL (like it should be a highlight reel of CaMPL. if people don't read past this section they should still be able to be like ``oh yeah i heard of CaMPL it was cool because of x, y, z'') which could include some of the following points:
 
 Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses message-passing concurrency.
-It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
-They designed a two-tiered logic, and consequently, CaMPL is a two-tiered programming language.
+It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving an asynchronous concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
+Their paper diverges from the approach taken by Abramsky et al. in 
+\cite{ABRAMSKY19933, Abr1993IntCats, Abramsky1999ConcurrentGA, AGN2000} which used exclusively the types and rules of linear logic that were introduced by Girard in \cite{GIRARD19871}.
+It also diverges from the popular approach of using linear logic to develop a type system for the \(\pi\)-calculus (comprehensively presented by Milner in \cite{Milner1993TheP}) which has produced a significant body of work especially after the connection to session types was established \cite{BELLIN199411, Barber1997Action, CPf2010, Wa12, CairesPT16, KMP19, AG19, QKB21}.
+%
+Instead, Cockett and Pastro introduced a two-tiered logic in which sequential computation operations are handled separately from concurrent communication operations, while still allowing interaction between the two tiers.
+Within the concurrent tier, operations for manipulating channels and the topology of the process network, which come from linear logic, are distinct from operations for passing messages of sequential data, such as strings or integers.
+This is what distinguishes their approach from those that use operations derived from linear logic exclusively.
+Consequently, CaMPL is a two-tiered programming language.
 We motivate this design decision with the following exerpt from Cockett and Pastro’s paper: 
 %consisting of a sequential part, called the message logic, that interacts with a concurrent part, called the message-passing logic. 
 %In the message-passing logic, concurrent processes pass messages of sequential data back and forth along communication channels.
@@ -62,11 +69,11 @@ satisfying certain coherences~\cite{CoP07, CS97}.
 %Linearly distributive categories are the categorical semantics of multiplicative linear logic~\cite{CS97}. 
 
 The concurrent type system provided by the message-passing logic ensures that processes can never be connected in a cycle.
-That is, at any instance in run-time, the topology of a program is guaranteed to be a finite acyclic graph consisting of processes, which are nodes, and channels, which are edges.
+That is, at any instance in run-time, the topology of a program is guaranteed to be a finite acyclic graph consisting of processes as nodes and channels as edges.
 %This property comes from the interaction between composition and the non-isomorphism linear distributors in the LDC.
 The benefit of this property is that problems caused by cycles, such as deadlocks and livelocks, do not occur \cite{Ly18}.
 However, similar to proving termination in the sequential case, livelock freedom is only guaranteed if we disallow general recursion.
-Deadlock freedom is still guaranteed.
+Deadlock freedom is still guaranteed, as is common in concurrent type systems based on linear logic \cite{BELLIN199411, CPf2010, Wa12, CairesPT16, QKB21}.
 
 % how the language implementation started;  history of work on campl prashant thesis, jared thesis, xanna thesis, melika thesis
 The first implementation of the CaMPL compiler was written by Kumar as described in \cite{Ku18}.
@@ -92,9 +99,7 @@ We also cover some more complicated examples in this section.
 Finally, we briefly discuss the categorical and logical semantics described by Cockett and Pastro and explain how CaMPL emerged from them in Section~\ref{Sec:math_underp}.
 In Appendix~\ref{sec:appendix}, we provide examples of complete programs that were written by collecting code from the examples throughout this article.
 
-{\bf Related work: }
-
-\TODO{add related work. can use references from presentation}
+%\TODO{add related work. can use references from presentation}
 %https://seis.bristol.ac.uk/~tz20861/talks/ll-cantab-2022.pdf
 
 
@@ -565,6 +570,7 @@ The outer-most layer is the first interaction that will take place, and after th
 \end{center}
 \end{table}
 
+
 \subsubsection{Custom types}
 \label{Sec:protocols}
 
@@ -573,7 +579,10 @@ Recall process \lstinline$broadcast$ from Example \ref{ex:broadcastmsg}.
 This process was only able to broadcast a single message from the source.
 To allow \lstinline$broadcast$ to call itself recursively until all messages are sent, the channel type needs to be able to change from \lstinline$Put$ to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called \tc{protocols} and \tc{coprotocols}, which can be recursive.
-%
+Non-recursive protocols and coprotocols are similar to session types and come from additive linear logic.
+Recursive protocols and coprotocols are the concurrent analogue of inductive and coinductive data types in functional programming languages. 
+However, a coprotocol is simply a dual protocol, which is not true for sequential inductive and coinductive data types.
+
 Consider the protocol \lstinline$SendMsgs$:
 \begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for sending an arbitrary number of messages] 
 protocol SendMsgs(A| ) => S =						-- sends messages of type A
@@ -628,12 +637,10 @@ On lines 7 and 18, a communication session is initiated on the output polarity c
 This sets the channel type as specified by the handle. 
 Finer details on these process commands are given in Section~\ref{subsec:hput-hcase}.
 
-Roughly speaking, protocols and coprotocols are the concurrent analogue of inductive and co-inductive data types in functional programming languages. 
-However, the only difference between protocols and coprotocols is the direction that handles travel on the channel.
+The only difference between protocols and coprotocols is the direction that handles travel on the channel.
 Protocol handles travel in the same direction as messages on a \lstinline$Put$ channel.
 For example, \lstinline$broadcast$ receives handles on \lstinline$source$ and sends handles on its destination channels.
 Coprotocol handles travel in the same direction as messages on a \lstinline$Get$ channel.
-This means that a coprotocol is simply a dual protocol, which is not true for sequential inductive and coinductive data types.
 
 A \lstinline$send_to_dest1$ process that forwards an arbitrary number of messages to \lstinline$proc1$ could use a \lstinline$Neg(SendMsgs([Char]| ))$ channel.
 Alternatively, we could use a coprotocol version of \lstinline$SendMsgs$ instead.
@@ -663,6 +670,9 @@ proc send_to_dest1 :: | SendMsgs([Char]| ), CoSendMsgs([Char]| ) => =
  \end{lstlisting}
 From this example, we can see that a coprotocol streamlines the process of writing code for a negated protocol rather than being a unique feature. 
 A complete program based on this example is given in Appendix~\ref{prog:broadcastmsgs}.
+
+Another use case for protocols and coprotocols is the creation of infinitely bundled channel types using \lstinline{(*)} or \lstinline{(+)}.
+This is demonstrated in Example~\ref{ex:mutex-protocol} and briefly discussed in Example~\ref{ex:service_handles}.
 
 
 \subsubsection{Interacting with the outside world using service channels}
@@ -1837,7 +1847,8 @@ The adjunction signifies that a process sending or receiving a message can do so
 The categorical semantics of CaMPL differ slightly from what was described in Cockett and Pastro’s paper.
 Since \lstinline{TopBot} is the unit channel type, we only have one unit instead of two, so $\X$ is actually an isomix category \cite{}.
 Furthermore, the \lstinline{Neg} channel type gives each channel type a linear adjoint which means that  $\X$ is a $\ast$-autonomous category \cite{}.
-The categorical semantics for protocols and coprotocols is given by initial algebras and final coalgebras \cite{Ye12}.
+The categorical semantics of non-recursive protocols are coproducts, and coprotocols are products \cite{CoS01} and the 2005 paper?.
+For recursive protocols (and coprotocols), the categorical semantics is given by pairs of initial functor algebras and final functor coalgebras \cite{Ye12}.
 The categorical semantics for non-deterministic processes is obtained by enriching the concurrent semantics, $\X$, in sup-lattices by taking the power set of each hom-set of morphisms \cite{xanna}.
 This allows a process to be represented by a set of processes that define its possible executions.
 The categorical semantics for higher-order processes is obtained by enriching the concurrent semantics, $\X$, in the sequential semantics, $\A$ \cite{No25}.
@@ -1912,6 +1923,13 @@ For example, we will consider the rules corresponding to \lstinline{get} and \ls
 Recall that $\circ$ and $\bullet$ correspond to the \lstinline{Put} and \lstinline{Get} types, respectively. 
 The rule $\circ_l$ is the same as using \lstinline{get} on an input channel, and the rule $\circ_r$ is the same as using \lstinline{put} on an output channel.
 The rule $\bullet_l$ is the same as using \lstinline{put} on an input channel, and the rule $\bullet_r$ is the same as using \lstinline{get} on an output channel.
+
+\TODO{citation}
+Protocols, coprotocols, races, and higher-order message passing were not discussed in Cockett and Pastro's paper.
+The inference rules for non-recursive protocols and coprotocols come from additive linear logic, which are similar to the additive rules in \cite{} 2005 paper multiplicative-additive linear logic.
+Recursive instances of protocols and coprotocols use proof boxes for fixed point combinators \cite{Ye12}.
+Races do not change the type of a process, so an inference rule for a race only requires specifying the different possible executions as different orderings of inference rule applications depending on the outcome of the race.
+Higher-order message passing has two additional rules for \lstinline{store} and \lstinline{use} which are given in \cite{No25}.
 
 \begin{figure}[h]
 	\centering 
