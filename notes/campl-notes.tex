@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+I \documentclass[11pt]{article}
 \input{preamble}
 \input{macros}
 \usepackage{array}
@@ -7,7 +7,8 @@
 
 \title{Categorical Message Passing Language (CaMPL): \newline Syntax and Semantics}
 \author{
-    Robin Cockett\thanks{University of Calgary} \and Daniel Kiyoshi Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna {Little Berg}* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology}}
+    Robin Cockett\thanks{University of Calgary} \and Daniel Kiyoshi Hashimoto\thanks{Universidade Federal do Rio de Janeiro} \and Alexanna {Little Berg}* \and Priyaa Varshinee Srinivasan\thanks{Tallinn University of Technology, Estonia. This work was co-funded by the European Union and Estonian Research Council through the Mobilitas 3.0
+(MOB3JD1227).}}
 %\def\authorrunning{D.\ I.\ Spivak \& P.\ V.\ Srinivasan}
 \date{\today}
 
@@ -20,9 +21,9 @@ We introduce a novel functional-style concurrent programming language called Cat
 This mathematical underpinning gives CaMPL programs useful properties such as deadlock freedom, and additionally, livelock freedom for non-recursive programs.
 
 We explore CaMPL's type system through a series of code examples. 
-A reader is encouraged to install CaMPL from our website and try running them!
+A reader is encouraged to install CaMPL from our website (\url{https://campl-ucalgary.github.io}) and try running them!
 %Categorical Message Passing Language, to the best of our knowledge, the only\footnote{Is this true?} concurrent programming language with mathematical underpinnings. 
-The current proto-alpha version of the compiler and abstract machine is implemented in Haskell. 
+The current proto-alpha version of the compiler and the abstract machine is implemented in Haskell. 
 %It is to be considered as a proof-of-concept of a programming language.
 \end{abstract}
 
@@ -95,8 +96,8 @@ We discuss the sequential tier of CaMPL, which corresponds to the message logic,
 We will also discuss how the value of sequential data can be used to control a process's execution in this section.
 The key concepts of the above programming features will be covered by these two sections, and the corresponding channel types and process commands are summarized in Table~\ref{Table:summary}.
 If one is interested in writing CaMPL programs, we provide finer details in Section~\ref{sec:concurrent-operators} which may be helpful to use as a manual.
-We also cover some more complicated examples in this section.
-Finally, we briefly discuss the categorical and logical semantics described by Cockett and Pastro and explain how CaMPL emerged from them in Section~\ref{Sec:math_underp}.
+We also cover some more complicated examples in the same section.
+Finally, we briefly discuss in Section~\ref{Sec:math_underp} the categorical and logical semantics described by Cockett and Pastro and explain how CaMPL emerged from them.
 In Appendix~\ref{sec:appendix}, we provide examples of complete programs that were written by collecting code from the examples throughout this article.
 
 %\TODO{add related work. can use references from presentation}
@@ -555,7 +556,7 @@ The outer-most layer is the first interaction that will take place, and after th
 \begin{center}
 \begin{tabular}{| l | l |}
 	\hline
-	 Channel type & Description of interaction \\
+	 {\bf Channel type} & {\bf Description of interaction} \\
 	 \hline
 \lstinline$TopBot$ & End communication on the channel (this is the base case). \\
 \lstinline$Put(A|Ch)$ & A message of type \lstinline$A$ travels from left to right (output to input polarity). \\ 
@@ -1125,7 +1126,7 @@ We will also revisit previous examples to emphasize the details of how one uses 
 \begin{center}
 	\quad \begin{tabular}{ |m{3.3cm} | m{6.75cm} | m{2.4cm} | m{1.4cm} | }
 	\hline
-		 Channel type & Description & Process \newline command & Example \\
+		 {\bf Channel type} & {\bf Description} & {\bf Process} \newline {\bf command} & {\bf Example} \\
 		 \hline      
 		 \lstinline$TopBot$ & Interaction on channel is over.  & \lstinline$close $or \lstinline$halt$ & \ref{ex:serverid} \\
 		 \hline      
@@ -1357,14 +1358,14 @@ Table \ref{tab:mpl-constructs} summarizes the complementary pairs of commands an
 \centering
 	\begin{tabular}{|l|l|}
 	\hline
-	Command & Description \\
+	{\bf Command} & {\bf Description} \\
 	\hline
-	\lstinline{put} & Sends a value on a channel. \\ 
-	\lstinline{get} & Blocks until a value is received on a channel. \\ \hline
-	\lstinline{hput} & Sends a handle on a channel. \\ 
-	\lstinline{hcase} & Blocks until a handle is received on a channel. \\ \hline
-	\lstinline{fork} & Creates two new processes and channels (halts original channel). \\ 
-	\lstinline{split} & Blocks until other ends of new channels have processes (closes original channel). \\ \hline
+	\lstinline$put$ & Sends a value on a channel. \\ 
+	\lstinline$get$ & Blocks until a value is received on a channel. \\ \hline
+	\lstinline$hput$ & Sends a handle on a channel. \\ 
+	\lstinline$hcase$ & Blocks until a handle is received on a channel. \\ \hline
+	\lstinline$fork$ & Creates two new processes and channels (halts original channel). \\ 
+	\lstinline$split$ & Blocks until other ends of new channels have processes (closes original channel). \\ \hline
 	\end{tabular}
 \caption{Complementary pairs of process commands.}
 \label{tab:mpl-constructs}
@@ -1810,8 +1811,7 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 
 CaMPL implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The logic of message passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential tier, called the message logic, that interacts with a concurrent tier, called the message-passing logic. 
 The message logic is a simple logic that corresponds to sequential functional programming.
-The message-passing logic corresponds to programming concurrent processes which use message passing along channels.
-We will discuss how the syntax we use in CaMPL arises from the inference rules of the two-tiered logic after briefly describing the categorical semantics of message passing.
+The message-passing logic corresponds to programming concurrent processes which use message passing along channels. They provided the term calculus for both the logic \cite[Section 2.1, Section 3.1]{CoP07} which was implemented as a programming language called the CaMPL. We will discuss the syntax of CaMPL in reference to the two-tiered logic after briefly describing the categorical semantics of message passing.
 
 The categorical semantics of message passing is given by a {\em linear actegory} in which a category of messages and sequential functions acts on a category of channels and concurrent processes in two directions.
 The covariant action passes messages in the forward direction, which we described in this article as ``left to right,'' and the contravariant action passes messages in the backward direction, which we described as ``right to left.''
@@ -1823,19 +1823,19 @@ The covariant action passes messages in the forward direction, which we describe
 A linear $\A$-actegory minimally consists of a monoidal category $\A$ acting covariantly and contravariantly on a linearly distributive category 
 %(LDC) 
 $\X$, satisfying certain coherences~\cite{CoP07, CS97}. 
-The categorical semantics of CaMPL is modelled by a symmetric linear $\A$-actegory in which a distributive symmetric monoidal category $\A$, which defines the semantics of the sequential tier, acts on a symmetric linearly distributive category $\X$, which defines the semantics of the concurrent tier. 
+The categorical semantics of CaMPL is modelled by a symmetric linear $\A$-actegory in which a distributive symmetric monoidal category $\A$, which defines the semantics of the sequential tier, acts on a symmetric linearly distributive category $\X$ \cite{CS97}, which defines the semantics of the concurrent tier. Linearly distributive categories are the categorical semantics of multiplicative linear logic \cite[Chapter 1]{Sri21}. 
 
-In $\A$, objects correspond to sequential types, or message types, and morphisms correspond to sequential functions.
+In the monoidal category $\A$, objects correspond to sequential types, or message types, and morphisms correspond to sequential functions.
 Since $\A$ is a distributive monoidal category, it has coproducts over which its tensor distributes.
 The tensor in $\A$ corresponds to tuples and the coproducts correspond to data types with multiple constructors.
 
-In $\X$, objects correspond to concurrent types, or channel types, and morphisms correspond to concurrent processes.
-Since $\X$ is a linearly distributive category, it has two functors:
+In the linearly distributive category $\X$, objects correspond to concurrent types, or channel types, and morphisms correspond to concurrent processes.
+Since $\X$ is a linearly distributive category, it has two functors $\ox$ and $\oa$, corresponding to the multiplicative conjunction $\ox$ and the multiplicative disjunction $\oplus$ of linear logic respectively:
 \[ \otimes: \X \times \X \to \X \quad \quad \text{ and } \quad \quad \oplus: \X \times \X \to \X\]
 These functors define the bundled channel types.
-The \(\otimes\) action corresponds to the \lstinline{(*)} channel type, and the \(\oplus\) action corresponds to the the \lstinline{(+)} channel type.
+The \(\otimes\) functor corresponds to the \lstinline{(*)} channel type, and the \(\oplus\) functor corresponds to the  \lstinline{(+)} channel type.
 
-The interaction of $\A$ and $\X$ is defined by two action functors:
+The interaction of $\A$ and $\X$ is defined by two {\em action} functors:
 \[ \circ: \A \times \X \to \X \quad \quad \text{ and } \quad \quad \bullet: \A^{\sf op} \times \X \to \X\]
 These functors describe how messages are passed on channels.
 The \(\circ\) action corresponds to the \lstinline{Put} channel type, and the \(\bullet\) action corresponds to the the \lstinline{Get} channel type.
@@ -1852,7 +1852,7 @@ For recursive protocols (and coprotocols), the categorical semantics is given by
 The categorical semantics for non-deterministic processes is obtained by enriching the concurrent semantics, $\X$, in sup-lattices by taking the power set of each hom-set of morphisms \cite{xanna}.
 This allows a process to be represented by a set of processes that define its possible executions.
 The categorical semantics for higher-order processes is obtained by enriching the concurrent semantics, $\X$, in the sequential semantics, $\A$ \cite{No25}.
-This allows a process to be represented by a sequential type so that it can be passed as a higher-order message.
+This allows a process to be represented by a sequential type so that it can be passed as a (higher-order) message.
 
 \subsection{Two-tiered logic}
 
@@ -1905,7 +1905,7 @@ The inference rules for {\bf Msg} are given in Figure \ref{Fig:MsgRules}. In the
 	
 The logic of message passing, {\bf PMsg}, is the concurrent tier, and the proofs in this logic correspond to concurrent programs. 
 It is concerned with interactions between processes over channels and represents the logic of communication. 
-A sequent of {\bf PMsg} corresponds to a process, so it has three components all of which are unordered lists: $\Phi$ is the sequential context of message types, $\Gamma$ is input polarity channels types, and $\Delta$ is output polarity channel types: 
+A sequent of {\bf PMsg} corresponds to a process, so it has three components all of which are unordered lists: $\Phi$ is the sequential context of message types, $\Gamma$ is input polarity channels types, and $\Delta$ is output polarity channel types. A sequent in {\bf PMsg} is of the following form:
 \[ \Phi \mid \Gamma \Vdash \Delta \]	
 The inference rules for {\bf PMsg} are shown in Figure \ref{Fig:PMsgRules}. 
 Each rule corresponds to a process command.
@@ -1949,7 +1949,7 @@ Higher-order message passing has two additional rules for \lstinline{store} and 
 		&  \inferrule*[Left=\(\top_l\)]{\Phi \mid \Gamma \Vdash \Delta}{\Phi \mid \Gamma, \top \Vdash \Delta} 
 		&& \inferrule*[Left=\(\top_r\)]{~}{\emptyset \mid ~ \Vdash \top}\\
 		& \inferrule*[Left=\(\bot_l\)]{~}{\emptyset \mid \bot \Vdash } 
-		&& \inferrule*[Left=\(\bot_r\)]{\Phi \mid \Gamma \Vdash \Delta}{\Phi \mid \Gamma \Vdash \bot, \Delta}\\
+		&& \inferrule*[Left=\(\bot_r\)]{\Phi \mid \Gamma \Vdash \Delta}{\Phi \mid \Gamma \Vdash \bot, \Delta}\\ \\
 		& \inferrule*[Left=\(\circ_l\)]{\Phi, A \mid \Gamma, X \Vdash \Delta}{\Phi \mid \Gamma, A \circ X \Vdash \Delta} 
 		&& \inferrule*[Left=\(\circ_r\)]{\Phi \vdash A \and \Psi \mid \Gamma \Vdash X, \Delta}{\Phi, \Psi \mid \Gamma \Vdash A \circ X, \Delta} \\
 		& \inferrule*[Left=\(\bullet_l\)]{\Phi \vdash A \and \Psi \mid \Gamma, X \Vdash \Delta}{\Phi, \Psi \mid \Gamma, A \bullet X \Vdash \Delta}
@@ -1991,6 +1991,7 @@ Additionally, we hope that a reader was engaged by the examples we used to showc
 To maximize enjoyment of the examples, we suggest compiling and running them!
 The current implementation of CaMPL is available at \url{https://campl-ucalgary.github.io/}.
 Complete programs that can be directly copied and pasted are given in Appendix~\ref{sec:appendix}.
+
 
 \newpage
 \printbibliography
