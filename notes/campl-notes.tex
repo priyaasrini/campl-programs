@@ -712,10 +712,10 @@ coprotocol S => Console =
 \end{lstlisting}
 
 A \lstinline{Prelude} with definitions of the service channel protocols and coprotocols and some simple but useful functions is given in Appendix~\ref{prog:prelude}.
-This can be copied to a \lstinline{Prelude.mpl} file that one can \lstinline{import} and use.
-Consider a modification of Example~\ref{ex:serverecho} in which we \lstinline{import Prelude} to give \ \lstinline$client$ a \lstinline$StringTerminal$ to receive user input and to give \lstinline$server$ a \lstinline$Console$ to log the messages it receives:
+This can be copied to a \lstinline{Prelude.mpl} file that one can \lstinline{include} and use.
+Consider a modification of Example~\ref{ex:serverecho} in which we \lstinline{include Prelude} to give \ \lstinline$client$ a \lstinline$StringTerminal$ to receive user input and to give \lstinline$server$ a \lstinline$Console$ to log the messages it receives:
 \begin{lstlisting} [label=ex:serverclientwithservices, caption=Client and server using service channels]  
-import Prelude
+include Prelude
 
 proc client :: | => SendMsgs([Char]| ), StringTerminal =
     | => ch, terminal -> do
@@ -2021,10 +2021,10 @@ This will contribute to the development of programming languages for distributed
 \subsection{Prelude}
 \label{prog:prelude}
 
-CaMPL has a module system that allows one to import and use code defined in other files.
+CaMPL has a module system that allows one to include and use code defined in other files.
 This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:service_handles}, and \ref{ex:terminal_handles}.
 We encourage readers to write additional functions in their version of the Prelude as an exercise in CaMPL programming.
-We demonstrate how to import the \lstinline{Prelude} in 
+We demonstrate how to include the \lstinline{Prelude} in 
 \ref{prog:h.o.hello_world}, \ref{prog:user_input_client_server}, \ref{prog:broadcastmsgs}, \ref{prog:stack_print}, and \ref{prog:mem-cell}.
 
 \begin{lstlisting}
@@ -2080,10 +2080,10 @@ fun (++) :: [A],[A] -> [A] =
 \subsection{Higher order Hello World}
 \label{prog:h.o.hello_world}
 
-This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:helloworld} and \ref{ex:hoprocs}.
+This program includes the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:helloworld} and \ref{ex:hoprocs}.
 
 \begin{lstlisting}
-import Prelude
+include Prelude
 
 -- from Example 1:
 proc helloworld :: | Console => =
@@ -2122,10 +2122,10 @@ proc run :: | Console => =
 \subsection{Requesting user input continuously}
 \label{prog:user_input_client_server}
 
-This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:serverclientwithservices}, \ref{ex:serverclientwithservices-branching}.
+This program includes the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:serverclientwithservices}, \ref{ex:serverclientwithservices-branching}.
 
 \begin{lstlisting}
-import Prelude
+include Prelude
 
 -- from Example 9:
 protocol SendMsgs (A| ) => S =
@@ -2247,7 +2247,7 @@ proc run =
 \subsection{Broadcasting an arbitrary number of messages}
 \label{prog:broadcastmsgs}
 
-This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:protocolpassmsgswconf}, \ref{ex:recbroadcast}, \ref{ex:coprotocolcopassmsgs},  \ref{ex:coprotocoldest1}.
+This program includes the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:protocolpassmsgswconf}, \ref{ex:recbroadcast}, \ref{ex:coprotocolcopassmsgs},  \ref{ex:coprotocoldest1}.
 It also uses ideas from Examples \ref{ex:serverclientwithservices} and \ref{ex:serverclientwithservices-branching}.
 We visualize the process network for this program in the following diagram:
 \[
@@ -2373,7 +2373,7 @@ We visualize the process network for this program in the following diagram:
 \]
 
 \begin{lstlisting}
-import Prelude
+include Prelude
 
 -- from Example 9:
 protocol SendMsgs(A| ) => S =
@@ -2564,10 +2564,10 @@ proc run :: | => =
 \subsection{Pushing messages onto a Stack codata type}
 \label{prog:stack_print}
 
-This program imports the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:codata stack}, \ref{ex:record}, \ref{ex:codata reverse_print}, and \ref{ex:serverclientwithservices-branching}.
+This program includes the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:codata stack}, \ref{ex:record}, \ref{ex:codata reverse_print}, and \ref{ex:serverclientwithservices-branching}.
 
 \begin{lstlisting}
-import Prelude
+include Prelude
 
 -- from Example 9:
 protocol SendMsgs(A| ) => S =
@@ -2648,7 +2648,7 @@ proc run :: | Console => StringTerminal =
 \subsection{Memory cell}
 \label{prog:mem-cell}
 
-This program imports the \lstinline{Prelude} from \ref{prog:prelude} and modifies code from Examples \ref{ex:mutex-protocol} and \ref{ex:mem-cell}.
+This program includes the \lstinline{Prelude} from \ref{prog:prelude} and modifies code from Examples \ref{ex:mutex-protocol} and \ref{ex:mem-cell}.
 We visualize the process network for this program in the following diagram:
 \[
 \begin{scaletikzpicturetowidth}{\textwidth}
@@ -2729,7 +2729,7 @@ We visualize the process network for this program in the following diagram:
 \]
 
 \begin{lstlisting}
-import Prelude
+include Prelude
     
 -- modified from Example 26:
 protocol Passer( |R) => S =
