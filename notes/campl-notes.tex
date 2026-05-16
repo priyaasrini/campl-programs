@@ -2021,7 +2021,7 @@ This will contribute to the development of programming languages for distributed
 \subsection{Prelude}
 \label{prog:prelude}
 
-CaMPL has a module system that allows one to include and use code defined in other files.
+CaMPL has a module system that allows one to include and use code defined in other files \cite{Fo23mod}.
 This \lstinline{Prelude.mpl} file combines code from Examples \ref{ex:servicechs}, \ref{ex:isEmpty}, \ref{ex:concat}, \ref{ex:service_handles}, and \ref{ex:terminal_handles}.
 We encourage readers to write additional functions in their version of the Prelude as an exercise in CaMPL programming.
 We demonstrate how to include the \lstinline{Prelude} in 
@@ -2125,7 +2125,7 @@ proc run :: | Console => =
 This program includes the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:serverclientwithservices}, \ref{ex:serverclientwithservices-branching}.
 
 \begin{lstlisting}
-include Prelude
+include Prelude (isEmpty| )
 
 -- from Example 9:
 protocol SendMsgs (A| ) => S =
@@ -2373,7 +2373,7 @@ We visualize the process network for this program in the following diagram:
 \]
 
 \begin{lstlisting}
-include Prelude
+include Prelude (isEmpty| )
 
 -- from Example 9:
 protocol SendMsgs(A| ) => S =
@@ -2400,6 +2400,9 @@ proc sender :: | Console => SendMsgsWithAck([Char]| ) =
 			get msg
 		if isEmpty(msg)
 			then do
+				on console do
+					hput ConsolePut
+					put "Indicating to destination processes that source is finished."
 				on source do 
 					hput CloseAckCh
 					close 
@@ -2567,7 +2570,7 @@ proc run :: | => =
 This program includes the \lstinline{Prelude} from \ref{prog:prelude} and combines code from Examples \ref{ex:protocolpassmsgs}, \ref{ex:codata stack}, \ref{ex:record}, \ref{ex:codata reverse_print}, and \ref{ex:serverclientwithservices-branching}.
 
 \begin{lstlisting}
-include Prelude
+include Prelude (isEmpty| )
 
 -- from Example 9:
 protocol SendMsgs(A| ) => S =
@@ -2637,10 +2640,17 @@ proc client :: | => SendMsgs([Char]|), StringTerminal =
 				client( | => ch, terminal)
 
 -- new code:
+proc server :: | SendMsgs([Char]| ), Console => =
+	| ch, console => -> do
+		on console do
+			hput ConsolePut
+			put "Collecting messages to print in reverse."
+		reverse_print(listStack([]) | ch, console => )	-- initializes stack
+
 proc run :: | Console => StringTerminal = 
     | console => terminal -> plug
         client( | => ch, terminal)
-        reverse_print(listStack([]) | ch, console => )	-- initializes stack
+        server( | ch, console => )
 \end{lstlisting}
 
 
@@ -2729,7 +2739,7 @@ We visualize the process network for this program in the following diagram:
 \]
 
 \begin{lstlisting}
-include Prelude
+include Prelude (isEmpty| )
     
 -- modified from Example 26:
 protocol Passer( |R) => S =
