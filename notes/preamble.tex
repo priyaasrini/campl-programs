@@ -64,9 +64,11 @@ citecolor=orange!50!black, urlcolor=orange!50!black, pdfencoding=unicode]{hyperr
 \lstset{escapeinside={(*@}{@*)}}
 \newcommand{\lighten}[1]{(*@ \color{gray}#1 @*)}
 \lstdefinelanguage[2026]{CaMPL}{%
-  keywords={},%
-  % Use otherkeywords for symbols
-  otherkeywords={->,=,=>,::,|},%
+  keywords={=},%
+  alsoletter={=},
+  % Use otherkeywords for symbols. If one keyword is a subsequence of another, you must specify the shorter first.
+  % I don't know why having = and := as other keywords doesn't work, but I just removed = and made it a letter.
+  otherkeywords={:=,::,|,=>,->},%
   % Use keywords [1] for keywords -- Can we have a seperate color scheme for process commands
   morekeywords={[1]data,codata,protocol,coprotocol,proc,%
     do,%

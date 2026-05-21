@@ -35,8 +35,8 @@ The current proto-alpha version of the compiler and the abstract machine is impl
 %
 %This section should introduce the salient details of CaMPL (like it should be a highlight reel of CaMPL. if people don't read past this section they should still be able to be like ``oh yeah i heard of CaMPL it was cool because of x, y, z'') which could include some of the following points:
 
-Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses message-passing concurrency.
-It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining and proving an asynchronous concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
+Categorical Message Passing Language (CaMPL) is a functional-style concurrent programming language that uses asynchronous message-passing concurrency.
+It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
 Their paper diverges from the approach taken by Abramsky et al. in 
 \cite{ABRAMSKY19933, Abr1993IntCats, Abramsky1999ConcurrentGA, AGN2000} which used exclusively the types and rules of linear logic that were introduced by Girard in \cite{GIRARD19871}.
 It also diverges from the popular approach of using linear logic to retrospectively develop a type system for the \(\pi\)-calculus (comprehensively presented by Milner in \cite{Milner1993TheP}) which has produced a significant body of work especially after the connection to session types was established \cite{BELLIN199411, Barber1997Action, CPf2010, Wa12, CairesPT16, KMP19, AG19, QKB21}.
@@ -84,7 +84,7 @@ The second implementation of the compiler was written by Pon as described in \ci
 This version re-implemented the existing features and added controlled non-determinism in the form of ``races.''
 Changes to the categorical semantics to include non-determinism were outlined by Little in \cite{xanna, xanna2}.
 The most recent feature added to the compiler was higher-order message passing which allows processes to send messages that contain encoded processes which can be decoded and invoked when they are received.
-The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25}. 
+The implementation of this feature and the changes to the categorical semantics were written by Norouzbeygi in \cite{No25, Cockett_2026}. 
 The current implementation of CaMPL is available at \url{https://campl-ucalgary.github.io/}.
 
 In this article, we illustrate CaMPL's two-tiered type system and demonstrate the above features through a series of code examples.
@@ -589,7 +589,8 @@ Recall process \lstinline$broadcast$ from Example \ref{ex:broadcastmsg}.
 This process was only able to broadcast a single message from the source.
 To allow \lstinline$broadcast$ to call itself recursively until all messages are sent, the channel type needs to be able to change from \lstinline$Put$ to \lstinline$TopBot$.
 This can be achieved by defining custom channel types, called \tc{protocols} and \tc{coprotocols}, which can be recursive.
-Non-recursive protocols and coprotocols are similar to session types and come from additive linear logic.
+Protocols and coprotocols are similar to session types as one process chooses an interaction from a pre-defined set of possible interactions and the other process defines its behaviour for each case.
+Non-recursive protocols and coprotocols come from additive linear logic.
 Recursive protocols and coprotocols are the concurrent analogue of inductive and coinductive data types in functional programming languages. 
 However, a coprotocol is simply a dual protocol, which is not true for sequential inductive and coinductive data types.
 
@@ -888,8 +889,8 @@ Thus, even if a user provides input within the time limit, the above process can
 \label{sec:homsgs}
 
 In sequential functional programming, higher-order functions take other functions as input or produce functions as output. 
-The semantics for this requires a type system in which a function can be represented as a type which is based on its type signature.
-Although higher-order functions are not currently supported in CaMPL, a concurrent analogue is. 
+%The semantics for this requires a type system in which a function can be represented as a type which is based on its type signature.
+CaMPL supports a concurrent analogue of this concept. 
 \tc{Higher-order processes} 
 %Higher-order processes are given by enriching the concurrent part in the sequential part.
 % the categorical semantics of higher-order functions is given by cartesian closed categories because the closed part basically gives a self-enrichment, so the concurrent analogue is given by enriching processes in the sequential side.
@@ -1035,7 +1036,19 @@ Note that we don't actually require that \lstinline$stack$ is implemented using 
 To use that implementation, we must initialize \lstinline$stack$ as \lstinline{listStack([])} when \lstinline$reverse_print$ is first called.
 A complete program based on this example is given in Appendix~\ref{prog:stack_print}.
 
-% \comment{Can we try demonstrating the use of \lstinline$unfold$ type? for listStack? no :((( :D }
+Although CaMPL doesn't have built-in syntax for function types, which are required to write higher-order functions, we can define a function codata type, called \lstinline{Func}, with an evaluation destructor, called \lstinline{Eval}.
+A record that produces a \lstinline{Func} instance defines the function as the implementation of \lstinline{Eval}.
+This allows one to write higher-order functions, such as folds and maps.
+We define a function codata type and demonstrate a record that defines a function instance in the following code snippet:
+% we have an example number for this, but then we will need to renumber all the examples again, and reupload to github etc.
+\begin{lstlisting}
+codata F -> Func(A, B) =			-- function codata type
+	Eval :: A, F -> B 					-- Eval implementation defines each function
+
+fun sumInts :: -> Func((Int, Int), Int) =	-- produces a Func instance
+    -> (Eval := (a, b) -> a + b)					-- using Eval will call the function
+\end{lstlisting}
+
 
 \subsection{Sequential control}
 \label{sec:seqcontrol}
