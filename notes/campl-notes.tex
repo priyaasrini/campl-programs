@@ -39,7 +39,7 @@ Categorical Message Passing Language (CaMPL) is a functional-style concurrent pr
 It implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. 
 Their paper diverges from the approach taken by Abramsky et al. in 
 \cite{ABRAMSKY19933, Abr1993IntCats, Abramsky1999ConcurrentGA, AGN2000} which used exclusively the types and rules of linear logic that were introduced by Girard in \cite{GIRARD19871}.
-It also diverges from the popular approach of using linear logic to retrospectively develop a type system for the \(\pi\)-calculus (comprehensively presented by Milner in \cite{Milner1993TheP}) which has produced a significant body of work especially after the connection to session types was established \cite{BELLIN199411, Barber1997Action, CPf2010, Wa12, CairesPT16, KMP19, AG19, QKB21}.
+It also diverges from the popular approach of using linear logic to retrospectively develop a type system for the \(\pi\)-calculus (comprehensively presented by Milner in \cite{Milner1993TheP}) which has produced a significant body of work especially after the connection to session types was established \cite{Honda1993TypesFD, BELLIN199411, Kob96, Barber1997Action, CPf2010, Wa12, CairesPT16, KMP19, AG19, QKB21}.
 %
 Instead, Cockett and Pastro introduced a two-tiered logic that augments linear logic with new rules for passing messages of sequential data, such as strings or integers.
 Consequently, CaMPL is a two-tiered programming language.
@@ -1373,8 +1373,10 @@ The \lstinline$halt$ command must be used as the last command in a command block
 That is, two processes connected along a channel will each use one command in a complementary pair to perform their role in the interaction.
 An extended discussion on the importance of channel polarities is given in Section~\ref{Sec:polarities}.
 
-In a complementary pair, one command \tc{blocks} a process until the other process performs the complementary command to \tc{unblock} it. 
-For example, \lstinline$get$ is used to receive a message, and it blocks until the other process performs the complementary \lstinline$put$ to send the message.
+Each complementary pair has a \tc{blocking} command and a \tc{non-blocking} command.
+The process using the blocking command must wait until the other process performs the complementary command to unblock it. 
+For example, \lstinline$get$ is a blocking command, so a process is blocked until a message is received from the process performing the complementary \lstinline$put$ which sends the message.
+The process using \lstinline$put$ is not blocked, even if the other process hasn't received the message, because message passing is asynchronous.
 Table \ref{tab:mpl-constructs} summarizes complementary pairs of commands and whether the process that uses each command is blocked.
  \begin{table}[!h]
 \centering
@@ -1833,7 +1835,7 @@ The following items were suggested by Hashimoto as improvements to CaMPL syntax:
 
 CaMPL implements a type system based on linear logic that was described in Cockett and Pastro’s paper ``The Logic of Message Passing'' \cite{CoP07}. The primary result of their paper was defining and proving a concurrent analogue of the functional programming Curry-Howard-Lambek correspondence or proofs-as-programs principle \cite{Howard1980, Lambek1969, Lambek1972}. They designed a two-tiered logic consisting of a sequential tier, called the message logic, that interacts with a concurrent tier, called the message-passing logic. 
 The message logic is a simple logic that corresponds to sequential functional programming.
-The message-passing logic corresponds to programming concurrent processes which use message passing along channels. They provided the term calculus for both the logic \cite[Section 2.1, Section 3.1]{CoP07} which was implemented as a programming language called the CaMPL. We will discuss the syntax of CaMPL in reference to the two-tiered logic after briefly describing the categorical semantics of message passing.
+The message-passing logic corresponds to programming concurrent processes which use asynchronous message passing along channels. They provided the term calculus for both logics \cite[Section 2.1, Section 3.1]{CoP07} which are implemented by CaMPL. We will discuss the syntax of CaMPL in reference to the two-tiered logic after briefly describing the categorical semantics of message passing.
 
 The categorical semantics of message passing is given by a {\em linear actegory} in which a category of messages and sequential functions acts on a category of channels and concurrent processes in two directions.
 The covariant action passes messages in the forward direction, which we described in this article as ``left to right,'' and the contravariant action passes messages in the backward direction, which we described as ``right to left.''
