@@ -901,13 +901,13 @@ The semantics for this uses a built-in sequential type \lstinline$Store(S)$ to r
 Example \ref{ex:hoprocs} shows higher-order processes passing \lstinline$helloworld$ from Example~\ref{ex:helloworld}. 
 A complete program based on this example is given in Appendix~\ref{prog:h.o.hello_world}.
 \begin{lstlisting} [label=ex:hoprocs, caption=Passing \lstinline{helloworld} between higher-order processes]
-proc ho_sender :: | => Put( Store(|Console=>) | TopBot) =
+proc ho_sender :: | => Put(Store(|Console=>) | TopBot) =
 	| => ch -> do
 		on ch do
 			put store(helloworld)		-- encode helloworld and send as a message
 			halt
 			
-proc ho_receiver :: | Put( Store(|Console=>) | TopBot), Console => =
+proc ho_receiver :: | Put(Store(|Console=>) | TopBot), Console => =
 	| ch, console => -> do
 		on ch do
 			get stored_process			-- receive message with encoded helloworld
@@ -1640,30 +1640,30 @@ One can use any name for a service channel type definition.
 For example, we have used the name \lstinline{Terminal} to group all handles related to Alacritty terminals.
 \begin{lstlisting}[label=ex:service_handles, caption=Complete list of service channel handles]
 protocol Terminal => S =
-    StringTerminalPut :: Put( [Char] | S) => S
-    StringTerminalGet :: Get( [Char] | S) => S 
+    StringTerminalPut :: Put([Char]|S) => S
+    StringTerminalGet :: Get([Char]|S) => S 
     StringTerminalClose :: TopBot => S
     
-    IntTerminalPut :: Put( Int | S) => S
-    IntTerminalGet :: Get( Int | S) => S 
+    IntTerminalPut :: Put(Int|S) => S
+    IntTerminalGet :: Get(Int|S) => S 
     IntTerminalClose :: TopBot => S
 
-    CharTerminalPut :: Put( Char | S) => S
-    CharTerminalGet :: Get( Char | S) => S 
+    CharTerminalPut :: Put(Char|S) => S
+    CharTerminalGet :: Get(Char|S) => S 
     CharTerminalClose :: TopBot => S
 
 coprotocol S => Console =
-    ConsolePut :: S => Get( [Char] | S) 
-    ConsoleGet :: S => Put( [Char] | S) 
+    ConsolePut :: S => Get([Char]|S) 
+    ConsoleGet :: S => Put([Char]|S) 
     ConsoleClose :: S => TopBot 
     ConsoleStringTerminal :: S => S (+) Neg(Terminal)
 
-    IntConsolePut :: S => Get( Int | S) 
-    IntConsoleGet :: S => Put( Int | S) 
+    IntConsolePut :: S => Get(Int|S) 
+    IntConsoleGet :: S => Put(Int|S) 
     IntConsoleClose :: S => TopBot 
 
-    CharConsolePut :: S => Get( Char | S) 
-    CharConsoleGet :: S => Put( Char | S) 
+    CharConsolePut :: S => Get(Char|S) 
+    CharConsoleGet :: S => Put(Char|S) 
     CharConsoleClose :: S => TopBot 
 
 coprotocol S => Timer =
@@ -1676,18 +1676,18 @@ Each \lstinline{Terminal} must be passed into another process since we are using
 Alternative to Example~\ref{ex:service_handles}, we can define three different protocols in the place of \lstinline{Terminal} to define the \lstinline{StringTerminal} that we have used in most of our examples:
 \begin{lstlisting}[label=ex:terminal_handles, caption=Three kinds of Terminals]
 protocol StringTerminal => S =
-    StringTerminalPut :: Put( [Char] | S) => S
-    StringTerminalGet :: Get( [Char] | S) => S 
+    StringTerminalPut :: Put([Char]|S) => S
+    StringTerminalGet :: Get([Char]|S) => S 
     StringTerminalClose :: TopBot => S
 
 protocol IntTerminal => S =
-    IntTerminalPut :: Put( Int | S) => S
-    IntTerminalGet :: Get( Int | S) => S 
+    IntTerminalPut :: Put(Int|S) => S
+    IntTerminalGet :: Get(Int|S) => S 
     IntTerminalClose :: TopBot => S
 
 protocol CharTerminal => S =
-    CharTerminalPut :: Put( Char | S) => S
-    CharTerminalGet :: Get( Char | S) => S 
+    CharTerminalPut :: Put(Char|S) => S
+    CharTerminalGet :: Get(Char|S) => S 
     CharTerminalClose :: TopBot => S
 \end{lstlisting} 
 We have included a Prelude file in Appendix~\ref{prog:prelude} that provides service channel definitions that group the handles in this way.
@@ -2049,34 +2049,34 @@ We demonstrate how to include the \lstinline{Prelude} in
 \begin{lstlisting}
 -- combines code from Examples 14, 31, 32:
 protocol StringTerminal => S =
-    StringTerminalPut :: Put( [Char] | S) => S
-    StringTerminalGet :: Get( [Char] | S) => S 
+    StringTerminalPut :: Put([Char]|S) => S
+    StringTerminalGet :: Get([Char]|S) => S 
     StringTerminalClose :: TopBot => S
 
 protocol IntTerminal => S =
-    IntTerminalPut :: Put( Int | S) => S
-    IntTerminalGet :: Get( Int | S) => S 
+    IntTerminalPut :: Put(Int|S) => S
+    IntTerminalGet :: Get(Int|S) => S 
     IntTerminalClose :: TopBot => S
 
 protocol CharTerminal => S =
-    CharTerminalPut :: Put( Char | S) => S
-    CharTerminalGet :: Get( Char | S) => S 
+    CharTerminalPut :: Put(Char|S) => S
+    CharTerminalGet :: Get(Char|S) => S 
     CharTerminalClose :: TopBot => S
 
 coprotocol S => Console =
-    ConsolePut :: S => Get( [Char] | S) 
-    ConsoleGet :: S => Put( [Char] | S) 
+    ConsolePut :: S => Get([Char]|S) 
+    ConsoleGet :: S => Put([Char]|S) 
     ConsoleClose :: S => TopBot 
     ConsoleStringTerminal :: S => S (+) Neg(StringTerminal)
 
 coprotocol S => IntConsole =
-    IntConsolePut :: S => Get( Int | S) 
-    IntConsoleGet :: S => Put( Int | S) 
+    IntConsolePut :: S => Get(Int|S) 
+    IntConsoleGet :: S => Put(Int|S) 
     IntConsoleClose :: S => TopBot 
 
 coprotocol S => CharConsole =
-    CharConsolePut :: S => Get( Char | S) 
-    CharConsoleGet :: S => Put( Char | S) 
+    CharConsolePut :: S => Get(Char|S) 
+    CharConsoleGet :: S => Put(Char|S) 
     CharConsoleClose :: S => TopBot 
 
 coprotocol S => Timer =
