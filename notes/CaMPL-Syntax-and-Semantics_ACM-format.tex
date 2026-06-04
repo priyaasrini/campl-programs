@@ -462,11 +462,11 @@ For now, we will consider the definition of process \lstinline$broadcast$ in Exa
 \begin{lstlisting}[label=ex:broadcastmsg, caption=Process that broadcasts a message from a single source] 
 proc broadcast = 
 	ack_msg | source => dest1, dest2 -> do
-		get msg on source								-- receive message from source
-		put msg on dest1								-- broadcast message to other processes
+		get msg on source						-- receive message from source
+		put msg on dest1						-- broadcast message to other processes
 		put msg on dest2
-		put ack_msg on source						-- send acknowledgement message to source
-		close source										-- close all channels and halt
+		put ack_msg on source				-- send acknowledgement message to source
+		close source								-- close all channels and halt
 		close dest1
 		halt dest2  -- the last channel is closed with the halt command
 \end{lstlisting}
@@ -572,10 +572,10 @@ proc server =
 			put "Hello Client!"	-- sends message to client
 			halt
 
- proc run = 					-- if we could compile this program, it would deadlock!
+ proc run = 				-- if this program could compile, it would deadlock!
  	| => -> plug
- 		client( | ch )		-- client process has channel ch (no defined polarity)
- 		server( | ch )		-- server process has channel ch (no defined polarity)
+ 		client( | ch )	-- client process has channel ch (no polarity)
+ 		server( | ch )	-- server process has channel ch (no polarity)
 \end{lstlisting}
 Neither process will be able to continue past their \lstinline{get} command because nothing is actually \lstinline{put} on the channel first.
 This is precisely what a deadlock is.
@@ -780,7 +780,7 @@ proc run =
 		sender( | => source)
 		broadcast("message broadcasted" | source => dest1, dest2)
 		send_to_dest1( | dest1, neg_dest1 => )	-- type of dest1 is Put 
-		proc1( | => neg_dest1)									-- type of neg_dest1 is Neg(Put)
+		proc1( | => neg_dest1)							-- type of neg_dest1 is Neg(Put)
 		proc2( | dest2 =>)
 \end{lstlisting}	
 Messages will travel along \lstinline$dest1$ from left to right and then in the opposite direction on \lstinline$neg_dest1$.
@@ -788,14 +788,14 @@ Since \lstinline$dest1$ is type \lstinline$Put$, \lstinline$neg_dest1$ can be \l
 We define process \lstinline$send_to_dest1$ as follows:
 \begin{lstlisting} [label=ex:negdest1, caption=Using a Neg(Put) channel instead of a Get channel] 
 proc send_to_dest1 :: | Put([Char] | TopBot), Neg(Put([Char] | TopBot)) => =
-	| source, neg_dest1 => -> do	-- send a message on neg_dest1 like a Get type
-		on source do								-- receive message from source via broadcast
+	| source, neg_dest1 => -> do	-- send msg on neg_dest1 like a Get type
+		on source do								-- receive msg from source via broadcast
 			get msg
 			close
 		plug
 			neg_dest1, dest1 => -> 		-- create a channel dest1
 				neg_dest1 |=| neg dest1 -- negate it and identify with neg_dest1
-			=> dest1 -> 							-- use dest1 to forward message to proc1
+			=> dest1 -> 							-- use dest1 to forward msg to proc1
 				on dest1 do	
 					put msg
 					halt
@@ -845,9 +845,9 @@ However, a coprotocol is simply a dual protocol, which is not true for sequentia
 
 Consider the protocol \lstinline$SendMsgs$:
 \begin{lstlisting}[label=ex:protocolpassmsgs, caption=Protocol for sending an arbitrary number of messages] 
-protocol SendMsgs(A| ) => S =						-- sends messages of type A
-	SendMsg :: Put(A|S) => S 							-- handle to send another message
-	CloseCh :: TopBot => S 								-- handle to finish sending messages
+protocol SendMsgs(A| ) => S =				-- sends messages of type A
+	SendMsg :: Put(A|S) => S 					-- handle to send another message
+	CloseCh :: TopBot => S 						-- handle to finish sending messages
 \end{lstlisting}
 This protocol allows an arbitrary number of messages of type \lstinline$A$ to be passed on a \lstinline$Put$ channel.
 When we use it as a channel type, we will instantiate the sequential type variable \lstinline$A$.
@@ -973,30 +973,30 @@ proc client :: | => SendMsgs([Char]| ), StringTerminal =
             hput StringTerminalPut
             put "Hello User! Please enter message in terminal:"
             hput StringTerminalGet
-            get msg                   -- receive user input
+            get msg             -- receive user input
         on ch do											
             hput SendMsg
-            put msg                   -- forward to server
+            put msg             -- forward to server
             hput CloseCh
             close
-        on terminal do								-- confirm then halt when user is ready
+        on terminal do					-- confirm then halt when user is ready
             hput StringTerminalPut
             put "Sent message to server. Press ENTER to close terminal."
             hput StringTerminalGet
-            get _											-- wait for user before closing terminal
+            get _								-- wait for user before closing terminal
             hput StringTerminalClose
             halt    
             
 proc server :: | SendMsgs([Char]| ), Console => =
     | ch, console => -> do
         hcase ch of
-            SendMsg -> do							-- log each message received
+            SendMsg -> do				-- log each message received
                 get msg on ch
                 on console do
                     hput ConsolePut
-                    put "message from user: " ++ msg	-- append msg and print
+                    put "message from user: " ++ msg	-- append msg
                 server( | ch, console => )
-            CloseCh -> do							-- halt after all messages received
+            CloseCh -> do				-- halt after all messages received
                 close ch
                 on console do
                     hput ConsoleClose
@@ -1035,25 +1035,25 @@ using the \lstinline$race$ command, is shown in Example~\ref{ex:nondetserver}:
 % where defn					-- locally define processes using where
 \begin{lstlisting} [label=ex:nondetserver, caption=Server echos each client in the order it receives messages]
 defn
-	proc server =			-- echos msgs without making clients wait for each other
+	proc server =		 -- echos msgs without clients waiting for each other
 		| two_ch => -> do
 			split two_ch into ch1, ch2
 			server_non_deterministic( | ch1, ch2 => )
 
-where defn					-- locally defined processes given after where
-	proc server_non_deterministic :: | 																				Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
+where defn				 -- locally defined processes given after where
+	proc server_non_deterministic :: | 																		Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
 		| ch1, ch2 => -> do
-			race					-- controlled non-determinism via a race
-				ch1 -> server_deterministic( | ch1, ch2 => )		-- client on ch1 wins
-				ch2 -> server_deterministic( | ch2, ch1 => )		-- client on ch2 wins
+			race				 -- controlled non-determinism via a race
+				ch1 -> server_deterministic( | ch1, ch2 => ) -- ch1 client wins
+				ch2 -> server_deterministic( | ch2, ch1 => ) -- ch2 client wins
 	
-	proc server_deterministic :: | 																						Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
+	proc server_deterministic :: | 																				Put([Char]|Get([Char]|TopBot)), Put([Char]|Get([Char]|TopBot)) => =
 		| winner, loser => -> do
-			on winner do	-- interacts with client it received a message from first
+			on winner do -- interact with client it received first message from
 				get msg
 				put msg
 				close
-			on loser do		-- interacts with other client
+			on loser do	 -- interact with other client
 				get msg
 				put msg
 				halt
@@ -1092,26 +1092,26 @@ proc client :: | Timer => SendMsgs([Char]| ), StringTerminal =
 			hput StringTerminalGet
 		on timer do
 			hput Timer
-			put 60000000											-- set time limit for 60 seconds
+			put 60000000									-- set time limit for 60 seconds
 		split timer into new_timer, times_up
-		on new_timer do										 	-- no recursion, so close new_timer
+		on new_timer do									-- no recursion, so close new_timer
 			hput TimerClose
 			close
 		race
-			times_up -> do										-- if the timer wins, user timed out
+			times_up -> do								-- if the timer wins, user timed out
 				on times_up do
 					get ()
 					close
-				on ch do												-- don't forward anything to server
+				on ch do										-- don't forward anything to server
 					hput CloseCh
 					close
-				on terminal do									-- halt after msg is finally received
+				on terminal do							-- halt after msg is finally received
 					get msg
 					hput StringTerminalPut
 					put "User timed out. Message not sent."
 					hput StringTerminalClose
 					halt
-			terminal -> do										-- if user wins, run original code
+			terminal -> do								-- if user wins, run original code
 				get msg on terminal
 				on ch do
 					hput SendMsg
@@ -1125,7 +1125,7 @@ proc client :: | Timer => SendMsgs([Char]| ), StringTerminal =
 					get _
 					hput StringTerminalClose
 					close
-				on times_up do									-- then close the timer and halt
+				on times_up do							-- then close the timer and halt
 					get ()
 					halt
 \end{lstlisting}
@@ -1268,7 +1268,7 @@ defn
 				SendMsg -> do		-- push messages to stack as they are received
 					get msg on source
 					reverse_print(Push(msg, stack) | source, console => )
-				CloseCh -> do		-- after receiving all messages, print flattened stack
+				CloseCh -> do		-- all messages received, print flattened stack
 					close source
 					on console do
 						hput ConsolePut
@@ -1291,11 +1291,11 @@ This allows one to write higher-order functions, such as folds and maps.
 We define a function codata type and demonstrate a record that defines a function instance in the following code snippet:
 % we have an example number for this, but then we will need to renumber all the examples again, and reupload to github etc.
 \begin{lstlisting}
-codata F -> Func(A, B) =			-- function codata type
-	Eval :: A, F -> B 					-- Eval implementation defines each function
+codata F -> Func(A, B) =		-- function codata type
+	Eval :: A, F -> B 				-- Eval implementation defines each function
 
 fun sumInts :: -> Func((Int, Int), Int) =	-- produces a Func instance
-    -> (Eval := (a, b) -> a + b)					-- using Eval will call the function
+    -> (Eval := (a, b) -> a + b)					-- using Eval calls function
 \end{lstlisting}
 
 
@@ -1311,20 +1311,20 @@ Each time \lstinline$client$ receives a string from the user, it will check if i
 \begin{lstlisting} [label=ex:serverclientwithservices-branching, caption=Client execution conditional on user input] 
 proc client :: | => SendMsgs([Char]| ), StringTerminal =
 	| => ch, terminal -> do
-		on terminal do				-- receive msg from user
+		on terminal do			-- receive msg from user
 			hput StringTerminalPut
 			put "Hello User! Enter message in terminal. Press ENTER to close."
 			hput StringTerminalGet
 			get msg
-		if isEmpty(msg)				-- conditional branching on the value of msg
-			then do							-- user pressed ENTER, so close channels and halt
+		if isEmpty(msg)			-- conditional branching on the value of msg
+			then do						-- user pressed ENTER, so close channels and halt
 				on ch do 
 					hput CloseCh
 					close 
 				on terminal do
 					hput StringTerminalClose	
 					halt 
-			else do							-- user has sent a message, so forward to server
+			else do						-- user has sent a message, so forward to server
 				on ch do											
 					hput SendMsg
 					put msg
@@ -1335,17 +1335,17 @@ A complete program based on this example is given in Appendix~\ref{prog:user_inp
 The above example can also be implemented using \lstinline$case$ on the built-in constructors for \lstinline{Bool}:
 \begin{lstlisting}
 	case isEmpty(msg) of
-		True -> do						-- user pressed ENTER, so close channels and halt
+		True -> do					-- user pressed ENTER, so close channels and halt
 			<lines 10-15>
-		False -> do						-- user has sent a message, so forward to server
+		False -> do					-- user has sent a message, so forward to server
 			<lines 17-20>
 \end{lstlisting}
 
 The above example can also be implemented using \lstinline$switch$:\begin{lstlisting}
 	switch
-		isEmpty(msg) -> do		-- user pressed ENTER, so close channels and halt
+		isEmpty(msg) -> do	-- user pressed ENTER, so close channels and halt
 			<lines 10-15>
-		True -> do						-- user has sent a message, so forward to server
+		True -> do					-- user has sent a message, so forward to server
 			<lines 17-20>
 \end{lstlisting}
 Note that \lstinline$switch$ statements streamline the code for an \lstinline$if$-\lstinline$then$-\lstinline$else if$-\lstinline$then$-\lstinline$...$-\lstinline$else$ statement rather than being a unique feature.
@@ -1364,18 +1364,18 @@ defn
 				get msg
 			pattern_match(msg | => ch, terminal)
 	proc pattern_match :: [Char] | => SendMsgs([Char]| ), StringTerminal =
-		"" | => ch, terminal -> do	-- user pressed ENTER. close channels and halt
+		"" | => ch, terminal -> do	-- user pressed ENTER. close and halt
 			on ch do 
 				hput CloseCh
 				close 
 			on terminal do
 				hput StringTerminalClose	
 				halt 
-		msg | => ch, terminal -> do	-- user sent a message, so forward to server
+		msg | => ch, terminal -> do	-- user sent a message, forward to server
 			on ch do											
 				hput SendMsg
 				put msg
-			client( | => ch, terminal)-- recurse 
+			client( | => ch, terminal)	-- recurse 
 \end{lstlisting}   
 We discuss mutually recursive processes in Section~\ref{sec:calling_procs}.
 
@@ -1431,7 +1431,7 @@ We will also revisit previous examples to emphasize the details of how one uses 
 \end{table}
 
 %\newpage
-\subsection{Connecting processes using {\tt plug}}
+\subsection{Connecting processes using \lstinline$plug$}
 
 We have seen the \lstinline$plug$ command used in most of our examples, especially in \lstinline$run$ processes.
 This command must be used as the last command in a process command block.
@@ -1559,19 +1559,19 @@ However, for clearer explanations, we will consider the process definitions sepa
 First, we will consider \lstinline$memAccess$:
 \begin{lstlisting}
 proc memAccess :: [Char] | Passer( |MemCh([Char]| )) => MemCh([Char]| ) =
-	tag | passer => mem -> do		-- note: waiting process has other end of passer
+	tag | passer => mem -> do		-- waiting process has other end of passer
 		on mem do									-- access memory cell using mem
 			hput MemGet
 			get stored_tag
 			hput MemPut
 			put tag
-		hcase passer of Pass -> do	-- block until other process requests to swap
-			fork passer as						-- pass memory cell access and swap to waiting
+		hcase passer of Pass -> do	-- block until other proc requests swap
+			fork passer as						-- pass mem cell access and swap to wait
 				pass_mem with mem -> 
 					pass_mem |=| mem								-- use id to pass mem access
-				neg_passer -> plug								-- now wait on other end of passer
+				neg_passer -> plug								-- wait on other end of passer
 					neg_passer, new_passer => ->		
-						neg_passer |=| neg new_passer	-- negate other end to id with it	
+						neg_passer |=| neg new_passer	-- negate other end to use id
 					memWait(tag | => new_passer)		-- recurse with other end
 \end{lstlisting}
 We demonstrate how identification can be used to pass a channel as a resource on line 11.
@@ -1582,10 +1582,10 @@ Next, consider \lstinline$memWait$:
 proc memWait :: [Char] | => Passer( |MemCh([Char]| )) =
 	tag | => passer -> do
 		hput Pass on passer										-- request to swap to accessing
-		split passer into mem, neg_passer			-- block until other proc passes mem
-		plug																	-- need to use other end of passer
+		split passer into mem, neg_passer			-- block until other proc forks
+		plug																	-- need other end of passer
 			=> neg_passer, new_passer -> 
-				neg_passer |=| neg new_passer			-- negate other end to id with it	
+				neg_passer |=| neg new_passer			-- negate other end to use id
 			memAccess(tag | new_passer => mem)	-- recurse with other end
 \end{lstlisting}
 Again, we use  \lstinline$neg$ to identify with a \lstinline$Neg$ channel on line 7.
